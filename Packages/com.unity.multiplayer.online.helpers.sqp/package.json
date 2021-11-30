@@ -1,0 +1,7 @@
+{
+    "name": "com.unity.multipayer.online.helpers.sqp",
+    "version": "0.1.0",
+    "description": "A simple SDK to handle Server Query Protocol (SQP) as well as A2S",
+    "displayName": "Server Query Protocol Helpers",
+    "unity": "2020.3"
+}

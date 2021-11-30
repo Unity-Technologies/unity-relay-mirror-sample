@@ -4,6 +4,7 @@ using System.ComponentModel;
 using UnityEngine;
 using Network;
 using Mirror;
+using Rpc;
 
 namespace UI
 {
@@ -19,6 +20,7 @@ namespace UI
     public class MenuUI : MonoBehaviour
     {
         MyNetworkManager manager;
+        private UnityRpc unityRpc;
 
         /// <summary>
         /// Whether to show the default control HUD at runtime.
@@ -113,6 +115,23 @@ namespace UI
                 else
                 {
                     if (GUILayout.Button("Server Only")) manager.StartServer();
+                }
+
+                if (GUILayout.Button("Auth Login"))
+                { 
+                    manager.Login(); 
+                }
+                if (GUILayout.Button("Vivox Login"))
+                {
+                    manager.VivoxLogin();
+                }
+                if (GUILayout.Button("Request Match"))
+                {
+                    manager.RequestMatch();
+                }
+                if (GUILayout.Button("Create Match"))
+                {
+                    manager.RequestMatch();
                 }
             }
             else

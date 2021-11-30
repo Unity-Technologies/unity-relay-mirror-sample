@@ -1,0 +1,59 @@
+{
+    "Matchmaking":{
+        "Name":"2-vs-2-TeamDeathmatch",
+        "TargetFunction": {
+            "Name": "standard"
+        },
+		"Pools": {
+            "standard": [
+              {
+                "Attribute": "mode",
+                "Max": 2,
+                "Min": 2
+              }
+            ]
+        },
+        "Config":{
+            "Name": "2-vs-2-TeamDeathmatch",
+            "QoSConfig":{
+                "DefaultQoSRegion": "<YOUR-QOS-REGION-HERE>",
+                "GroupByStrategy": 1
+            },
+            "TeamRules":{
+                "Teams": [
+                    {
+                        "Name": "BlueTeam",
+                        "TeamCount": {
+                            "Min": 1.0,
+                            "Max": 1.0
+                        },
+                        "PlayerCount": {
+                            "Min": 2.0,
+                            "Max": 2.0
+                        }
+                    },
+                    {
+                        "Name": "RedTeam",
+                        "TeamCount": {
+                            "Min": 1.0,
+                            "Max": 1.0
+                        },
+                        "PlayerCount": {
+                            "Min": 2.0,
+                            "Max": 2.0
+                        }
+                    }
+                ]
+            },
+            "DefaultScore": 0.0,
+            "MinTicketAgeMs": 0.0,
+            "TicketTimeoutMs": 300000.0
+        }
+    },
+    "Multiplay":{
+        "Profile": "<YOUR-PROFILE-ID-HERE>",
+        "Access": "<YOUR-ACCESS-KEY-HERE>",
+        "Secret": "<YOUR-SECRET-ACCESS-KEY-HERE>",
+        "FleetId": "<YOUR-FLEET-ID-HERE>"
+    }
+}

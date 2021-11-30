@@ -16,13 +16,8 @@ namespace Vivox
         UnityRpc unityRpc;
 
         private Uri endpoint;
-        Uri server = new Uri("https://unity.vivox.com/appconfig/9134c-unity-82382-test");
 
         private string m_UserId;
-        private string m_Issuer = "9134c-unity-82382-test";
-        private string m_Domain = "mtu1xp.vivox.com";
-        private string m_TokenKey = "v5l8mpqVE6RM8Hj9NaZLJ0iGzIGgdAIw";
-        private TimeSpan m_TimeSpan = TimeSpan.FromSeconds(90);
 
         private ILoginSession m_LoginSession;
         private IChannelSession m_ChannelSession;
@@ -38,7 +33,7 @@ namespace Vivox
             unityRpc = GetComponent<UnityRpc>();
             client = new VivoxUnity.Client();
             // Uninitialize to clean up any old instances
-            //client.Uninitialize();
+            client.Uninitialize();
             //TODO: change to make log level dynamic
             VivoxConfig config = new VivoxConfig();
             config.InitialLogLevel = (vx_log_level)2;
@@ -98,7 +93,7 @@ namespace Vivox
                     }
                 });
             };
-            unityRpc.GetVivoxLoginToken(username, unityRpc.GetAuthToken(), vivoxLoginTokenReceived);
+            unityRpc.GetVivoxLoginToken(username, vivoxLoginTokenReceived);
         }
 
         public void Logout()
@@ -180,7 +175,7 @@ namespace Vivox
                     }
                 });
             };
-            unityRpc.GetVivoxJoinToken(channelName, channelType.ToString(), unityRpc.GetAuthToken(), vivoxJoinTokenReceived);
+            unityRpc.GetVivoxJoinToken(channelName, channelType.ToString(), vivoxJoinTokenReceived);
         }
 
         public void OnChannelStatusChanged(object sender, PropertyChangedEventArgs channelArgs)

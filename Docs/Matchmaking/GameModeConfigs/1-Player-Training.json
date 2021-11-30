@@ -1,0 +1,48 @@
+{
+    "Matchmaking":{
+        "Name":"1-Player-Training",
+        "TargetFunction": {
+            "Name": "standard"
+        },
+		"Pools": {
+            "standard": [
+              {
+                "Attribute": "mode",
+                "Max": 1,
+                "Min": 1
+              }
+            ]
+        },
+        "Config":{
+            "Name": "1-Player-Training",
+            "QoSConfig":{
+                "DefaultQoSRegion": "<YOUR-QOS-REGION-HERE>",
+                "GroupByStrategy": 1
+            },
+            "TeamRules":{
+                "Teams": [
+                    {
+                        "Name": "Player",
+                        "TeamCount": {
+                            "Min": 1.0,
+                            "Max": 1.0
+                        },
+                        "PlayerCount": {
+                            "Min": 1.0,
+                            "Max": 1.0
+                        }
+                    }
+                ]
+            },
+            "DefaultScore": 0.0,
+            "MinTicketAgeMs": 0.0,
+            "TicketTimeoutMs": 300000.0
+        }
+    },
+    "Multiplay":{
+        "Profile": "<YOUR-PROFILE-ID-HERE>",
+        "Access": "<YOUR-ACCESS-KEY-HERE>",
+        "Secret": "<YOUR-SECRET-ACCESS-KEY-HERE>",
+        "FleetId": "<YOUR-FLEET-ID-HERE>"
+    }
+}

@@ -11,7 +11,7 @@ namespace Rpc
 
     public class UnityRpc : MonoBehaviour
     {
-        private string m_AuthToken;
+        private string m_AuthToken = "";
 
         //Replace UPID in the endpoint with the proper UPID once one is generated
         private string ticketEndpoint = "https://cloud.connected.unity3d.com/d98bfc46-6576-4059-b530-dc74eb4f1388/matchmaking/api/v1/tickets";
@@ -43,7 +43,7 @@ namespace Rpc
                 if (wasSuccessful && response.uuid != "")
                 {
                     Debug.Log("AllocateServer: successfully allocated server");
-                    StartCoroutine(PollUnity(response.uuid, allocateParams.fleet_id));
+                    StartCoroutine(PollMultiplay(response.uuid, allocateParams.fleet_id));
                 }
                 else
                 {
@@ -51,32 +51,32 @@ namespace Rpc
                 }
             };
 
-            StartCoroutine(PostRequest<AllocateRequestParams, AllocateResponse>(m_AuthToken, "MultiplayService.Allocate", allocateParams, onAllocateComplete));
+            StartCoroutine(PostRequest<AllocateRequestParams, AllocateResponse>("MultiplayService.Allocate", allocateParams, onAllocateComplete));
         }
 
         public void Login(string username, OnRequestCompleteDelegate<SignInResponse> onLoginCompleteDelegate)
         {
             SignInParams signInParams = new SignInParams();
             signInParams.username = username;
-            StartCoroutine(PostRequest<SignInParams, SignInResponse>("", "AuthService.SignIn", signInParams, onLoginCompleteDelegate));
+            StartCoroutine(PostRequest<SignInParams, SignInResponse>("AuthService.SignIn", signInParams, onLoginCompleteDelegate));
         }
 
-        public void GetVivoxLoginToken(string user, string authToken, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
+        public void GetVivoxLoginToken(string user, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
         {
             VivoxTokenRequestParams vivoxRequestParams = new VivoxTokenRequestParams();
             vivoxRequestParams.user = user;
-            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>(authToken, "VivoxService.Login", vivoxRequestParams, onVivoxLoginTokenReceived));
+            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Login", vivoxRequestParams, onVivoxLoginTokenReceived));
         }
 
-        public void GetVivoxJoinToken(string channelName, string channelType, string authToken, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
+        public void GetVivoxJoinToken(string channelName, string channelType, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
         {
             VivoxTokenRequestParams vivoxRequestParams = new VivoxTokenRequestParams();
             vivoxRequestParams.name = channelName;
             vivoxRequestParams.type = channelType;
-            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>(authToken, "VivoxService.Join", vivoxRequestParams, onVivoxLoginTokenReceived));
+            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Join", vivoxRequestParams, onVivoxLoginTokenReceived));
         }
 
-        public void GetRequestMatchTicket(int mode, string authToken, OnRequestCompleteDelegate<RequestMatchTicketResponse> onRequestMatchTicketReceived)
+        public void GetRequestMatchTicket(int mode, OnRequestCompleteDelegate<RequestMatchTicketResponse> onRequestMatchTicketReceived)
         {
             foreach (PingInfo site in m_PingSites)
             {
@@ -86,44 +86,40 @@ namespace Rpc
             RequestMatchTicketParams requestMatchTicketParams = new RequestMatchTicketParams();
             requestMatchTicketParams.mode = mode;
             requestMatchTicketParams.QosResults = m_PingSites;
-            StartCoroutine(PostRequest<RequestMatchTicketParams, RequestMatchTicketResponse>(authToken, "MatchMakerService.RequestMatch", requestMatchTicketParams, onRequestMatchTicketReceived));
+            StartCoroutine(PostRequest<RequestMatchTicketParams, RequestMatchTicketResponse>("MatchMakerService.RequestMatch", requestMatchTicketParams, onRequestMatchTicketReceived));
         }
 
-        public IEnumerator PollUnity(string uuid, string fleetId)
-        {
-            timePolling = 0;
-            matchCreated = false;
-            while (!matchCreated && timePolling < 300)
-            {
-                PollMultiplay(uuid, fleetId);
-                yield return new WaitForSeconds(5.0f);
-                timePolling += 5;
-            }
-        }
-
-        public void PollMultiplay(string uuid, string fleetId)
+        public IEnumerator PollMultiplay(string uuid, string fleetId)
         {
             PollMultiplayParams pollMultiplayParams = new PollMultiplayParams();
             pollMultiplayParams.uuid = uuid;
             pollMultiplayParams.fleetid = fleetId;
 
-            OnRequestCompleteDelegate<PollMultiplayResponse> onMultiplayPollComplete = delegate (PollMultiplayResponse response, bool wasSuccessful)
+            timePolling = 0;
+            matchCreated = false;
+            while (!matchCreated && timePolling < 300)
             {
-                if (!wasSuccessful || response.state == "Error" || response.status == "500")
+                OnRequestCompleteDelegate<PollMultiplayResponse> onMultiplayPollComplete = delegate (PollMultiplayResponse response, bool wasSuccessful)
                 {
-                    // TODO: handle error here
-                    Debug.Log($"PollMultiplay: failed retrieving connection from multiplay");
-                    matchCreated = true;
-                }
-                if(response.connection != "")
-                {
-                    Debug.Log($"PollMultiplay: successfully retrieved connetion from multiplay: {response.connection}");
-                    string test = response.connection;
-                    matchCreated = true;
-                }
-            };
+                    if (!wasSuccessful || response.state == "Error" || response.status == "500")
+                    {
+                        // TODO: handle error here
+                        Debug.Log($"PollMultiplay: failed retrieving connection from multiplay");
+                        matchCreated = true;
+                    }
+                    if (response.connection != "")
+                    {
+                        Debug.Log($"PollMultiplay: successfully retrieved connetion from multiplay: {response.connection}");
+                        string test = response.connection;
+                        matchCreated = true;
+                    }
+                };
+                StartCoroutine(PostRequest<PollMultiplayParams, PollMultiplayResponse>("MultiplayService.SingleAllocations", pollMultiplayParams, onMultiplayPollComplete));
+                yield return new WaitForSeconds(5.0f);
+                timePolling += 5;
+            }
 
-            StartCoroutine(PostRequest<PollMultiplayParams, PollMultiplayResponse>(m_AuthToken, "MultiplayService.SingleAllocations", pollMultiplayParams, onMultiplayPollComplete));
+            
         }
 
         //Possibly add a delegate that way we can call invoke and this can be used to poll anything
@@ -181,7 +177,7 @@ namespace Rpc
             }
         }
 
-        public void GetEnvironment(string authToken)
+        public void GetEnvironment()
         {
             EnvironmentRequestParams environmentRequestParams = new EnvironmentRequestParams();
             OnRequestCompleteDelegate<EnvironmentResponse> onEnvironmentReceived = delegate (EnvironmentResponse response, bool wasSuccessful)
@@ -196,10 +192,10 @@ namespace Rpc
                     Debug.Log("failed to retrieve multiplay environment");
                 }
             };
-            StartCoroutine(PostRequest<EnvironmentRequestParams, EnvironmentResponse>(authToken, "MultiplayService.Environment", environmentRequestParams, onEnvironmentReceived));
+            StartCoroutine(PostRequest<EnvironmentRequestParams, EnvironmentResponse>("MultiplayService.Environment", environmentRequestParams, onEnvironmentReceived));
         }
 
-        IEnumerator PostRequest<TRequest, TResponse>(string authToken, string method, TRequest requestParams, OnRequestCompleteDelegate<TResponse> onRequestCompleteDelegate)
+        IEnumerator PostRequest<TRequest, TResponse>(string method, TRequest requestParams, OnRequestCompleteDelegate<TResponse> onRequestCompleteDelegate)
         {
             RequestArgs<TRequest> args = new RequestArgs<TRequest>();
             args.@params = requestParams;
@@ -216,9 +212,9 @@ namespace Rpc
             uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
             uwr.SetRequestHeader("Content-Type", "application/json");
             uwr.SetRequestHeader("Accept", "application/json");
-            if(authToken != "")
+            if(m_AuthToken != "")
             {
-                uwr.SetRequestHeader("Authorization", "BEARER " + authToken);
+                uwr.SetRequestHeader("Authorization", "BEARER " + m_AuthToken);
             }
 
             ResponseResult<TResponse> response = new ResponseResult<TResponse>();

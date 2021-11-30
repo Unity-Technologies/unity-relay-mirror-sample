@@ -31,9 +31,9 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multipayer.online.helpers.sqp": {
-      "version": "file:C:/WolfJaw/Unity Projects/com.unity.multiplayer.online.helpers-master/com.unity.multiplayer.online.helpers.sqp",
+      "version": "file:com.unity.multiplayer.online.helpers.sqp",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {}
     },
     "com.unity.nuget.newtonsoft-json": {
