@@ -55,10 +55,10 @@
             ser.WriteInt(-1);
             ser.WriteByte(responseHeader);
             ser.WriteByte(protocol);
-            ser.WriteA2SString(serverName);
-            ser.WriteA2SString(serverName);
-            ser.WriteA2SString(folder);
-            ser.WriteA2SString(gameName);
+            ser.WriteString(serverName);
+            ser.WriteString(serverName);
+            ser.WriteString(folder);
+            ser.WriteString(gameName);
             ser.WriteShort(steamId); //how to handle, only ushort versions no short version
             ser.WriteByte(playerCount);
             ser.WriteByte(maxPlayers);
@@ -67,14 +67,9 @@
             ser.WriteByte(environment);
             ser.WriteByte(visibility);
             ser.WriteByte(valveAntiCheat);
-            ser.WriteA2SString(version);
+            ser.WriteString(version);
             ser.WriteByte(extraDataFlag);
             return 0;
-        }
-
-        public static A2SInfoResponsePacket Deserialize(Serializer ser)
-        {
-            return null;
         }
     }
 
@@ -105,16 +100,11 @@
             for (int i = 0; i < players.Length; i++)
             {
                 ser.WriteByte(players[i].index);
-                ser.WriteA2SString(players[i].playerName);
+                ser.WriteString(players[i].playerName);
                 ser.WriteInt(players[i].score);
                 ser.WriteFloat(players[i].duration); // TODO: write float?
             }
             return 0;
-        }
-
-        public static A2SRulesResponsePacket Deserialize(Serializer ser)
-        {
-            return null;
         }
     }
 
@@ -142,15 +132,10 @@
             ser.WriteShort(numRules);
             for (int i = 0; i < rules.Length; i++)
             {
-                ser.WriteA2SString(rules[i].ruleName);
-                ser.WriteA2SString(rules[i].ruleValue);
+                ser.WriteString(rules[i].ruleName);
+                ser.WriteString(rules[i].ruleValue);
             }
             return 0;
-        }
-
-        public static A2SRulesResponsePacket Deserialize(Serializer ser)
-        {
-            return null;
         }
     }
 

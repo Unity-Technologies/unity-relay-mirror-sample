@@ -70,21 +70,21 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E.Collections
         public int Serialize(Serializer ser)
         {
             ser.WriteUShort(port);
-            ser.WriteA2SString(platform);
-            ser.WriteA2SString(playlistVersion);
+            ser.WriteString(platform);
+            ser.WriteString(playlistVersion);
             ser.WriteUInt(playlistNum);
-            ser.WriteA2SString(playlistName);
+            ser.WriteString(playlistName);
             ser.WriteByte((byte)platformPlayers.Count);
 
             foreach (KeyValuePair<string, byte> entry in platformPlayers)
             {
-                ser.WriteA2SString(entry.Key);
+                ser.WriteString(entry.Key);
                 ser.WriteByte(entry.Value);
             }
 
             ser.WriteByte(numClients);
             ser.WriteByte(maxClients);
-            ser.WriteA2SString(map);
+            ser.WriteString(map);
 
             return 0;
         }
@@ -172,9 +172,9 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E.Collections
         public int Serialize(Serializer ser)
         {
             ser.WriteULong(id);
-            ser.WriteA2SString(name);
+            ser.WriteString(name);
             ser.WriteByte(teamID);
-            ser.WriteA2SString(address);
+            ser.WriteString(address);
             ser.WriteUInt(ping);
             ser.WriteUInt(packetsReceived);
             ser.WriteUInt(packetsDropped);
@@ -256,9 +256,9 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E.Collections
         {
             Header.Serialize(ser);
             instanceInfo.Serialize(ser);
-            ser.WriteA2SString(buildName);
-            ser.WriteA2SString(dataCenter);
-            ser.WriteA2SString(gameMode);
+            ser.WriteString(buildName);
+            ser.WriteString(dataCenter);
+            ser.WriteString(gameMode);
             basicInfo.Serialize(ser);
             performanceInfo.Serialize(ser);
             matchState.Serialize(ser);

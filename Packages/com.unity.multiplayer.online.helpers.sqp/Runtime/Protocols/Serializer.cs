@@ -54,13 +54,19 @@ namespace Unity.Helpers.ServerQuery
             return m_buffer;
         }
 
+        public void MoveCursor(int pos)
+        {
+            m_cursor = pos;
+        }
+
         public static ushort StringSize(string str)
         {
             if (str.Length > 255) throw new ArgumentException("String is to big to be serialized");
             return (ushort)(Encoding.ASCII.GetByteCount(str) + 1);
         }
 
-        public int WriteA2SString(string s)
+        // Note: This function also works for writing TF2E strings
+        public int WriteString(string s)
         {
             if (s.Length > 255) throw new ArgumentException("string to big to be serialized");
 
@@ -73,7 +79,7 @@ namespace Unity.Helpers.ServerQuery
             return stringSize;
         }
         
-        public int WriteString(string s)
+        public int WriteStringSQP(string s)
         {
             if (s.Length > 255) throw new ArgumentException("String is to big to be serialized");
 
@@ -113,7 +119,16 @@ namespace Unity.Helpers.ServerQuery
         {
             if(m_cursor + UShortSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
             var byteVal = BitConverter.GetBytes(val);
-            //if(BitConverter.IsLittleEndian) Array.Reverse(byteVal);
+            byteVal.CopyTo(m_buffer, m_cursor);
+            m_cursor += byteVal.Length;
+            return UShortSize;
+        }
+
+        public int WriteUShortSQP(ushort val)
+        {
+            if (m_cursor + UShortSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
+            var byteVal = BitConverter.GetBytes(val);
+            if (BitConverter.IsLittleEndian) Array.Reverse(byteVal);
             byteVal.CopyTo(m_buffer, m_cursor);
             m_cursor += byteVal.Length;
             return UShortSize;

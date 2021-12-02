@@ -17,7 +17,7 @@ namespace Rpc
         private string ticketEndpoint = "https://cloud.connected.unity3d.com/d98bfc46-6576-4059-b530-dc74eb4f1388/matchmaking/api/v1/tickets";
 
         string BackendUrl = "http://104.149.129.150:8080/rpc";
-        string localBackendUrl = "http://172.31.231.55:8080/rpc";
+        string localBackendUrl = "http://172.23.223.173:8080/rpc";
 
         PingInfo[] m_PingSites;
         MultiplayProfile[] profiles;

@@ -102,7 +102,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E
                 responsePacket.basicInfo.playlistVersion = "N/A";
                 responsePacket.basicInfo.playlistNum = 0;
                 responsePacket.basicInfo.playlistName = "Team Deathmatch";
-                responsePacket.basicInfo.numClients = 0;
+                responsePacket.basicInfo.numClients = 2;
                 responsePacket.basicInfo.maxClients = 16;
                 responsePacket.basicInfo.map = "Highrise";
 

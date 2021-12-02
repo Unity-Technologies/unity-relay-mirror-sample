@@ -388,7 +388,7 @@ Example QueryRequest packet with PlayerInfo RequestedChunk:
 | PlayerCount | ushort | Number of players |
 | FieldCount | byte | Number of fields per player |
 
-Directly after the `FieldCount`, for ever field:
+Directly after the `FieldCount`, for every field:
 | Data | Type | Comment |
 | --- | --- | --- |
 | Key | string | The key, or name, of the rule |
@@ -507,10 +507,10 @@ Example QueryRequest packet with a TeamInfo RequestedChunk:
 | LastPacket | byte | 0 |
 | PacketLength | ushort | Length of the packet, after this point |
 | ChunkLength | uint | Length of TeamInfo chunk, after this point |
-| TeamCount | ushort | Number of players |
+| TeamCount | ushort | Number of teams |
 | FieldCount | byte | Number of fields per team |
 
-Directly after the `FieldCount`, for ever field:
+Directly after the `FieldCount`, for every field:
 | Data | Type | Comment |
 | --- | --- | --- |
 | Key | string | The key, or name, of the rule |

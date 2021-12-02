@@ -184,7 +184,7 @@ namespace Network
             data.ServerInfo.GameType = "slayer";
             data.ServerInfo.ServerName = "testing sqp";
             data.ServerInfo.MaxPlayers = 20;
-            sqpManager.ServerStart(data, SQPServer.Protocol.TF2E, 9000);
+            sqpManager.ServerStart(data, SQPServer.Protocol.SQP, 9000);
 
             // Checking for TF2E as it is not implemented yet -- TODO:change this later
             if (port != 0 && protocol != SQPServer.Protocol.TF2E)

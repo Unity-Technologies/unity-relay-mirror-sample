@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using Unity.Helpers.ServerQuery.Data;
-using Unity.Helpers.ServerQuery;
+using Unity.Helpers.ServerQuery.Protocols.SQP.Collections;
 using Unity.ServerQuery.Protocols.SQP;
 
 namespace Unity.Helpers.ServerQuery.Protocols.SQP
@@ -94,56 +94,213 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
             Serializer ser = new Serializer(response, Serializer.SerializationMode.Write);
             //Packet header
-            header.Serialize(ser);
+            SQPInfoResponsePacket responsePacket = new SQPInfoResponsePacket();
+            responsePacket.header = header;
 
             //SQP version
-            ser.WriteUShort(SQPVersion);
+            responsePacket.version = SQPVersion;
 
             // Current and last packet
-            ser.WriteByte(0);
-            ser.WriteByte(0);
-            
+            responsePacket.currentPacket = 0;
+            responsePacket.lastPacket = 0;
+
             //Packet length
-            ser.WriteUShort((ushort)packetLength);
+            responsePacket.packetLength = (ushort)packetLength;
             //Chunk length
-            ser.WriteUInt((ushort)chunkLength);
-            
+            responsePacket.chunkLength = (ushort)chunkLength;
+
             //Current players in game
-            ser.WriteUShort((ushort)info.CurrentPlayers);
+            responsePacket.currentPlayers = (ushort)info.CurrentPlayers;
             //Max player in game
-            ser.WriteUShort((ushort)info.MaxPlayers);
-            
+            responsePacket.maxPlayers = (ushort)info.MaxPlayers;
+
             //Server name
-            ser.WriteString(info.ServerName);
-            
+            responsePacket.serverName = info.ServerName;
+
             //Game type name
-            ser.WriteString(info.GameType);
-            
+            responsePacket.gameType = info.GameType;
+
             //Build ID
-            ser.WriteString(info.BuildID);
-            
+            responsePacket.buildID = info.BuildID;
+
             //Map name
-            ser.WriteString(info.Map);
-            
+            responsePacket.map = info.Map;
+
             //Port number
-            ser.WriteUShort(info.GamePort);
+            responsePacket.gamePort = info.GamePort;
+
+            responsePacket.Serialize(ser);
             
             return response;
         }
 
         private byte[] BuildServerRuleResponse(PacketHeader header, uint serverID)
         {
-            return null;
+            //length of rules chunk
+            int chunkLength = 
+                Serializer.StringSize("TestRule") + // rule key
+                Serializer.ByteSize + // rule type
+                Serializer.StringSize("TestValue"); // rule value
+
+            int packetLength = chunkLength + Serializer.UIntSize; // accounting for size of chunkLength field
+
+            int packetSize = 
+                PacketHeader.Size() + // Header size
+                Serializer.UShortSize + // SQP Version
+                Serializer.ByteSize + // Current Packet
+                Serializer.ByteSize + // Packet Length
+                Serializer.UShortSize + // Packet Length
+                packetLength + 1; // Chunk Length + rules
+
+            byte[] response = new byte[packetSize];
+
+            Serializer ser = new Serializer(response, Serializer.SerializationMode.Write);
+
+            SQPRulesResponsePacket responsePacket = new SQPRulesResponsePacket();
+            responsePacket.header = header;
+            responsePacket.version = SQPVersion;
+            responsePacket.currentPacket = 0;
+            responsePacket.lastPacket = 0;
+            responsePacket.packetLength = (ushort)packetLength;
+            responsePacket.chunkLength = (uint)chunkLength;
+
+            SQPServerRule rule = new SQPServerRule();
+            rule.key = "TestRule";
+            rule.type = 4; // string value
+            rule.valueString = "TestValue";
+
+            SQPServerRule[] rules = new SQPServerRule[1];
+            rules[0] = rule;
+
+            responsePacket.rules = rules;
+
+            responsePacket.Serialize(ser);
+            return response;
         }
 
         private byte[] BuildPlayerInfoResponse(PacketHeader header, uint serverID)
         {
-            return null;
+            int chunkLength = 
+                Serializer.UShortSize + // Player Count
+                Serializer.ByteSize + // Field Count
+                Serializer.StringSize("PlayerName") + // Field One - Key
+                Serializer.ByteSize + // Field One - Type
+                Serializer.StringSize("Jeff") + // Player One - Field Value
+                Serializer.StringSize("John"); // Player Two - Field Value
+
+            int packetLength = chunkLength + Serializer.UIntSize;
+
+            int packetSize =
+                PacketHeader.Size() + // Header size
+                Serializer.UShortSize + // SQP Version
+                Serializer.ByteSize + // Current Packet
+                Serializer.ByteSize + // Last Packet
+                Serializer.UShortSize + // Packet Length
+                packetLength + 1; // Chunk Length + rules
+
+            byte[] response = new byte[packetSize];
+
+            Serializer ser = new Serializer(response, Serializer.SerializationMode.Write);
+
+            SQPPlayerResponsePacket responsePacket = new SQPPlayerResponsePacket();
+            responsePacket.header = header;
+            responsePacket.version = SQPVersion;
+            responsePacket.currentPacket = 0;
+            responsePacket.lastPacket = 0;
+            responsePacket.packetLength = (ushort)packetLength;
+            responsePacket.chunkLength = (uint)chunkLength;
+            responsePacket.playerCount = 2;
+            responsePacket.fieldCount = 1;
+
+            SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
+            fieldPlayerOne.key = "PlayerName";
+            fieldPlayerOne.type = 4;
+            fieldPlayerOne.valueString = "Jeff";
+            SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
+            fieldsOne[0] = fieldPlayerOne;
+
+            SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
+            fieldPlayerTwo.key = "PlayerName";
+            fieldPlayerTwo.type = 4;
+            fieldPlayerTwo.valueString = "John";
+            SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
+            fieldsTwo[0] = fieldPlayerTwo;
+
+            SQPFieldContainer playerOne = new SQPFieldContainer();
+            playerOne.fields = fieldsOne;
+            SQPFieldContainer playerTwo = new SQPFieldContainer();
+            playerTwo.fields = fieldsTwo;
+            SQPFieldContainer[] players = new SQPFieldContainer[2];
+            players[0] = playerOne;
+            players[1] = playerTwo;
+
+            responsePacket.players = players;
+
+            responsePacket.Serialize(ser);
+            
+            return response;
         }
 
         private byte[] BuildTeamInfoResponse(PacketHeader header, uint serverID)
         {
-            return null;
+            int chunkLength =
+                Serializer.UShortSize + // Team Count
+                Serializer.ByteSize + // Field Count
+                Serializer.StringSize("Score") + // Field One - Key
+                Serializer.ByteSize + // Field One - Type
+                Serializer.UIntSize + // Player One - Field Value
+                Serializer.UIntSize; // Player Two - Field Value
+
+            int packetLength = chunkLength + Serializer.UIntSize;
+
+            int packetSize =
+                PacketHeader.Size() + // Header size
+                Serializer.UShortSize + // SQP Version
+                Serializer.ByteSize + // Current Packet
+                Serializer.ByteSize + // Last Packet
+                Serializer.UShortSize + // Packet Length
+                packetLength + 1; // Chunk Length + rules
+
+            byte[] response = new byte[packetSize];
+
+            Serializer ser = new Serializer(response, Serializer.SerializationMode.Write);
+
+            SQPTeamResponsePacket responsePacket = new SQPTeamResponsePacket();
+            responsePacket.header = header;
+            responsePacket.version = SQPVersion;
+            responsePacket.currentPacket = 0;
+            responsePacket.lastPacket = 0;
+            responsePacket.packetLength = (ushort)packetLength;
+            responsePacket.chunkLength = (uint)chunkLength;
+            responsePacket.teamCount = 2;
+            responsePacket.fieldCount = 1;
+
+            SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
+            fieldPlayerOne.key = "Score";
+            fieldPlayerOne.type = 2;
+            fieldPlayerOne.valueUInt = 23;
+            SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
+            fieldsOne[0] = fieldPlayerOne;
+
+            SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
+            fieldPlayerTwo.key = "Score";
+            fieldPlayerTwo.type = 2;
+            fieldPlayerTwo.valueUInt = 11;
+            SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
+            fieldsTwo[0] = fieldPlayerTwo;
+
+            SQPFieldContainer teamOne = new SQPFieldContainer();
+            teamOne.fields = fieldsOne;
+            SQPFieldContainer teamTwo = new SQPFieldContainer();
+            teamTwo.fields = fieldsTwo;
+            SQPFieldContainer[] teams = new SQPFieldContainer[2];
+            teams[0] = teamOne;
+            teams[1] = teamTwo;
+            responsePacket.teams = teams;
+
+            responsePacket.Serialize(ser);
+
+            return response;
         }
 
         private byte[] HandleQueryRequest(PacketHeader header, Serializer ser, IPEndPoint remoteClient, uint serverID)
