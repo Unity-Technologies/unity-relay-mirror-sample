@@ -1,250 +1,163 @@
-using System.Linq;
+using System;
 using Mono.CecilX;
+using UnityEditor;
+using UnityEngine;
 
 namespace Mirror.Weaver
 {
-    public static class WeaverTypes
+    // not static, because ILPostProcessor is multithreaded
+    public class WeaverTypes
     {
-        // Network types
-        public static TypeReference NetworkBehaviourType;
-        public static TypeReference RemoteCallHelperType;
-        public static TypeReference MonoBehaviourType;
-        public static TypeReference ScriptableObjectType;
-        public static TypeReference NetworkConnectionType;
+        public MethodReference ScriptableObjectCreateInstanceMethod;
 
-        public static TypeReference MessageBaseType;
-        public static TypeReference IMessageBaseType;
-        public static TypeReference SyncListType;
-        public static TypeReference SyncSetType;
-        public static TypeReference SyncDictionaryType;
+        public MethodReference NetworkBehaviourDirtyBitsReference;
+        public MethodReference GetPooledWriterReference;
+        public MethodReference RecycleWriterReference;
 
-        public static MethodReference ScriptableObjectCreateInstanceMethod;
+        public MethodReference NetworkClientConnectionReference;
 
-        public static MethodReference NetworkBehaviourDirtyBitsReference;
-        public static MethodReference GetPooledWriterReference;
-        public static MethodReference RecycleWriterReference;
-        public static TypeReference NetworkClientType;
-        public static TypeReference NetworkServerType;
+        public MethodReference CmdDelegateConstructor;
 
-        public static TypeReference NetworkReaderType;
-
-        public static TypeReference NetworkWriterType;
-        public static TypeReference PooledNetworkWriterType;
-
-        public static TypeReference NetworkIdentityType;
-        public static TypeReference IEnumeratorType;
-
-        public static TypeReference ClientSceneType;
-        public static MethodReference ReadyConnectionReference;
-
-        public static TypeReference ComponentType;
-        public static TypeReference ObjectType;
-
-        public static TypeReference CmdDelegateReference;
-        public static MethodReference CmdDelegateConstructor;
-
-        public static MethodReference NetworkServerGetActive;
-        public static MethodReference NetworkServerGetLocalClientActive;
-        public static MethodReference NetworkClientGetActive;
+        public MethodReference NetworkServerGetActive;
+        public MethodReference NetworkServerGetLocalClientActive;
+        public MethodReference NetworkClientGetActive;
 
         // custom attribute types
-        public static TypeReference SyncVarType;
-        public static TypeReference CommandType;
-        public static TypeReference ClientRpcType;
-        public static TypeReference TargetRpcType;
-        public static TypeReference SyncEventType;
-        public static TypeReference SyncObjectType;
-        public static MethodReference InitSyncObjectReference;
+        public MethodReference InitSyncObjectReference;
 
         // array segment
-        public static TypeReference ArraySegmentType;
-        public static MethodReference ArraySegmentConstructorReference;
-        public static MethodReference ArraySegmentArrayReference;
-        public static MethodReference ArraySegmentOffsetReference;
-        public static MethodReference ArraySegmentCountReference;
+        public MethodReference ArraySegmentConstructorReference;
 
-        // list
-        public static TypeReference ListType;
-        public static MethodReference ListConstructorReference;
-        public static MethodReference ListCountReference;
-        public static MethodReference ListGetItemReference;
-        public static MethodReference ListAddReference;
+        // syncvar
+        public MethodReference syncVarEqualReference;
+        public MethodReference syncVarNetworkIdentityEqualReference;
+        public MethodReference syncVarGameObjectEqualReference;
+        public MethodReference setSyncVarReference;
+        public MethodReference setSyncVarHookGuard;
+        public MethodReference getSyncVarHookGuard;
+        public MethodReference setSyncVarGameObjectReference;
+        public MethodReference getSyncVarGameObjectReference;
+        public MethodReference setSyncVarNetworkIdentityReference;
+        public MethodReference getSyncVarNetworkIdentityReference;
+        public MethodReference syncVarNetworkBehaviourEqualReference;
+        public MethodReference setSyncVarNetworkBehaviourReference;
+        public MethodReference getSyncVarNetworkBehaviourReference;
+        public MethodReference registerCommandDelegateReference;
+        public MethodReference registerRpcDelegateReference;
+        public MethodReference getTypeFromHandleReference;
+        public MethodReference logErrorReference;
+        public MethodReference logWarningReference;
+        public MethodReference sendCommandInternal;
+        public MethodReference sendRpcInternal;
+        public MethodReference sendTargetRpcInternal;
 
-        // system types
-        public static TypeReference voidType;
-        public static TypeReference singleType;
-        public static TypeReference doubleType;
-        public static TypeReference boolType;
-        public static TypeReference int64Type;
-        public static TypeReference uint64Type;
-        public static TypeReference int32Type;
-        public static TypeReference uint32Type;
-        public static TypeReference objectType;
-        public static TypeReference typeType;
-        public static TypeReference gameObjectType;
-        public static TypeReference transformType;
+        public MethodReference readNetworkBehaviourGeneric;
 
-        public static MethodReference syncVarEqualReference;
-        public static MethodReference syncVarNetworkIdentityEqualReference;
-        public static MethodReference syncVarGameObjectEqualReference;
-        public static MethodReference setSyncVarReference;
-        public static MethodReference setSyncVarHookGuard;
-        public static MethodReference getSyncVarHookGuard;
-        public static MethodReference setSyncVarGameObjectReference;
-        public static MethodReference getSyncVarGameObjectReference;
-        public static MethodReference setSyncVarNetworkIdentityReference;
-        public static MethodReference getSyncVarNetworkIdentityReference;
-        public static MethodReference registerCommandDelegateReference;
-        public static MethodReference registerRpcDelegateReference;
-        public static MethodReference registerEventDelegateReference;
-        public static MethodReference getTypeReference;
-        public static MethodReference getTypeFromHandleReference;
-        public static MethodReference logErrorReference;
-        public static MethodReference logWarningReference;
-        public static MethodReference sendCommandInternal;
-        public static MethodReference sendRpcInternal;
-        public static MethodReference sendTargetRpcInternal;
-        public static MethodReference sendEventInternal;
+        // attributes
+        public TypeDefinition initializeOnLoadMethodAttribute;
+        public TypeDefinition runtimeInitializeOnLoadMethodAttribute;
 
+        AssemblyDefinition assembly;
 
-        public static void SetupUnityTypes(AssemblyDefinition unityAssembly, AssemblyDefinition mirrorAssembly)
-        {
-            gameObjectType = unityAssembly.MainModule.GetType("UnityEngine.GameObject");
-            transformType = unityAssembly.MainModule.GetType("UnityEngine.Transform");
+        public TypeReference Import<T>() => Import(typeof(T));
 
-            NetworkClientType = mirrorAssembly.MainModule.GetType("Mirror.NetworkClient");
-            NetworkServerType = mirrorAssembly.MainModule.GetType("Mirror.NetworkServer");
+        public TypeReference Import(Type t) => assembly.MainModule.ImportReference(t);
 
-            SyncVarType = mirrorAssembly.MainModule.GetType("Mirror.SyncVarAttribute");
-            CommandType = mirrorAssembly.MainModule.GetType("Mirror.CommandAttribute");
-            ClientRpcType = mirrorAssembly.MainModule.GetType("Mirror.ClientRpcAttribute");
-            TargetRpcType = mirrorAssembly.MainModule.GetType("Mirror.TargetRpcAttribute");
-            SyncEventType = mirrorAssembly.MainModule.GetType("Mirror.SyncEventAttribute");
-            SyncObjectType = mirrorAssembly.MainModule.GetType("Mirror.SyncObject");
-        }
-
-        static ModuleDefinition ResolveSystemModule(AssemblyDefinition currentAssembly)
-        {
-            AssemblyNameReference name = AssemblyNameReference.Parse("mscorlib");
-            ReaderParameters parameters = new ReaderParameters
-            {
-                AssemblyResolver = currentAssembly.MainModule.AssemblyResolver
-            };
-            return currentAssembly.MainModule.AssemblyResolver.Resolve(name, parameters).MainModule;
-        }
-
-        static TypeReference ImportSystemModuleType(AssemblyDefinition currentAssembly, ModuleDefinition systemModule, string fullName)
-        {
-            TypeDefinition type = systemModule.GetType(fullName) ?? systemModule.ExportedTypes.First(t => t.FullName == fullName).Resolve();
-            if (type != null)
-            {
-                return currentAssembly.MainModule.ImportReference(type);
-            }
-            Weaver.Error("Failed to import mscorlib type: " + fullName + " because Resolve failed. (Might happen when trying to Resolve in NetStandard dll, see also: https://github.com/vis2k/Mirror/issues/791)");
-            return null;
-        }
-
-        public static void SetupTargetTypes(AssemblyDefinition unityAssembly, AssemblyDefinition mirrorAssembly, AssemblyDefinition currentAssembly)
+        // constructor resolves the types and stores them in fields
+        public WeaverTypes(AssemblyDefinition assembly, Logger Log, ref bool WeavingFailed)
         {
             // system types
-            ModuleDefinition systemModule = ResolveSystemModule(currentAssembly);
-            voidType = ImportSystemModuleType(currentAssembly, systemModule, "System.Void");
-            singleType = ImportSystemModuleType(currentAssembly, systemModule, "System.Single");
-            doubleType = ImportSystemModuleType(currentAssembly, systemModule, "System.Double");
-            boolType = ImportSystemModuleType(currentAssembly, systemModule, "System.Boolean");
-            int64Type = ImportSystemModuleType(currentAssembly, systemModule, "System.Int64");
-            uint64Type = ImportSystemModuleType(currentAssembly, systemModule, "System.UInt64");
-            int32Type = ImportSystemModuleType(currentAssembly, systemModule, "System.Int32");
-            uint32Type = ImportSystemModuleType(currentAssembly, systemModule, "System.UInt32");
-            objectType = ImportSystemModuleType(currentAssembly, systemModule, "System.Object");
-            typeType = ImportSystemModuleType(currentAssembly, systemModule, "System.Type");
-            IEnumeratorType = ImportSystemModuleType(currentAssembly, systemModule, "System.Collections.IEnumerator");
+            this.assembly = assembly;
 
-            ArraySegmentType = ImportSystemModuleType(currentAssembly, systemModule, "System.ArraySegment`1");
-            ArraySegmentArrayReference = Resolvers.ResolveProperty(ArraySegmentType, currentAssembly, "Array");
-            ArraySegmentCountReference = Resolvers.ResolveProperty(ArraySegmentType, currentAssembly, "Count");
-            ArraySegmentOffsetReference = Resolvers.ResolveProperty(ArraySegmentType, currentAssembly, "Offset");
-            ArraySegmentConstructorReference = Resolvers.ResolveMethod(ArraySegmentType, currentAssembly, ".ctor");
+            TypeReference ArraySegmentType = Import(typeof(ArraySegment<>));
+            ArraySegmentConstructorReference = Resolvers.ResolveMethod(ArraySegmentType, assembly, Log, ".ctor", ref WeavingFailed);
 
-            ListType = ImportSystemModuleType(currentAssembly, systemModule, "System.Collections.Generic.List`1");
-            ListCountReference = Resolvers.ResolveProperty(ListType, currentAssembly, "Count");
-            ListGetItemReference = Resolvers.ResolveMethod(ListType, currentAssembly, "get_Item");
-            ListAddReference = Resolvers.ResolveMethod(ListType, currentAssembly, "Add");
-            ListConstructorReference = Resolvers.ResolveMethod(ListType, currentAssembly, ".ctor");
+            TypeReference NetworkServerType = Import(typeof(NetworkServer));
+            NetworkServerGetActive = Resolvers.ResolveMethod(NetworkServerType, assembly, Log, "get_active", ref WeavingFailed);
+            NetworkServerGetLocalClientActive = Resolvers.ResolveMethod(NetworkServerType, assembly, Log, "get_localClientActive", ref WeavingFailed);
+            TypeReference NetworkClientType = Import(typeof(NetworkClient));
+            NetworkClientGetActive = Resolvers.ResolveMethod(NetworkClientType, assembly, Log, "get_active", ref WeavingFailed);
 
-            NetworkReaderType = mirrorAssembly.MainModule.GetType("Mirror.NetworkReader");
-            NetworkWriterType = mirrorAssembly.MainModule.GetType("Mirror.NetworkWriter");
-            TypeReference pooledNetworkWriterTmp = mirrorAssembly.MainModule.GetType("Mirror.PooledNetworkWriter");
-            PooledNetworkWriterType = currentAssembly.MainModule.ImportReference(pooledNetworkWriterTmp);
+            TypeReference cmdDelegateReference = Import<RemoteCalls.CmdDelegate>();
+            CmdDelegateConstructor = Resolvers.ResolveMethod(cmdDelegateReference, assembly, Log, ".ctor", ref WeavingFailed);
 
-            NetworkServerGetActive = Resolvers.ResolveMethod(NetworkServerType, currentAssembly, "get_active");
-            NetworkServerGetLocalClientActive = Resolvers.ResolveMethod(NetworkServerType, currentAssembly, "get_localClientActive");
-            NetworkClientGetActive = Resolvers.ResolveMethod(NetworkClientType, currentAssembly, "get_active");
+            TypeReference NetworkBehaviourType = Import<NetworkBehaviour>();
+            TypeReference RemoteCallHelperType = Import(typeof(RemoteCalls.RemoteCallHelper));
 
-            CmdDelegateReference = mirrorAssembly.MainModule.GetType("Mirror.RemoteCalls.CmdDelegate");
-            CmdDelegateConstructor = Resolvers.ResolveMethod(CmdDelegateReference, currentAssembly, ".ctor");
-
-            currentAssembly.MainModule.ImportReference(gameObjectType);
-            currentAssembly.MainModule.ImportReference(transformType);
-
-            TypeReference networkIdentityTmp = mirrorAssembly.MainModule.GetType("Mirror.NetworkIdentity");
-            NetworkIdentityType = currentAssembly.MainModule.ImportReference(networkIdentityTmp);
-
-            NetworkBehaviourType = mirrorAssembly.MainModule.GetType("Mirror.NetworkBehaviour");
-            RemoteCallHelperType = mirrorAssembly.MainModule.GetType("Mirror.RemoteCalls.RemoteCallHelper");
-            NetworkConnectionType = mirrorAssembly.MainModule.GetType("Mirror.NetworkConnection");
-
-            MonoBehaviourType = unityAssembly.MainModule.GetType("UnityEngine.MonoBehaviour");
-            ScriptableObjectType = unityAssembly.MainModule.GetType("UnityEngine.ScriptableObject");
+            TypeReference ScriptableObjectType = Import<UnityEngine.ScriptableObject>();
 
             ScriptableObjectCreateInstanceMethod = Resolvers.ResolveMethod(
-                ScriptableObjectType, currentAssembly,
-                md => md.Name == "CreateInstance" && md.HasGenericParameters);
+                ScriptableObjectType, assembly, Log,
+                md => md.Name == "CreateInstance" && md.HasGenericParameters,
+                ref WeavingFailed);
 
-            NetworkConnectionType = mirrorAssembly.MainModule.GetType("Mirror.NetworkConnection");
-            NetworkConnectionType = currentAssembly.MainModule.ImportReference(NetworkConnectionType);
+            NetworkBehaviourDirtyBitsReference = Resolvers.ResolveProperty(NetworkBehaviourType, assembly, "syncVarDirtyBits");
+            TypeReference NetworkWriterPoolType = Import(typeof(NetworkWriterPool));
+            GetPooledWriterReference = Resolvers.ResolveMethod(NetworkWriterPoolType, assembly, Log, "GetWriter", ref WeavingFailed);
+            RecycleWriterReference = Resolvers.ResolveMethod(NetworkWriterPoolType, assembly, Log, "Recycle", ref WeavingFailed);
 
-            MessageBaseType = mirrorAssembly.MainModule.GetType("Mirror.MessageBase");
-            IMessageBaseType = mirrorAssembly.MainModule.GetType("Mirror.IMessageBase");
-            SyncListType = mirrorAssembly.MainModule.GetType("Mirror.SyncList`1");
-            SyncSetType = mirrorAssembly.MainModule.GetType("Mirror.SyncSet`1");
-            SyncDictionaryType = mirrorAssembly.MainModule.GetType("Mirror.SyncDictionary`2");
+            NetworkClientConnectionReference = Resolvers.ResolveMethod(NetworkClientType, assembly, Log, "get_connection", ref WeavingFailed);
 
-            NetworkBehaviourDirtyBitsReference = Resolvers.ResolveProperty(NetworkBehaviourType, currentAssembly, "syncVarDirtyBits");
-            TypeDefinition NetworkWriterPoolType = mirrorAssembly.MainModule.GetType("Mirror.NetworkWriterPool");
-            GetPooledWriterReference = Resolvers.ResolveMethod(NetworkWriterPoolType, currentAssembly, "GetWriter");
-            RecycleWriterReference = Resolvers.ResolveMethod(NetworkWriterPoolType, currentAssembly, "Recycle");
+            syncVarEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SyncVarEqual", ref WeavingFailed);
+            syncVarNetworkIdentityEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SyncVarNetworkIdentityEqual", ref WeavingFailed);
+            syncVarGameObjectEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SyncVarGameObjectEqual", ref WeavingFailed);
+            setSyncVarReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SetSyncVar", ref WeavingFailed);
+            setSyncVarHookGuard = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SetSyncVarHookGuard", ref WeavingFailed);
+            getSyncVarHookGuard = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "GetSyncVarHookGuard", ref WeavingFailed);
 
-            ComponentType = unityAssembly.MainModule.GetType("UnityEngine.Component");
-            ObjectType = unityAssembly.MainModule.GetType("UnityEngine.Object");
-            ClientSceneType = mirrorAssembly.MainModule.GetType("Mirror.ClientScene");
-            ReadyConnectionReference = Resolvers.ResolveMethod(ClientSceneType, currentAssembly, "get_readyConnection");
+            setSyncVarGameObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SetSyncVarGameObject", ref WeavingFailed);
+            getSyncVarGameObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "GetSyncVarGameObject", ref WeavingFailed);
+            setSyncVarNetworkIdentityReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SetSyncVarNetworkIdentity", ref WeavingFailed);
+            getSyncVarNetworkIdentityReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "GetSyncVarNetworkIdentity", ref WeavingFailed);
+            syncVarNetworkBehaviourEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SyncVarNetworkBehaviourEqual", ref WeavingFailed);
+            setSyncVarNetworkBehaviourReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SetSyncVarNetworkBehaviour", ref WeavingFailed);
+            getSyncVarNetworkBehaviourReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "GetSyncVarNetworkBehaviour", ref WeavingFailed);
 
-            syncVarEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SyncVarEqual");
-            syncVarNetworkIdentityEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SyncVarNetworkIdentityEqual");
-            syncVarGameObjectEqualReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SyncVarGameObjectEqual");
-            setSyncVarReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SetSyncVar");
-            setSyncVarHookGuard = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "setSyncVarHookGuard");
-            getSyncVarHookGuard = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "getSyncVarHookGuard");
+            registerCommandDelegateReference = Resolvers.ResolveMethod(RemoteCallHelperType, assembly, Log, "RegisterCommandDelegate", ref WeavingFailed);
+            registerRpcDelegateReference = Resolvers.ResolveMethod(RemoteCallHelperType, assembly, Log, "RegisterRpcDelegate", ref WeavingFailed);
 
-            setSyncVarGameObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SetSyncVarGameObject");
-            getSyncVarGameObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "GetSyncVarGameObject");
-            setSyncVarNetworkIdentityReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SetSyncVarNetworkIdentity");
-            getSyncVarNetworkIdentityReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "GetSyncVarNetworkIdentity");
-            registerCommandDelegateReference = Resolvers.ResolveMethod(RemoteCallHelperType, currentAssembly, "RegisterCommandDelegate");
-            registerRpcDelegateReference = Resolvers.ResolveMethod(RemoteCallHelperType, currentAssembly, "RegisterRpcDelegate");
-            registerEventDelegateReference = Resolvers.ResolveMethod(RemoteCallHelperType, currentAssembly, "RegisterEventDelegate");
-            getTypeReference = Resolvers.ResolveMethod(objectType, currentAssembly, "GetType");
-            getTypeFromHandleReference = Resolvers.ResolveMethod(typeType, currentAssembly, "GetTypeFromHandle");
-            logErrorReference = Resolvers.ResolveMethod(unityAssembly.MainModule.GetType("UnityEngine.Debug"), currentAssembly, "LogError");
-            logWarningReference = Resolvers.ResolveMethod(unityAssembly.MainModule.GetType("UnityEngine.Debug"), currentAssembly, "LogWarning");
-            sendCommandInternal = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SendCommandInternal");
-            sendRpcInternal = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SendRPCInternal");
-            sendTargetRpcInternal = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SendTargetRPCInternal");
-            sendEventInternal = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "SendEventInternal");
+            TypeReference unityDebug = Import(typeof(UnityEngine.Debug));
+            // these have multiple methods with same name, so need to check parameters too
+            logErrorReference = Resolvers.ResolveMethod(unityDebug, assembly, Log, md =>
+                md.Name == "LogError" &&
+                md.Parameters.Count == 1 &&
+                md.Parameters[0].ParameterType.FullName == typeof(object).FullName,
+                ref WeavingFailed);
 
-            SyncObjectType = currentAssembly.MainModule.ImportReference(SyncObjectType);
-            InitSyncObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, currentAssembly, "InitSyncObject");
+            logWarningReference = Resolvers.ResolveMethod(unityDebug, assembly, Log, md =>
+                md.Name == "LogWarning" &&
+                md.Parameters.Count == 1 &&
+                md.Parameters[0].ParameterType.FullName == typeof(object).FullName,
+                ref WeavingFailed);
+
+            TypeReference typeType = Import(typeof(Type));
+            getTypeFromHandleReference = Resolvers.ResolveMethod(typeType, assembly, Log, "GetTypeFromHandle", ref WeavingFailed);
+            sendCommandInternal = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SendCommandInternal", ref WeavingFailed);
+            sendRpcInternal = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SendRPCInternal", ref WeavingFailed);
+            sendTargetRpcInternal = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "SendTargetRPCInternal", ref WeavingFailed);
+
+            InitSyncObjectReference = Resolvers.ResolveMethod(NetworkBehaviourType, assembly, Log, "InitSyncObject", ref WeavingFailed);
+
+            TypeReference readerExtensions = Import(typeof(NetworkReaderExtensions));
+            readNetworkBehaviourGeneric = Resolvers.ResolveMethod(readerExtensions, assembly, Log, (md =>
+            {
+                return md.Name == nameof(NetworkReaderExtensions.ReadNetworkBehaviour) &&
+                       md.HasGenericParameters;
+            }),
+            ref WeavingFailed);
+
+            // [InitializeOnLoadMethod]
+            // 'UnityEditor' is not available in builds.
+            // we can only import this attribute if we are in an Editor assembly.
+            if (Helpers.IsEditorAssembly(assembly))
+            {
+                TypeReference initializeOnLoadMethodAttributeRef = Import(typeof(InitializeOnLoadMethodAttribute));
+                initializeOnLoadMethodAttribute = initializeOnLoadMethodAttributeRef.Resolve();
+            }
+
+            // [RuntimeInitializeOnLoadMethod]
+            TypeReference runtimeInitializeOnLoadMethodAttributeRef = Import(typeof(RuntimeInitializeOnLoadMethodAttribute));
+            runtimeInitializeOnLoadMethodAttribute = runtimeInitializeOnLoadMethodAttributeRef.Resolve();
         }
     }
 }
