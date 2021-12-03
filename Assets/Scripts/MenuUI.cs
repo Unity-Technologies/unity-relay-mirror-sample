@@ -68,13 +68,13 @@ namespace UI
             }
 
             // client ready
-            if (NetworkClient.isConnected && !ClientScene.ready)
+            if (NetworkClient.isConnected && !NetworkClient.ready)
             {
-                ClientScene.Ready(NetworkClient.connection);
+                NetworkClient.Ready();
 
-                if (ClientScene.localPlayer == null)
+                if (NetworkClient.localPlayer == null)
                 {
-                    ClientScene.AddPlayer(NetworkClient.connection);
+                    NetworkClient.AddPlayer();
                 }
 
             }

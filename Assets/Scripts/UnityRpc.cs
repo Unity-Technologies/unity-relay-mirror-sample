@@ -206,7 +206,7 @@ namespace Rpc
             string jsonData = JsonUtility.ToJson(args);
             Debug.Log($"JsonData: {jsonData}");
 
-            UnityWebRequest uwr = UnityWebRequest.Post(localBackendUrl, "POST");
+            UnityWebRequest uwr = UnityWebRequest.Post(BackendUrl, "POST");
             byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(jsonData);
             uwr.uploadHandler = (UploadHandler)new UploadHandlerRaw(jsonToSend);
             uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();

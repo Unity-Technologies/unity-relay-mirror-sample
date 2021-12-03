@@ -243,10 +243,10 @@ namespace Network
         void FindLocalPlayer()
         {
             //Check to see if the player is loaded in yet
-            if (ClientScene.localPlayer == null)
+            if (NetworkClient.localPlayer == null)
                 return;
 
-            m_LocalPlayer = ClientScene.localPlayer.GetComponent<Player>();
+            m_LocalPlayer = NetworkClient.localPlayer.GetComponent<Player>();
         }
     }
 }

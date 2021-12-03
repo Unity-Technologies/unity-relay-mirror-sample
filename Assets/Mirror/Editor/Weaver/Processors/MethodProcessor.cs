@@ -5,13 +5,13 @@ namespace Mirror.Weaver
 {
     public static class MethodProcessor
     {
-        private const string RpcPrefix = "UserCode_";
+        const string RpcPrefix = "UserCode_";
 
         // creates a method substitute
         // For example, if we have this:
         //  public void CmdThrust(float thrusting, int spin)
         //  {
-        //      xxxxx   
+        //      xxxxx
         //  }
         //
         //  it will substitute the method and move the code to a new method with a provided name
@@ -30,10 +30,19 @@ namespace Mirror.Weaver
         //
         //  the original method definition loses all code
         //  this returns the newly created method with all the user provided code
-        public static MethodDefinition SubstituteMethod(TypeDefinition td, MethodDefinition md)
+        public static MethodDefinition SubstituteMethod(Logger Log, TypeDefinition td, MethodDefinition md, ref bool WeavingFailed)
         {
             string newName = RpcPrefix + md.Name;
             MethodDefinition cmd = new MethodDefinition(newName, md.Attributes, md.ReturnType);
+
+            // force the substitute method to be protected.
+            // -> public would show in the Inspector for UnityEvents as
+            //    User_CmdUsePotion() etc. but the user shouldn't use those.
+            // -> private would not allow inheriting classes to call it, see
+            //    OverrideVirtualWithBaseCallsBothVirtualAndBase test.
+            // -> IL has no concept of 'protected', it's called IsFamily there.
+            cmd.IsPublic = false;
+            cmd.IsFamily = true;
 
             // add parameters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -57,26 +66,22 @@ namespace Mirror.Weaver
 
             td.Methods.Add(cmd);
 
-            FixRemoteCallToBaseMethod(td, cmd);
+            FixRemoteCallToBaseMethod(Log, td, cmd, ref WeavingFailed);
             return cmd;
         }
 
-        /// <summary>
-        /// Finds and fixes call to base methods within remote calls
-        /// <para>For example, changes `base.CmdDoSomething` to `base.CallCmdDoSomething` within `this.CallCmdDoSomething`</para>
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="method"></param>
-        public static void FixRemoteCallToBaseMethod(TypeDefinition type, MethodDefinition method)
+        // Finds and fixes call to base methods within remote calls
+        //For example, changes `base.CmdDoSomething` to `base.CallCmdDoSomething` within `this.CallCmdDoSomething`
+        public static void FixRemoteCallToBaseMethod(Logger Log, TypeDefinition type, MethodDefinition method, ref bool WeavingFailed)
         {
             string callName = method.Name;
 
             // Cmd/rpc start with Weaver.RpcPrefix
-            // eg CallCmdDoSomething
+            // e.g. CallCmdDoSomething
             if (!callName.StartsWith(RpcPrefix))
                 return;
 
-            // eg CmdDoSomething
+            // e.g. CmdDoSomething
             string baseRemoteCallName = method.Name.Substring(RpcPrefix.Length);
 
             foreach (Instruction instruction in method.Body.Instructions)
@@ -90,19 +95,19 @@ namespace Mirror.Weaver
 
                     if (baseMethod == null)
                     {
-                        Weaver.Error($"Could not find base method for {callName}", method);
+                        Log.Error($"Could not find base method for {callName}", method);
+                        WeavingFailed = true;
                         return;
                     }
 
                     if (!baseMethod.IsVirtual)
                     {
-                        Weaver.Error($"Could not find base method that was virutal {callName}", method);
+                        Log.Error($"Could not find base method that was virtual {callName}", method);
+                        WeavingFailed = true;
                         return;
                     }
 
                     instruction.Operand = baseMethod;
-
-                    Weaver.DLog(type, "Replacing call to '{0}' with '{1}' inside '{2}'", calledMethod.FullName, baseMethod.FullName, method.FullName);
                 }
             }
         }
