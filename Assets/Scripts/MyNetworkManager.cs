@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 using Vivox;
@@ -12,14 +11,15 @@ namespace Network
 {
     public class MyNetworkManager : NetworkManager
     {
-        public Player m_LocalPlayer;
+        public Player localPlayer;
         private VivoxManager m_VivoxManager;
-        private ServerQueryManager sqpManager;
-        private UnityRpc unityRpc;
+        private ServerQueryManager m_SQPManager;
+        private UnityRpc m_UnityRpc;
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
-        private bool isDedicatedServer;
+        private bool m_IsDedicatedServer;
+        public bool isLoggedIn = false;
 
         private List<Player> m_Players;
 
@@ -32,15 +32,15 @@ namespace Network
         public override void Start()
         {
             base.Start();
-            isDedicatedServer = false;
+            m_IsDedicatedServer = false;
             m_Username = SystemInfo.deviceName;
-            unityRpc = GetComponent<UnityRpc>();
+            m_UnityRpc = GetComponent<UnityRpc>();
             string[] args = System.Environment.GetCommandLineArgs();
             foreach(string arg in args)
             {
                 if (arg == "-server")
                 {
-                    isDedicatedServer = true;
+                    m_IsDedicatedServer = true;
                 }
             }
         }
@@ -48,19 +48,20 @@ namespace Network
         public void Login()
         {
             OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
-            unityRpc.Login(m_Username, loginDelegate);
+            m_UnityRpc.Login(m_Username, loginDelegate);
         }
 
         void OnLoginComplete(SignInResponse responseArgs, bool wasSuccessful)
         {
             if (wasSuccessful)
             {
+                isLoggedIn = true;
                 m_UserId = responseArgs.userid;
 
-                unityRpc.SetAuthToken(responseArgs.token);
-                unityRpc.SetPingSites(responseArgs.pingsites);
+                m_UnityRpc.SetAuthToken(responseArgs.token);
+                m_UnityRpc.SetPingSites(responseArgs.pingsites);
 
-                unityRpc.GetEnvironment();
+                m_UnityRpc.GetMultiplayEnvironment();
             }
         }
 
@@ -69,15 +70,15 @@ namespace Network
             OnPingSitesCompleteDelegate onPingCompleteDelegate = delegate ()
             {
                 OnRequestCompleteDelegate<RequestMatchTicketResponse> RequestMatchDelegate = RequestMatchResponse;
-                unityRpc.GetRequestMatchTicket(1, RequestMatchDelegate);
+                m_UnityRpc.GetRequestMatchTicket(1, RequestMatchDelegate);
             };
-            unityRpc.PingSites(onPingCompleteDelegate); // Ping sites needs delegate to know when all finished
+            m_UnityRpc.PingSites(onPingCompleteDelegate); // Ping sites needs delegate to know when all finished
         }
 
 
         public void CreateMatch()
         {
-            unityRpc.AllocateServer();
+            m_UnityRpc.AllocateServer();
         }
 
         public void VivoxLogin()
@@ -97,7 +98,7 @@ namespace Network
                         Debug.Log($"successfully completed matchmaker polling, received connection: {response.assignment.connection}");
                     }
                 };
-                StartCoroutine(unityRpc.PollMatch(responseArgs.id, responseArgs.token, onMatchmakerPollingComplete));
+                StartCoroutine(m_UnityRpc.PollMatch(responseArgs.id, responseArgs.token, onMatchmakerPollingComplete));
             }
         }
 
@@ -105,20 +106,19 @@ namespace Network
         {
             if (NetworkManager.singleton.isNetworkActive)
             {
-
-                if (m_LocalPlayer == null)
+                if (localPlayer == null)
                 {
                     FindLocalPlayer();
                     //player was found, therefore we have spawned into the game
-                    if(m_LocalPlayer != null)
+                    if(localPlayer != null)
                     {
                         if (m_VivoxManager.IsLoggedIn)
                         {
                             OnJoinCompleteDelegate joinCompleteDelegate = delegate ()
                             {
-                                m_VivoxManager.JoinChannel("TP_" + m_LocalPlayer.m_SessionId, VivoxUnity.ChannelType.Positional, true, false);
+                                m_VivoxManager.JoinChannel("TP_" + localPlayer.sessionId, VivoxUnity.ChannelType.Positional, true, false);
                             };
-                            m_VivoxManager.JoinChannel("TN_" + m_LocalPlayer.m_SessionId, VivoxUnity.ChannelType.NonPositional, true, false, joinCompleteDelegate);
+                            m_VivoxManager.JoinChannel("TN_" + localPlayer.sessionId, VivoxUnity.ChannelType.NonPositional, true, false, joinCompleteDelegate);
                         }
                         else
                         {
@@ -129,15 +129,42 @@ namespace Network
             }
             else
             {
-                m_LocalPlayer = null;
+                localPlayer = null;
                 m_Players.Clear();
             }
+
+            // Update server query if any players are added to the server
+            if (m_IsDedicatedServer)
+            {
+                foreach (KeyValuePair<uint, NetworkIdentity> kvp in NetworkServer.spawned)
+                {
+                    Player comp = kvp.Value.GetComponent<Player>();
+
+                    //Add if new
+                    if (comp != null && !m_Players.Contains(comp))
+                    {
+                        comp.sessionId = m_SessionId;
+                        m_Players.Add(comp);
+                    }
+                }
+
+                QueryData data = m_SQPManager.GetQueryData();
+                data.ServerInfo.CurrentPlayers = m_Players.Count;
+                m_SQPManager.UpdateQueryData(data);
+            }
         }
+
+        internal void Logout()
+        {
+            m_UnityRpc.SetAuthToken("");
+            isLoggedIn = false;
+        }
+
         public override void OnStartServer()
         {
             Debug.Log("Server Started!");
 
-            SQPServer.Protocol protocol = SQPServer.Protocol.TF2E;
+            ServerQueryServer.Protocol protocol = ServerQueryServer.Protocol.SQP;
             ushort port = 0;
             string version = "";
 
@@ -161,11 +188,15 @@ namespace Network
                 {
                     if(args[i+1] == "sqp")
                     {
-                        protocol = SQPServer.Protocol.SQP;
+                        protocol = ServerQueryServer.Protocol.SQP;
                     }
                     if (args[i + 1] == "a2s")
                     {
-                        protocol = SQPServer.Protocol.A2S;
+                        protocol = ServerQueryServer.Protocol.A2S;
+                    }
+                    if (args[i + 1] == "tf2e")
+                    {
+                        protocol = ServerQueryServer.Protocol.TF2E;
                     }
                     Debug.Log($"found query protocol: {args[i + 1]}");
                 }
@@ -176,27 +207,24 @@ namespace Network
             }
 
             m_SessionId = System.Guid.NewGuid().ToString();
-            sqpManager = GetComponent<ServerQueryManager>();
+            m_SQPManager = GetComponent<ServerQueryManager>();
 
 
             QueryData data = new QueryData();
-            data.ServerInfo.CurrentPlayers = m_Players.Count;
-            data.ServerInfo.GameType = "slayer";
-            data.ServerInfo.ServerName = "testing sqp";
-            data.ServerInfo.MaxPlayers = 20;
-            sqpManager.ServerStart(data, SQPServer.Protocol.SQP, 9000);
-
-            // Checking for TF2E as it is not implemented yet -- TODO:change this later
-            if (port != 0 && protocol != SQPServer.Protocol.TF2E)
-            {
-                sqpManager.ServerStart(data, protocol, port);
-            }
+            data.ServerInfo.CurrentPlayers = 2;
+            data.ServerInfo.GameType = "N/A";
+            data.ServerInfo.ServerName = "Unity Dedicated Server";
+            data.ServerInfo.Map = "Tutorial Map";
+            data.ServerInfo.BuildID = "001";
+            data.ServerInfo.GamePort = 1234;
+            data.ServerInfo.MaxPlayers = 16;
+            m_SQPManager.ServerStart(data, protocol, port);
         }
 
         public override void OnStopServer()
         {
             Debug.Log("Server Stopped!");
-            sqpManager.OnDestroy();
+            m_SQPManager.OnDestroy();
             m_SessionId = "";
         }
 
@@ -214,26 +242,6 @@ namespace Network
             Debug.Log($"{m_VivoxManager.GetName()} connected to Server!");
         }
 
-        public override void OnServerAddPlayer(NetworkConnection conn)
-        {
-            base.OnServerAddPlayer(conn);
-            foreach (KeyValuePair<uint, NetworkIdentity> kvp in NetworkIdentity.spawned)
-            {
-                Player comp = kvp.Value.GetComponent<Player>();
-
-                //Add if new
-                if (comp != null && !m_Players.Contains(comp))
-                {
-                    comp.m_SessionId = m_SessionId;
-                    m_Players.Add(comp);
-                }
-            }
-
-            QueryData data = sqpManager.GetQueryData();
-            data.ServerInfo.CurrentPlayers = m_Players.Count;
-            sqpManager.UpdateQueryData(data);
-        }
-
         public override void OnClientDisconnect(NetworkConnection conn)
         {
             Debug.Log("Disconnected from Server!");
@@ -246,7 +254,7 @@ namespace Network
             if (NetworkClient.localPlayer == null)
                 return;
 
-            m_LocalPlayer = NetworkClient.localPlayer.GetComponent<Player>();
+            localPlayer = NetworkClient.localPlayer.GetComponent<Player>();
         }
     }
 }

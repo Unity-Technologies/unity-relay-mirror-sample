@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 
 namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
@@ -10,7 +9,41 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 		ServerRules = 1 << 1,
 		PlayerInfo = 1 << 2,
 		TeamInfo = 1 << 3
-	};
+	}
+
+    public enum PacketType
+    {
+        Challenge,
+        Query
+    }
+
+    public struct SQPPacketHeader
+    {
+        public PacketType Type;
+        public UInt32 ChallengeToken;
+
+        public int Serialize(Serializer ser)
+        {
+            ser.WriteByte((Type == PacketType.Challenge) ? (byte)0 : (byte)1);
+            ser.WriteUInt(ChallengeToken);
+            return Size();
+        }
+
+        public static SQPPacketHeader Deserialize(Serializer ser)
+        {
+            var header = new SQPPacketHeader
+            {
+                Type = (ser.ReadByte() == 0) ? PacketType.Challenge : PacketType.Query,
+                ChallengeToken = ser.ReadUInt()
+            };
+            return header;
+        }
+
+        public static int Size()
+        {
+            return 1 + 4;
+        }
+    }
 
     public class SQPServerRule
     {
@@ -71,12 +104,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
     public class SQPInfoResponsePacket
     {
-        public PacketHeader header;
-        public ushort version;
-        public byte currentPacket;
-        public byte lastPacket;
-        public ushort packetLength;
-        public uint chunkLength;
         public ushort currentPlayers;
         public ushort maxPlayers;
         public string serverName;
@@ -89,12 +116,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
         public int Serialize(Serializer ser)
         {
-            header.Serialize(ser);
-            ser.WriteUShortSQP(version);
-            ser.WriteByte(currentPacket);
-            ser.WriteByte(lastPacket);
-            ser.WriteUShortSQP(packetLength);
-            ser.WriteUInt(chunkLength);
             ser.WriteUShortSQP(currentPlayers);
             ser.WriteUShortSQP(maxPlayers);
             ser.WriteStringSQP(serverName);
@@ -109,41 +130,23 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
     public class SQPRulesResponsePacket
     {
-        public PacketHeader header;
-        public ushort version;
-        public byte currentPacket;
-        public byte lastPacket;
-        public ushort packetLength;
-        public uint chunkLength;
         public SQPServerRule[] rules;
 
         public SQPRulesResponsePacket() { }
 
         public int Serialize(Serializer ser)
         {
-            header.Serialize(ser);
-            ser.WriteUShortSQP(version);
-            ser.WriteByte(currentPacket);
-            ser.WriteByte(lastPacket);
-            ser.WriteUShortSQP(packetLength);
-            ser.WriteUInt(chunkLength);
-
             foreach(SQPServerRule rule in rules)
             {
                 rule.Serialize(ser);
             }
+
             return 0;
         }
     }
 
     public class SQPPlayerResponsePacket
     {
-        public PacketHeader header;
-        public ushort version;
-        public byte currentPacket;
-        public byte lastPacket;
-        public ushort packetLength;
-        public uint chunkLength;
         public ushort playerCount;
         public byte fieldCount;
         public SQPFieldContainer[] players;
@@ -152,12 +155,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
         public int Serialize(Serializer ser)
         {
-            header.Serialize(ser);
-            ser.WriteUShortSQP(version);
-            ser.WriteByte(currentPacket);
-            ser.WriteByte(lastPacket);
-            ser.WriteUShortSQP(packetLength);
-            ser.WriteUInt(chunkLength);
             ser.WriteUShortSQP(playerCount);
             ser.WriteByte(fieldCount);
 
@@ -204,12 +201,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
     public class SQPTeamResponsePacket
     {
-        public PacketHeader header;
-        public ushort version;
-        public byte currentPacket;
-        public byte lastPacket;
-        public ushort packetLength;
-        public uint chunkLength;
         public ushort teamCount;
         public byte fieldCount;
         public SQPFieldContainer[] teams;
@@ -218,12 +209,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
         public int Serialize(Serializer ser)
         {
-            header.Serialize(ser);
-            ser.WriteUShortSQP(version);
-            ser.WriteByte(currentPacket);
-            ser.WriteByte(lastPacket);
-            ser.WriteUShortSQP(packetLength);
-            ser.WriteUInt(chunkLength);
             ser.WriteUShortSQP(teamCount);
             ser.WriteByte(fieldCount);
 
@@ -272,7 +257,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
     public class SQPQueryResponsePacket
     {
         public byte requestedChunks;
-        public PacketHeader header;
+        public SQPPacketHeader header;
         public ushort version;
         public byte CurrentPacket;
         public byte lastPacket;
@@ -286,7 +271,13 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
         public uint teamInfoChunkLength;
         public SQPTeamResponsePacket teamInfoData;
 
-        public SQPQueryResponsePacket() { }
+        public SQPQueryResponsePacket() 
+        {
+            serverInfoData = new SQPInfoResponsePacket();
+            serverRulesData = new SQPRulesResponsePacket();
+            playerInfodata = new SQPPlayerResponsePacket();
+            teamInfoData = new SQPTeamResponsePacket();
+        }
 
         public int Serialize(Serializer ser)
         {
@@ -300,10 +291,10 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
             bool requestedTeamInfo = (requestedChunks & (byte)SQPChunkType.TeamInfo) > 0;
 
             header.Serialize(ser);
-
-            long queryHeaderLengthPos = ser.Size - Serializer.UShortSize;
-
-            long startPos = ser.Size;
+            ser.WriteUShortSQP(version);
+            ser.WriteByte(CurrentPacket);
+            ser.WriteByte(lastPacket);
+            ser.WriteUShortSQP(packetLength);
 
             if (requestedServerInfo)
             {
@@ -360,12 +351,6 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
                 // Determine how long the Chunk is
                 teamInfoChunkLength = (uint)(ser.Size - teamInfoChunkStartPos);
             }
-
-            packetLength = (ushort)(ser.Size - startPos);
-
-            ser.MoveCursor((int)queryHeaderLengthPos);
-
-            ser.WriteUShort(packetLength);
 
             if (requestedServerInfo)
             {

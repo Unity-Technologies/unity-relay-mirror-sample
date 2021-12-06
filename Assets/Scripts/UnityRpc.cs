@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
@@ -14,19 +13,19 @@ namespace Rpc
         private string m_AuthToken = "";
 
         //Replace UPID in the endpoint with the proper UPID once one is generated
-        private string ticketEndpoint = "https://cloud.connected.unity3d.com/d98bfc46-6576-4059-b530-dc74eb4f1388/matchmaking/api/v1/tickets";
+        private string m_TicketEndpoint = "https://cloud.connected.unity3d.com/d98bfc46-6576-4059-b530-dc74eb4f1388/matchmaking/api/v1/tickets";
 
-        string BackendUrl = "http://104.149.129.150:8080/rpc";
-        string localBackendUrl = "http://172.23.223.173:8080/rpc";
+        private string m_BackendUrl = "http://104.149.129.150:8080/rpc";
+        private string m_LocalBackendUrl = "http://172.23.218.171:8080/rpc";
 
-        PingInfo[] m_PingSites;
-        MultiplayProfile[] profiles;
+        private PingInfo[] m_PingSites;
+        private MultiplayProfile[] profiles;
 
-        bool matchFound;
-        bool matchCreated;
-        int timePolling;
-        int pingsCompleted;
-        float pingTimeout = 0.05f;
+        private bool m_MatchFound;
+        private bool m_MatchCreated;
+        private int m_TimePolling;
+        private int m_PingsCompleted;
+        private float m_PingTimeout = 0.05f;
 
         public void AllocateServer()
         {
@@ -95,9 +94,9 @@ namespace Rpc
             pollMultiplayParams.uuid = uuid;
             pollMultiplayParams.fleetid = fleetId;
 
-            timePolling = 0;
-            matchCreated = false;
-            while (!matchCreated && timePolling < 300)
+            m_TimePolling = 0;
+            m_MatchCreated = false;
+            while (!m_MatchCreated && m_TimePolling < 300)
             {
                 OnRequestCompleteDelegate<PollMultiplayResponse> onMultiplayPollComplete = delegate (PollMultiplayResponse response, bool wasSuccessful)
                 {
@@ -105,18 +104,18 @@ namespace Rpc
                     {
                         // TODO: handle error here
                         Debug.Log($"PollMultiplay: failed retrieving connection from multiplay");
-                        matchCreated = true;
+                        m_MatchCreated = true;
                     }
                     if (response.connection != "")
                     {
                         Debug.Log($"PollMultiplay: successfully retrieved connetion from multiplay: {response.connection}");
                         string test = response.connection;
-                        matchCreated = true;
+                        m_MatchCreated = true;
                     }
                 };
                 StartCoroutine(PostRequest<PollMultiplayParams, PollMultiplayResponse>("MultiplayService.SingleAllocations", pollMultiplayParams, onMultiplayPollComplete));
                 yield return new WaitForSeconds(5.0f);
-                timePolling += 5;
+                m_TimePolling += 5;
             }
 
             
@@ -125,19 +124,19 @@ namespace Rpc
         //Possibly add a delegate that way we can call invoke and this can be used to poll anything
         public IEnumerator PollMatch(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingComplete)
         {
-            timePolling = 0;
-            matchFound = false;
-            while (!matchFound && timePolling < 300)
+            m_TimePolling = 0;
+            m_MatchFound = false;
+            while (!m_MatchFound && m_TimePolling < 300)
             {
                 StartCoroutine(PollMatchmaker(ticketId, delegateToken, onMatchmakerPollingComplete));
                 yield return new WaitForSeconds(5.0f);
-                timePolling += 5;
+                m_TimePolling += 5;
             }
         }
 
         public IEnumerator PollMatchmaker(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingComplete)
         {
-            string url = ticketEndpoint + "?id=" + ticketId;
+            string url = m_TicketEndpoint + "?id=" + ticketId;
 
             UnityWebRequest uwr = UnityWebRequest.Get(url);
             uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
@@ -151,10 +150,10 @@ namespace Rpc
 
             MatchmakerPollingResponse response = new MatchmakerPollingResponse();
 
-            if (uwr.isNetworkError)
+            if (uwr.result == UnityWebRequest.Result.ConnectionError)
             {
                 Debug.Log("Error While Sending: " + uwr.error);
-                matchFound = true;
+                m_MatchFound = true;
                 onMatchmakerPollingComplete(response, false);
             }
             else
@@ -165,19 +164,19 @@ namespace Rpc
                 if (response.assignment != null && response.assignment.connection != null)
                 {
                     // call something to open the connection (will need delegate)
-                    matchFound = true;
+                    m_MatchFound = true;
                     onMatchmakerPollingComplete(response, true);
                 }
                 if (response.assignment.error != "")
                 {
                     // propogate out error
-                    matchFound = true;
+                    m_MatchFound = true;
                     onMatchmakerPollingComplete(response, true);
                 }
             }
         }
 
-        public void GetEnvironment()
+        public void GetMultiplayEnvironment()
         {
             EnvironmentRequestParams environmentRequestParams = new EnvironmentRequestParams();
             OnRequestCompleteDelegate<EnvironmentResponse> onEnvironmentReceived = delegate (EnvironmentResponse response, bool wasSuccessful)
@@ -206,7 +205,7 @@ namespace Rpc
             string jsonData = JsonUtility.ToJson(args);
             Debug.Log($"JsonData: {jsonData}");
 
-            UnityWebRequest uwr = UnityWebRequest.Post(BackendUrl, "POST");
+            UnityWebRequest uwr = UnityWebRequest.Post(m_LocalBackendUrl, "POST");
             byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(jsonData);
             uwr.uploadHandler = (UploadHandler)new UploadHandlerRaw(jsonToSend);
             uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
@@ -222,7 +221,7 @@ namespace Rpc
             //Send the request then wait here until it returns
             yield return uwr.SendWebRequest();
 
-            if (uwr.isNetworkError)
+            if (uwr.result == UnityWebRequest.Result.ConnectionError)
             {
                 Debug.Log("Error While Sending: " + uwr.error);
                 onRequestCompleteDelegate(response.result, false);
@@ -238,7 +237,7 @@ namespace Rpc
 
         public void PingSites(OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
-            pingsCompleted = 0;
+            m_PingsCompleted = 0;
             //TODO: test with multiple ping sites. Does the invoke happen after all of them are actually done/updated?
             foreach (PingInfo site in m_PingSites)
             {
@@ -248,7 +247,7 @@ namespace Rpc
 
         IEnumerator StartPing(string ip, OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
-            WaitForSeconds f = new WaitForSeconds(pingTimeout);
+            WaitForSeconds f = new WaitForSeconds(m_PingTimeout);
             Ping p = new Ping(ip);
             while (!p.isDone)
             {
@@ -259,7 +258,7 @@ namespace Rpc
 
         void PingFinished(Ping p, OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
-            if(p.time >= pingTimeout)
+            if(p.time >= m_PingTimeout)
             {
                 UpdatePingSitePacketLoss(p.ip);
             }
@@ -268,12 +267,12 @@ namespace Rpc
                 UpdatePingSiteLatency(p.ip, p.time);
             }
 
-            pingsCompleted++;
+            m_PingsCompleted++;
 
-            if(pingsCompleted == m_PingSites.Length)
+            if(m_PingsCompleted == m_PingSites.Length)
             {
                 Debug.Log("ping sites has completed");
-                pingsCompleted = 0;
+                m_PingsCompleted = 0;
                 onPingCompleteDelegate.Invoke();
             }
         }
