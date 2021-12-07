@@ -16,6 +16,8 @@ namespace Unity.Helpers.ServerQuery.Data
 
         public ushort GamePort { get; set; }
 
+        public ushort Version { get; set; }
+
         public ServerData()
         {
             CurrentPlayers = 0;
@@ -25,6 +27,7 @@ namespace Unity.Helpers.ServerQuery.Data
             BuildID = "Default Build ID";
             Map = "Default Map Name";
             GamePort = 0;
+            Version = 000;
         }
     }
 }

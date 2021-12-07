@@ -56,10 +56,10 @@
             ser.WriteByte(responseHeader);
             ser.WriteByte(protocol);
             ser.WriteString(serverName);
-            ser.WriteString(serverName);
+            ser.WriteString(serverMap);
             ser.WriteString(folder);
             ser.WriteString(gameName);
-            ser.WriteShort(steamId); //how to handle, only ushort versions no short version
+            ser.WriteShort(steamId);
             ser.WriteByte(playerCount);
             ser.WriteByte(maxPlayers);
             ser.WriteByte(botCount);
@@ -102,7 +102,7 @@
                 ser.WriteByte(players[i].index);
                 ser.WriteString(players[i].playerName);
                 ser.WriteInt(players[i].score);
-                ser.WriteFloat(players[i].duration); // TODO: write float?
+                ser.WriteFloat(players[i].duration);
             }
             return 0;
         }

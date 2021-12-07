@@ -89,8 +89,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
                 Serializer.ByteSize + // visibility
                 Serializer.ByteSize + // valve anti-cheat
                 Serializer.StringSize(version) + // version
-                Serializer.ByteSize + 1; // extra data flag // TODO: off by one error here? 
-
+                Serializer.ByteSize + 1; // extra data flag 
 
             byte[] response = new byte[packetSize];
 

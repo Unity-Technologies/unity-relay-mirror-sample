@@ -128,7 +128,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
             {
                 SQPServerRule rule = new SQPServerRule();
                 rule.key = "TestRule";
-                rule.type = 4; // string value
+                rule.type = (byte)SQPDynamicType.String;
                 rule.valueString = "TestValue";
 
                 SQPServerRule[] rules = new SQPServerRule[1];
@@ -143,14 +143,14 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
                 SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
                 fieldPlayerOne.key = "PlayerName";
-                fieldPlayerOne.type = 4;
+                fieldPlayerOne.type = (byte)SQPDynamicType.String;
                 fieldPlayerOne.valueString = "Jeff";
                 SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
                 fieldsOne[0] = fieldPlayerOne;
 
                 SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
                 fieldPlayerTwo.key = "PlayerName";
-                fieldPlayerTwo.type = 4;
+                fieldPlayerTwo.type = (byte)SQPDynamicType.String;
                 fieldPlayerTwo.valueString = "John";
                 SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
                 fieldsTwo[0] = fieldPlayerTwo;
@@ -173,14 +173,14 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
                 SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
                 fieldPlayerOne.key = "Score";
-                fieldPlayerOne.type = 2;
+                fieldPlayerOne.type = (byte)SQPDynamicType.Uint;
                 fieldPlayerOne.valueUInt = 23;
                 SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
                 fieldsOne[0] = fieldPlayerOne;
 
                 SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
                 fieldPlayerTwo.key = "Score";
-                fieldPlayerTwo.type = 2;
+                fieldPlayerTwo.type = (byte)SQPDynamicType.Uint;
                 fieldPlayerTwo.valueUInt = 11;
                 SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
                 fieldsTwo[0] = fieldPlayerTwo;

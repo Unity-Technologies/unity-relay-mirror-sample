@@ -680,11 +680,11 @@ PlayerSettings:
     m_VersionName: 
   apiCompatibilityLevel: 6
   activeInputHandler: 0
-  cloudProjectId: f669240a-bc95-450a-aafb-e9416fcd8cd2
+  cloudProjectId: 9134ca3b-e51a-4d98-ab4e-65149173f3e8
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: UnityBossroomSample
+  organizationId: wj_erik
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   virtualTexturingSupportEnabled: 0

@@ -9,6 +9,7 @@ public class Player : NetworkBehaviour
 
     [SyncVar]
     public string sessionId = "";
+
     private VivoxManager m_VivoxManager;
 
     void HandleMovement()

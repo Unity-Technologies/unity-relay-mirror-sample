@@ -17,6 +17,15 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
         Query
     }
 
+    enum SQPDynamicType
+    {
+        Byte = 0,
+		Ushort = 1,
+		Uint = 2,
+		Ulong = 3,
+		String = 4
+	}
+
     public struct SQPPacketHeader
     {
         public PacketType Type;
@@ -24,7 +33,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
 
         public int Serialize(Serializer ser)
         {
-            ser.WriteByte((Type == PacketType.Challenge) ? (byte)0 : (byte)1);
+            ser.WriteByte((Type == PacketType.Challenge) ? (byte)PacketType.Challenge : (byte)PacketType.Query);
             ser.WriteUInt(ChallengeToken);
             return Size();
         }
@@ -63,19 +72,19 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
             ser.WriteByte(type);
             switch (type)
             {
-                case 0:
+                case (byte)SQPDynamicType.Byte:
                     ser.WriteByte(valueByte);
                     break;
-                case 1:
+                case (byte)SQPDynamicType.Ushort:
                     ser.WriteUShortSQP(valueUShort);
                     break;
-                case 2:
+                case (byte)SQPDynamicType.Uint:
                     ser.WriteUInt(valueUInt);
                     break;
-                case 3:
+                case (byte)SQPDynamicType.Ulong:
                     ser.WriteULong(valueULong);
                     break;
-                case 4:
+                case (byte)SQPDynamicType.String:
                     ser.WriteStringSQP(valueString);
                     break;
                 default:
@@ -172,19 +181,19 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
                     {
                         switch (players[i].fields[j].type)
                         {
-                            case 0:
+                            case (byte)SQPDynamicType.Byte:
                                 ser.WriteByte(players[i].fields[j].valueByte);
                                 break;
-                            case 1:
+                            case (byte)SQPDynamicType.Ushort:
                                 ser.WriteUShortSQP(players[i].fields[j].valueUShort);
                                 break;
-                            case 2:
+                            case (byte)SQPDynamicType.Uint:
                                 ser.WriteUInt(players[i].fields[j].valueUInt);
                                 break;
-                            case 3:
+                            case (byte)SQPDynamicType.Ulong:
                                 ser.WriteULong(players[i].fields[j].valueULong);
                                 break;
-                            case 4:
+                            case (byte)SQPDynamicType.String:
                                 ser.WriteStringSQP(players[i].fields[j].valueString);
                                 break;
                             default:
@@ -227,19 +236,19 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP.Collections
                     {
                         switch (teams[i].fields[j].type)
                         {
-                            case 0:
+                            case (byte)SQPDynamicType.Byte:
                                 ser.WriteByte(teams[i].fields[j].valueByte);
                                 break;
-                            case 1:
+                            case (byte)SQPDynamicType.Ushort:
                                 ser.WriteUShortSQP(teams[i].fields[j].valueUShort);
                                 break;
-                            case 2:
+                            case (byte)SQPDynamicType.Uint:
                                 ser.WriteUInt(teams[i].fields[j].valueUInt);
                                 break;
-                            case 3:
+                            case (byte)SQPDynamicType.Ulong:
                                 ser.WriteULong(teams[i].fields[j].valueULong);
                                 break;
-                            case 4:
+                            case (byte)SQPDynamicType.String:
                                 ser.WriteStringSQP(teams[i].fields[j].valueString);
                                 break;
                             default:

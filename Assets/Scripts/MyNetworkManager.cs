@@ -13,7 +13,7 @@ namespace Network
     {
         public Player localPlayer;
         private VivoxManager m_VivoxManager;
-        private ServerQueryManager m_SQPManager;
+        private ServerQueryManager m_ServerQueryManager;
         private UnityRpc m_UnityRpc;
         private string m_SessionId = "";
         private string m_Username;
@@ -36,6 +36,7 @@ namespace Network
             m_Username = SystemInfo.deviceName;
             m_UnityRpc = GetComponent<UnityRpc>();
             string[] args = System.Environment.GetCommandLineArgs();
+
             foreach(string arg in args)
             {
                 if (arg == "-server")
@@ -43,6 +44,8 @@ namespace Network
                     m_IsDedicatedServer = true;
                 }
             }
+
+            m_VivoxManager = GetComponent<VivoxManager>();
         }
 
         public void Login()
@@ -83,7 +86,6 @@ namespace Network
 
         public void VivoxLogin()
         {
-            m_VivoxManager = GetComponent<VivoxManager>();
             m_VivoxManager.Login(m_UserId);
         }
 
@@ -109,10 +111,9 @@ namespace Network
                 if (localPlayer == null)
                 {
                     FindLocalPlayer();
-                    //player was found, therefore we have spawned into the game
-                    if(localPlayer != null)
-                    {
-                        if (m_VivoxManager.IsLoggedIn)
+                    if(localPlayer != null) {
+                        if (m_VivoxManager.isLoggedIn &&
+                        localPlayer.sessionId != "")
                         {
                             OnJoinCompleteDelegate joinCompleteDelegate = delegate ()
                             {
@@ -122,7 +123,7 @@ namespace Network
                         }
                         else
                         {
-                            Debug.LogWarning("Can't join Vivox channels are we are not logged in");
+                            localPlayer = null;
                         }
                     }
                 }
@@ -133,25 +134,6 @@ namespace Network
                 m_Players.Clear();
             }
 
-            // Update server query if any players are added to the server
-            if (m_IsDedicatedServer)
-            {
-                foreach (KeyValuePair<uint, NetworkIdentity> kvp in NetworkServer.spawned)
-                {
-                    Player comp = kvp.Value.GetComponent<Player>();
-
-                    //Add if new
-                    if (comp != null && !m_Players.Contains(comp))
-                    {
-                        comp.sessionId = m_SessionId;
-                        m_Players.Add(comp);
-                    }
-                }
-
-                QueryData data = m_SQPManager.GetQueryData();
-                data.ServerInfo.CurrentPlayers = m_Players.Count;
-                m_SQPManager.UpdateQueryData(data);
-            }
         }
 
         internal void Logout()
@@ -207,7 +189,7 @@ namespace Network
             }
 
             m_SessionId = System.Guid.NewGuid().ToString();
-            m_SQPManager = GetComponent<ServerQueryManager>();
+            m_ServerQueryManager = GetComponent<ServerQueryManager>();
 
 
             QueryData data = new QueryData();
@@ -218,13 +200,64 @@ namespace Network
             data.ServerInfo.BuildID = "001";
             data.ServerInfo.GamePort = 1234;
             data.ServerInfo.MaxPlayers = 16;
-            m_SQPManager.ServerStart(data, protocol, port);
+            m_ServerQueryManager.ServerStart(data, protocol, port);
+        }
+
+        public override void OnServerAddPlayer(NetworkConnection conn)
+        {
+            base.OnServerAddPlayer(conn);
+            // Update server query if any players are added to the server
+            foreach (KeyValuePair<uint, NetworkIdentity> kvp in NetworkServer.spawned)
+            {
+                Player comp = kvp.Value.GetComponent<Player>();
+
+                //Add if new
+                if (comp != null && !m_Players.Contains(comp))
+                {
+                    comp.sessionId = m_SessionId;
+                    m_Players.Add(comp);
+                }
+            }
+
+            QueryData data = m_ServerQueryManager.GetQueryData();
+            data.ServerInfo.CurrentPlayers = m_Players.Count;
+            m_ServerQueryManager.UpdateQueryData(data);
+        }
+
+        public override void OnServerDisconnect(NetworkConnection conn)
+        {
+            base.OnServerDisconnect(conn);
+            Dictionary<uint, NetworkIdentity> spawnedPlayers = NetworkServer.spawned;
+
+            // Update players list on client disconnect
+            foreach(Player player in m_Players)
+            {
+                bool playerFound = false;
+
+                foreach (KeyValuePair<uint, NetworkIdentity> kvp in spawnedPlayers)
+                {
+                    Player comp = kvp.Value.GetComponent<Player>();
+
+                    // Verify the player is still in the match
+                    if (comp != null && player == comp)
+                    {
+                        playerFound = true;
+                        break;
+                    }
+                }
+
+                if (!playerFound)
+                {
+                    m_Players.Remove(player);
+                    break;
+                }
+            }
         }
 
         public override void OnStopServer()
         {
             Debug.Log("Server Stopped!");
-            m_SQPManager.OnDestroy();
+            m_ServerQueryManager.OnDestroy();
             m_SessionId = "";
         }
 
@@ -233,7 +266,9 @@ namespace Network
             base.OnStopClient();
 
             Debug.Log("Left the Server!");
-            m_VivoxManager.LeaveChannel(null);
+            m_VivoxManager.LeaveChannel();
+            localPlayer = null;
+
             m_SessionId = "";
         }
 
@@ -245,7 +280,6 @@ namespace Network
         public override void OnClientDisconnect(NetworkConnection conn)
         {
             Debug.Log("Disconnected from Server!");
-            m_VivoxManager.LeaveChannel(null);
         }
 
         void FindLocalPlayer()

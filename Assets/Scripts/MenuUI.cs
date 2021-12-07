@@ -4,7 +4,7 @@ using System.ComponentModel;
 using UnityEngine;
 using Network;
 using Mirror;
-using Rpc;
+using Vivox;
 
 namespace UI
 {
@@ -20,6 +20,8 @@ namespace UI
     public class MenuUI : MonoBehaviour
     {
         private MyNetworkManager m_Manager;
+
+        private VivoxManager m_VivoxManger;
 
         /// <summary>
         /// Whether to show the default control HUD at runtime.
@@ -39,6 +41,7 @@ namespace UI
         void Awake()
         {
             m_Manager = GetComponent<MyNetworkManager>();
+            m_VivoxManger = GetComponent<VivoxManager>();
         }
 
         void OnGUI()
@@ -87,24 +90,6 @@ namespace UI
         {
             if (!NetworkClient.active)
             {
-                // Server + Client
-                if (Application.platform != RuntimePlatform.WebGLPlayer)
-                {
-                    if (GUILayout.Button("Host (Server + Client)"))
-                    {
-                        m_Manager.StartHost();
-                    }
-                }
-
-                // Client + IP
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Client"))
-                {
-                    m_Manager.StartClient();
-                }
-                m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
-                GUILayout.EndHorizontal();
-
                 // Server Only
                 if (Application.platform == RuntimePlatform.WebGLPlayer)
                 {
@@ -118,14 +103,47 @@ namespace UI
 
                 if (m_Manager.isLoggedIn)
                 {
+                    if (m_VivoxManger.isLoggedIn)
+                    {
+                        // Server + Client
+                        if (Application.platform != RuntimePlatform.WebGLPlayer)
+                        {
+                            if (GUILayout.Button("Host (Server + Client)"))
+                            {
+                                m_Manager.StartHost();
+                            }
+                        }
+
+                        // Client + IP
+                        GUILayout.BeginHorizontal();
+                        if (GUILayout.Button("Client"))
+                        {
+                            m_Manager.StartClient();
+                        }
+                        m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
+                        GUILayout.EndHorizontal();
+                    }
+
                     if (GUILayout.Button("Auth Logout"))
                     {
                         m_Manager.Logout();
                     }
-                    if (GUILayout.Button("Vivox Login"))
+
+                    if (!m_VivoxManger.isLoggedIn)
                     {
-                        m_Manager.VivoxLogin();
+                        if (GUILayout.Button("Vivox Login"))
+                        {
+                            m_Manager.VivoxLogin();
+                        }
                     }
+                    else
+                    {
+                        if (GUILayout.Button("Vivox Logout"))
+                        {
+                            m_VivoxManger.Logout();
+                        }
+                    }
+
                     if (GUILayout.Button("Start Matchmaking"))
                     {
                         m_Manager.RequestMatch();

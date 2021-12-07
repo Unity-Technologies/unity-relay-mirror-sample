@@ -25,6 +25,7 @@ namespace Rpc
         private bool m_MatchCreated;
         private int m_TimePolling;
         private int m_PingsCompleted;
+        private const int k_TimesToPing = 10;
         private float m_PingTimeout = 0.05f;
 
         public void AllocateServer()
@@ -80,6 +81,7 @@ namespace Rpc
             foreach (PingInfo site in m_PingSites)
             {
                 // calculate packet loss here?
+                site.packetloss = site.packetloss / k_TimesToPing;
             }
 
             RequestMatchTicketParams requestMatchTicketParams = new RequestMatchTicketParams();
@@ -106,7 +108,7 @@ namespace Rpc
                         Debug.Log($"PollMultiplay: failed retrieving connection from multiplay");
                         m_MatchCreated = true;
                     }
-                    if (response.connection != "")
+                    if (response.connection != "<nil>:0")
                     {
                         Debug.Log($"PollMultiplay: successfully retrieved connetion from multiplay: {response.connection}");
                         string test = response.connection;
@@ -167,7 +169,7 @@ namespace Rpc
                     m_MatchFound = true;
                     onMatchmakerPollingComplete(response, true);
                 }
-                if (response.assignment.error != "")
+                if (response.assignment.error != null) 
                 {
                     // propogate out error
                     m_MatchFound = true;
@@ -205,7 +207,7 @@ namespace Rpc
             string jsonData = JsonUtility.ToJson(args);
             Debug.Log($"JsonData: {jsonData}");
 
-            UnityWebRequest uwr = UnityWebRequest.Post(m_LocalBackendUrl, "POST");
+            UnityWebRequest uwr = UnityWebRequest.Post(m_BackendUrl, "POST");
             byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(jsonData);
             uwr.uploadHandler = (UploadHandler)new UploadHandlerRaw(jsonToSend);
             uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
@@ -238,10 +240,12 @@ namespace Rpc
         public void PingSites(OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
             m_PingsCompleted = 0;
-            //TODO: test with multiple ping sites. Does the invoke happen after all of them are actually done/updated?
             foreach (PingInfo site in m_PingSites)
             {
-                StartCoroutine(StartPing(site.ipv4, onPingCompleteDelegate));
+                for(int i = 0; i < k_TimesToPing; i++)
+                {
+                    StartCoroutine(StartPing(site.ipv4, onPingCompleteDelegate));
+                }
             }
         }
 
@@ -269,7 +273,7 @@ namespace Rpc
 
             m_PingsCompleted++;
 
-            if(m_PingsCompleted == m_PingSites.Length)
+            if(m_PingsCompleted == m_PingSites.Length * k_TimesToPing)
             {
                 Debug.Log("ping sites has completed");
                 m_PingsCompleted = 0;
