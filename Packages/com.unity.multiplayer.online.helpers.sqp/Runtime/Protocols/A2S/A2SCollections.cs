@@ -1,4 +1,6 @@
-﻿namespace Unity.Helpers.ServerQuery.Protocols.A2S.Collections
+﻿using System.Collections.Generic;
+
+namespace Unity.Helpers.ServerQuery.Protocols.A2S.Collections
 {
     public class A2SRequestPacket
     {
@@ -88,7 +90,7 @@
         public int defaultHeader;
         public byte responseHeader;
         public byte numPlayers;
-        public A2SPlayerResponsePacketPlayer[] players;
+        public List<A2SPlayerResponsePacketPlayer> players;
 
         public A2SPlayerResponsePacket() { }
 
@@ -97,12 +99,12 @@
             ser.WriteInt(-1);
             ser.WriteByte(responseHeader);
             ser.WriteByte(numPlayers);
-            for (int i = 0; i < players.Length; i++)
+            foreach (A2SPlayerResponsePacketPlayer player in players)
             {
-                ser.WriteByte(players[i].index);
-                ser.WriteString(players[i].playerName);
-                ser.WriteInt(players[i].score);
-                ser.WriteFloat(players[i].duration);
+                ser.WriteByte(player.index);
+                ser.WriteString(player.playerName);
+                ser.WriteInt(player.score);
+                ser.WriteFloat(player.duration);
             }
             return 0;
         }
@@ -121,7 +123,7 @@
         public int defaultHeader;
         public byte responseHeader;
         public short numRules;
-        public A2SRulesResponsePacketKeyValue[] rules;
+        public List<A2SRulesResponsePacketKeyValue> rules;
 
         public A2SRulesResponsePacket() { }
 
@@ -130,10 +132,10 @@
             ser.WriteInt(-1);
             ser.WriteByte(responseHeader);
             ser.WriteShort(numRules);
-            for (int i = 0; i < rules.Length; i++)
+            foreach (A2SRulesResponsePacketKeyValue rule in rules)
             {
-                ser.WriteString(rules[i].ruleName);
-                ser.WriteString(rules[i].ruleValue);
+                ser.WriteString(rule.ruleName);
+                ser.WriteString(rule.ruleValue);
             }
             return 0;
         }

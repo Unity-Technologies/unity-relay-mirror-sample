@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery.Protocols.SQP.Collections;
 using Unity.ServerQuery.Protocols.SQP;
+using UnityEngine;
 
 namespace Unity.Helpers.ServerQuery.Protocols.SQP
 {
@@ -18,14 +19,14 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
         public byte[] ReceiveData(byte[] data, IPEndPoint remoteClient, uint serverID)
         {
-            //Minimal packet size is five
+            // Minimal packet size is five
             if (data.Length < 5) return null;
 
-            //Parse packet header
+            // Parse packet header
             Serializer ser = new Serializer(data, Serializer.SerializationMode.Read);
             var header = SQPPacketHeader.Deserialize(ser);
 
-            //The packet is a challenge request
+            // The packet is a challenge request
             switch (header.Type)
             {
                 //The packet is a challenge request
@@ -41,13 +42,13 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
         private byte[] SendQueryRequest(SQPPacketHeader header, Serializer serRead, IPEndPoint remoteClient, uint serverID)
         {
-            var info = QueryDataProvider.GetServerData(serverID).ServerInfo;
+            var info = QueryDataProvider.GetServerData(serverID);
             QueryHeader queryHeader = QueryHeader.Deserialize(serRead);
-            //Invalid SQP version
+            // Invalid SQP version
             if (queryHeader.Version != SQPVersion) return null;
-            //Invalid token
+            // Invalid token
             if (!CheckToken(header, remoteClient)) return null;
-            //Build and send the answer
+            // Build and send the answer
 
             int headerSize =
                 SQPPacketHeader.Size() + // Packet header 
@@ -63,30 +64,92 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
                 packetSize += Serializer.UIntSize + // Size of ServerInfoChunckLength
                     Serializer.UShortSize + // Current Players
                     Serializer.UShortSize + // Max Players
-                    Serializer.StringSize(info.ServerName) + // Server Name
-                    Serializer.StringSize(info.GameType) + // Game Type
-                    Serializer.StringSize(info.BuildID) + // Build ID
-                    Serializer.StringSize(info.Map) + // Map
+                    Serializer.StringSize(info.SQPServerInfo.serverName) + // Server Name
+                    Serializer.StringSize(info.SQPServerInfo.gameType) + // Game Type
+                    Serializer.StringSize(info.SQPServerInfo.buildID) + // Build ID
+                    Serializer.StringSize(info.SQPServerInfo.map) + // Map
                     Serializer.UShortSize; // Game Port
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.ServerRules) > 0)
             {
-                packetSize += Serializer.UIntSize + // Size of rulesChunkLength
-                    Serializer.StringSize("TestRule") + // rule key
-                    Serializer.ByteSize + // rule type
-                    Serializer.StringSize("TestValue") + 1; // rule value
+                packetSize += Serializer.UIntSize + 1; // Size of rulesChunkLength + offset
+
+                // Count packet size based on each rule
+                foreach (SQPServerRule rule in info.SQPServerRules.rules)
+                {
+                    packetSize += Serializer.StringSize(rule.key) + // Rule Key
+                        Serializer.ByteSize; // Rule Type
+
+                    switch (rule.type)
+                    {
+                        case (byte)SQPDynamicType.Byte:
+                            packetSize += Serializer.ByteSize;
+                            break;
+                        case (byte)SQPDynamicType.Ushort:
+                            packetSize += Serializer.UShortSize;
+                            break;
+                        case (byte)SQPDynamicType.Uint:
+                            packetSize += Serializer.UIntSize;
+                            break;
+                        case (byte)SQPDynamicType.Ulong:
+                            packetSize += Serializer.ULongSize;
+                            break;
+                        case (byte)SQPDynamicType.String:
+                            packetSize += Serializer.StringSize(rule.valueString);
+                            break;
+                        default:
+                            Debug.Log("invalid SQP server rule type found");
+                            break;
+                    }
+                }
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.PlayerInfo) > 0)
             {
+
                 packetSize += Serializer.UIntSize + // Size of playersChunkLength
                     Serializer.UShortSize + // Player Count
-                    Serializer.ByteSize + // Field Count
-                    Serializer.StringSize("PlayerName") + // Field One - Key
-                    Serializer.ByteSize + // Field One - Type
-                    Serializer.StringSize("Jeff") + // Player One - Field Value
-                    Serializer.StringSize("John") + 1; // Player Two - Field Value
+                    Serializer.ByteSize + 1; // Field Count
+
+                // Count up packet size based on the key/type of every field for the first player
+                // Every player should have the same fields and every field only needs to print once
+                if(info.SQPPlayerInfo.players.Count != 0)
+                {
+                    foreach (SQPFieldKeyValue field in info.SQPPlayerInfo.players[0].fields)
+                    {
+                        packetSize += Serializer.StringSize(field.key) + // Field Key
+                            Serializer.ByteSize; // Field Type
+                    }
+
+                    foreach (SQPFieldContainer player in info.SQPPlayerInfo.players)
+                    {
+                        foreach (SQPFieldKeyValue field in player.fields)
+                        {
+                            switch (field.type)
+                            {
+                                case (byte)SQPDynamicType.Byte:
+                                    packetSize += Serializer.ByteSize;
+                                    break;
+                                case (byte)SQPDynamicType.Ushort:
+                                    packetSize += Serializer.UShortSize;
+                                    break;
+                                case (byte)SQPDynamicType.Uint:
+                                    packetSize += Serializer.UIntSize;
+                                    break;
+                                case (byte)SQPDynamicType.Ulong:
+                                    packetSize += Serializer.ULongSize;
+                                    break;
+                                case (byte)SQPDynamicType.String:
+                                    packetSize += Serializer.StringSize(field.valueString);
+                                    break;
+                                default:
+                                    Debug.Log("invalid SQP server rule type found");
+                                    break;
+                            }
+                        }
+                    }
+                }
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.TeamInfo) > 0)
@@ -94,11 +157,44 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
                 packetSize +=
                     Serializer.UIntSize + // Size of teamInfoChunkLength
                     Serializer.UShortSize + // Team count
-                    Serializer.ByteSize + // Field count
-                    Serializer.StringSize("Score") + // Field One - Key
-                    Serializer.ByteSize + // Field One - Type
-                    Serializer.UIntSize + // Player One - Field Value
-                    Serializer.UIntSize + 1; // Player Two - Field Value
+                    Serializer.ByteSize + 1; // Field count
+
+                if (info.SQPTeamInfo.teams.Count != 0)
+                {
+                    foreach (SQPFieldKeyValue field in info.SQPTeamInfo.teams[0].fields)
+                    {
+                        packetSize += Serializer.StringSize(field.key) + // Field key
+                            Serializer.ByteSize; // Field type
+                    }
+
+                    foreach (SQPFieldContainer team in info.SQPTeamInfo.teams)
+                    {
+                        foreach (SQPFieldKeyValue field in team.fields)
+                        {
+                            switch (field.type)
+                            {
+                                case (byte)SQPDynamicType.Byte:
+                                    packetSize += Serializer.ByteSize;
+                                    break;
+                                case (byte)SQPDynamicType.Ushort:
+                                    packetSize += Serializer.UShortSize;
+                                    break;
+                                case (byte)SQPDynamicType.Uint:
+                                    packetSize += Serializer.UIntSize;
+                                    break;
+                                case (byte)SQPDynamicType.Ulong:
+                                    packetSize += Serializer.ULongSize;
+                                    break;
+                                case (byte)SQPDynamicType.String:
+                                    packetSize += Serializer.StringSize(field.valueString);
+                                    break;
+                                default:
+                                    Debug.Log("invalid SQP server rule type found");
+                                    break;
+                            }
+                        }
+                    }
+                }
             }
 
             byte[] response = new byte[packetSize + headerSize];
@@ -115,85 +211,32 @@ namespace Unity.Helpers.ServerQuery.Protocols.SQP
 
             if(((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.ServerInfo) > 0)
             {
-                responsePacket.serverInfoData.currentPlayers = (ushort)info.CurrentPlayers;
-                responsePacket.serverInfoData.maxPlayers = (ushort)info.MaxPlayers;
-                responsePacket.serverInfoData.serverName = info.ServerName;
-                responsePacket.serverInfoData.gameType = info.GameType;
-                responsePacket.serverInfoData.buildID = info.BuildID;
-                responsePacket.serverInfoData.map = info.Map;
-                responsePacket.serverInfoData.gamePort = info.GamePort;
+                responsePacket.serverInfoData.currentPlayers = (ushort)info.SQPServerInfo.currentPlayers;
+                responsePacket.serverInfoData.maxPlayers = (ushort)info.SQPServerInfo.maxPlayers;
+                responsePacket.serverInfoData.serverName = info.SQPServerInfo.serverName;
+                responsePacket.serverInfoData.gameType = info.SQPServerInfo.gameType;
+                responsePacket.serverInfoData.buildID = info.SQPServerInfo.buildID;
+                responsePacket.serverInfoData.map = info.SQPServerInfo.map;
+                responsePacket.serverInfoData.gamePort = info.SQPServerInfo.gamePort;
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.ServerRules) > 0)
             {
-                SQPServerRule rule = new SQPServerRule();
-                rule.key = "TestRule";
-                rule.type = (byte)SQPDynamicType.String;
-                rule.valueString = "TestValue";
-
-                SQPServerRule[] rules = new SQPServerRule[1];
-                rules[0] = rule;
-                responsePacket.serverRulesData.rules = rules;
+                responsePacket.serverRulesData.rules = info.SQPServerRules.rules;
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.PlayerInfo)> 0)
             {
-                responsePacket.playerInfodata.playerCount = 2;
-                responsePacket.playerInfodata.fieldCount = 1;
-
-                SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
-                fieldPlayerOne.key = "PlayerName";
-                fieldPlayerOne.type = (byte)SQPDynamicType.String;
-                fieldPlayerOne.valueString = "Jeff";
-                SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
-                fieldsOne[0] = fieldPlayerOne;
-
-                SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
-                fieldPlayerTwo.key = "PlayerName";
-                fieldPlayerTwo.type = (byte)SQPDynamicType.String;
-                fieldPlayerTwo.valueString = "John";
-                SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
-                fieldsTwo[0] = fieldPlayerTwo;
-
-                SQPFieldContainer playerOne = new SQPFieldContainer();
-                playerOne.fields = fieldsOne;
-                SQPFieldContainer playerTwo = new SQPFieldContainer();
-                playerTwo.fields = fieldsTwo;
-                SQPFieldContainer[] players = new SQPFieldContainer[2];
-                players[0] = playerOne;
-                players[1] = playerTwo;
-
-                responsePacket.playerInfodata.players = players;
+                responsePacket.playerInfodata.playerCount = info.SQPPlayerInfo.playerCount;
+                responsePacket.playerInfodata.fieldCount = info.SQPPlayerInfo.fieldCount;
+                responsePacket.playerInfodata.players = info.SQPPlayerInfo.players;
             }
 
             if (((byte)queryHeader.RequestedChunks & (byte)SQPChunkType.TeamInfo) > 0)
             {
-                responsePacket.teamInfoData.teamCount = 2;
-                responsePacket.teamInfoData.fieldCount = 1;
-
-                SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
-                fieldPlayerOne.key = "Score";
-                fieldPlayerOne.type = (byte)SQPDynamicType.Uint;
-                fieldPlayerOne.valueUInt = 23;
-                SQPFieldKeyValue[] fieldsOne = new SQPFieldKeyValue[1];
-                fieldsOne[0] = fieldPlayerOne;
-
-                SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
-                fieldPlayerTwo.key = "Score";
-                fieldPlayerTwo.type = (byte)SQPDynamicType.Uint;
-                fieldPlayerTwo.valueUInt = 11;
-                SQPFieldKeyValue[] fieldsTwo = new SQPFieldKeyValue[1];
-                fieldsTwo[0] = fieldPlayerTwo;
-
-                SQPFieldContainer teamOne = new SQPFieldContainer();
-                teamOne.fields = fieldsOne;
-                SQPFieldContainer teamTwo = new SQPFieldContainer();
-                teamTwo.fields = fieldsTwo;
-                SQPFieldContainer[] teams = new SQPFieldContainer[2];
-                teams[0] = teamOne;
-                teams[1] = teamTwo;
-
-                responsePacket.teamInfoData.teams = teams;
+                responsePacket.teamInfoData.teamCount = info.SQPTeamInfo.teamCount;
+                responsePacket.teamInfoData.fieldCount = info.SQPTeamInfo.fieldCount;
+                responsePacket.teamInfoData.teams = info.SQPTeamInfo.teams;
             }
 
             responsePacket.Serialize(ser);
