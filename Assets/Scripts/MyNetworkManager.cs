@@ -27,6 +27,7 @@ namespace Network
         private ServerQueryServer.Protocol m_Protocol;
         private string m_Version = "001";
         private ushort m_Port = 0;
+        private ushort m_QueryPort = 0;
         public bool isLoggedIn = false;
 
         private List<Player> m_Players;
@@ -49,6 +50,42 @@ namespace Network
                         kcpTransport.Port = m_Port;
                     }
                 }
+                if (args[i] == "-queryport")
+                {
+                    try
+                    {
+                        m_QueryPort = ushort.Parse(args[i + 1]);
+                        Debug.Log($"found port {m_QueryPort}");
+                    }
+                    catch
+                    {
+                        Debug.Log($"unable to parse {args[i + 1]} into ushort for port");
+                    }
+                }
+                if (args[i] == "-queryprotocol")
+                {
+                    if (args[i + 1] == "sqp")
+                    {
+                        m_Protocol = ServerQueryServer.Protocol.SQP;
+                    }
+                    if (args[i + 1] == "a2s")
+                    {
+                        m_Protocol = ServerQueryServer.Protocol.A2S;
+                    }
+                    if (args[i + 1] == "tf2e")
+                    {
+                        m_Protocol = ServerQueryServer.Protocol.TF2E;
+                    }
+                    Debug.Log($"found query protocol: {args[i + 1]}");
+                }
+                if (args[i] == "-version")
+                {
+                    m_Version = args[i + 1];
+                }
+                if (args[i] == "-server")
+                {
+                    m_IsDedicatedServer = true;
+                }
             }
         }
 
@@ -58,15 +95,6 @@ namespace Network
             m_IsDedicatedServer = false;
             m_Username = SystemInfo.deviceName;
             m_UnityRpc = GetComponent<UnityRpc>();
-            string[] args = System.Environment.GetCommandLineArgs();
-
-            foreach(string arg in args)
-            {
-                if (arg == "-server")
-                {
-                    m_IsDedicatedServer = true;
-                }
-            }
 
             m_VivoxManager = GetComponent<VivoxManager>();
         }
@@ -171,46 +199,9 @@ namespace Network
 
             m_SessionId = System.Guid.NewGuid().ToString();
             m_ServerQueryManager = GetComponent<ServerQueryManager>();
-            m_Protocol = ServerQueryServer.Protocol.TF2E;
-            ushort queryPort = 0;
-            
-            string[] args = System.Environment.GetCommandLineArgs();
+            m_Protocol = ServerQueryServer.Protocol.SQP;
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "-queryport")
-                {
-                    try
-                    {
-                        queryPort = ushort.Parse(args[i+1]);
-                        Debug.Log($"found port {queryPort}");
-                    }
-                    catch 
-                    {
-                        Debug.Log($"unable to parse {args[i+1]} into ushort for port");
-                    }
-                }
-                if (args[i] == "-queryprotocol")
-                {
-                    if(args[i+1] == "sqp")
-                    {
-                        m_Protocol = ServerQueryServer.Protocol.SQP;
-                    }
-                    if (args[i + 1] == "a2s")
-                    {
-                        m_Protocol = ServerQueryServer.Protocol.A2S;
-                    }
-                    if (args[i + 1] == "tf2e")
-                    {
-                        m_Protocol = ServerQueryServer.Protocol.TF2E;
-                    }
-                    Debug.Log($"found query protocol: {args[i + 1]}");
-                }
-                if(args[i] == "-version")
-                {
-                    m_Version = args[i + 1];
-                }
-            }
+            
 
 
             QueryData data = new QueryData();
@@ -340,7 +331,7 @@ namespace Network
             }
 
 
-            m_ServerQueryManager.ServerStart(data, m_Protocol, queryPort);
+            m_ServerQueryManager.ServerStart(data, m_Protocol, m_QueryPort);
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn)
