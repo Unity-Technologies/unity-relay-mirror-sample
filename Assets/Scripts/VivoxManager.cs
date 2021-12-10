@@ -22,18 +22,20 @@ namespace Vivox
         private ILoginSession m_LoginSession;
         private IChannelSession m_ChannelSession;
         ChannelId m_CurrentChannelId;
-        public bool IsLoggedIn;
+        public bool isLoggedIn;
 
         private ChannelId m_PositionalChannelId;
         private ChannelId m_NonPositionalChannelId;
 
         private void Awake()
         {
-            IsLoggedIn = false;
+            isLoggedIn = false;
             unityRpc = GetComponent<UnityRpc>();
             client = new VivoxUnity.Client();
+
             // Uninitialize to clean up any old instances
             client.Uninitialize();
+
             //TODO: change to make log level dynamic
             VivoxConfig config = new VivoxConfig();
             config.InitialLogLevel = (vx_log_level)2;
@@ -89,7 +91,7 @@ namespace Vivox
                     {
                         BindLoginCallbackListeners(false, m_LoginSession);
                         Debug.Log(e.Message);
-                        IsLoggedIn = false;
+                        isLoggedIn = false;
                     }
                 });
             };
@@ -100,7 +102,7 @@ namespace Vivox
         {
             m_LoginSession.Logout();
             BindLoginCallbackListeners(false, m_LoginSession);
-            IsLoggedIn = false;
+            isLoggedIn = false;
         }
 
         public void OnLoginStatusChanged(object sender, PropertyChangedEventArgs loginArgs)
@@ -115,7 +117,7 @@ namespace Vivox
 
                 case LoginState.LoggedIn:
                     Debug.Log($"Logged In {m_LoginSession.LoginSessionId.Name}");
-                    IsLoggedIn = true;
+                    isLoggedIn = true;
                     break;
 
                     // no case for logged out. Vivox Logout function changes the state for logout but doesn't send events for it
@@ -199,7 +201,7 @@ namespace Vivox
             }
         }
 
-        public void LeaveChannel(IChannelSession channelToDisconnect)
+        public void LeaveChannel()
         {
             m_ChannelSession.Disconnect();
             if (m_NonPositionalChannelId != null)

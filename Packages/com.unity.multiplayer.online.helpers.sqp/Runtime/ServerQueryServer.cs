@@ -10,7 +10,7 @@ using Unity.Helpers.ServerQuery.Protocols.TF2E;
 
 namespace Unity.Helpers.ServerQuery
 {
-    public class SQPServer : IDisposable
+    public class ServerQueryServer : IDisposable
     {
         private bool m_disposed = false;
         private UdpClient m_socket;
@@ -23,7 +23,7 @@ namespace Unity.Helpers.ServerQuery
             TF2E
         }
         
-        public SQPServer(Protocol protocol, QueryData data, string iface = "0.0.0.0", int port = 0)
+        public ServerQueryServer(Protocol protocol, QueryData data, string iface = "0.0.0.0", int port = 0)
         {
             m_serverID = QueryDataProvider.RegisterServer(data);
             switch (protocol)

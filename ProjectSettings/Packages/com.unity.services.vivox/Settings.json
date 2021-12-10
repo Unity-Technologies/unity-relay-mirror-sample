@@ -11,7 +11,7 @@
             {
                 "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
                 "key": "domain",
-                "value": "{\"m_Value\":\" mtu1xp.vivox.com\"}"
+                "value": "{\"m_Value\":\"mtu1xp.vivox.com\"}"
             },
             {
                 "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
@@ -27,6 +27,11 @@
                 "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
                 "key": "tokenKey",
                 "value": "{\"m_Value\":\"v5l8mpqVE6RM8Hj9NaZLJ0iGzIGgdAIw\"}"
+            },
+            {
+                "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "key": "pulledCredentialProjectId",
+                "value": "{\"m_Value\":\"9134ca3b-e51a-4d98-ab4e-65149173f3e8\"}"
             }
         ]
     }

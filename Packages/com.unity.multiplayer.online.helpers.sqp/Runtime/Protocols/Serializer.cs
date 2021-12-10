@@ -174,7 +174,16 @@ namespace Unity.Helpers.ServerQuery
         {
             if(m_cursor + UIntSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
             var byteVal = BitConverter.GetBytes(val);
-            if(BitConverter.IsLittleEndian) Array.Reverse(byteVal);
+            byteVal.CopyTo(m_buffer, m_cursor);
+            m_cursor += byteVal.Length;
+            return UIntSize;
+        }
+
+        public int WriteUIntSQP(uint val)
+        {
+            if (m_cursor + UIntSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
+            var byteVal = BitConverter.GetBytes(val);
+            if (BitConverter.IsLittleEndian) Array.Reverse(byteVal);
             byteVal.CopyTo(m_buffer, m_cursor);
             m_cursor += byteVal.Length;
             return UIntSize;
@@ -196,6 +205,16 @@ namespace Unity.Helpers.ServerQuery
                 m_cursor += UIntSize;
             }
             
+            return val;
+        }
+
+        public uint ReadUIntSQP()
+        {
+            if (m_cursor + UIntSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to read the data.");
+            uint val = 0;
+            val = BitConverter.ToUInt32(m_buffer, m_cursor);
+            m_cursor += UIntSize;
+
             return val;
         }
 
@@ -222,7 +241,16 @@ namespace Unity.Helpers.ServerQuery
         {
             if(m_cursor + ULongSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
             var byteVal = BitConverter.GetBytes(val);
-            if(BitConverter.IsLittleEndian) Array.Reverse(byteVal);
+            byteVal.CopyTo(m_buffer, m_cursor);
+            m_cursor += byteVal.Length;
+            return ULongSize;
+        }
+
+        public int WriteULongSQP(ulong val)
+        {
+            if (m_cursor + ULongSize > m_buffer.Length) throw new InternalBufferOverflowException("Buffer is too small to serialize that data.");
+            var byteVal = BitConverter.GetBytes(val);
+            if (BitConverter.IsLittleEndian) Array.Reverse(byteVal);
             byteVal.CopyTo(m_buffer, m_cursor);
             m_cursor += byteVal.Length;
             return ULongSize;

@@ -6,13 +6,13 @@ using Vivox;
 
 public class Player : NetworkBehaviour
 {
-    [SyncVar(hook = nameof(OnHolaCountChanged))]
-    int holaCount = 0;
 
     [SyncVar]
-    public string m_SessionId = "";
+    public string sessionId = "";
 
-    private string m_Username = System.Guid.NewGuid().ToString();
+    public string username;
+    public string platform;
+
     private VivoxManager m_VivoxManager;
 
     void HandleMovement()
@@ -28,14 +28,15 @@ public class Player : NetworkBehaviour
 
     private void Awake()
     {
-        
+        username = SystemInfo.deviceName;
+        platform = Application.platform.ToString();
     }
 
     private void Start()
     {
         if (isLocalPlayer)
         {
-            m_VivoxManager = FindObjectOfType<VivoxManager>(); 
+            m_VivoxManager = FindObjectOfType<VivoxManager>();
         }
     }
 
@@ -53,12 +54,6 @@ public class Player : NetworkBehaviour
             m_VivoxManager.ChangeChannel(KeyCode.M);
         }
 
-        if (isLocalPlayer && Input.GetKeyDown(KeyCode.X))
-        {
-            Debug.Log("Sending Hola to Server!");
-            Hola();
-        }
-
         if (m_VivoxManager != null)
         {
             if (m_VivoxManager.GetAudioState() == VivoxUnity.ConnectionState.Connected && transform.hasChanged)
@@ -67,46 +62,10 @@ public class Player : NetworkBehaviour
                 transform.hasChanged = false;
             }
         }
-        //n == area 
-        //m == team 
-        //f == area PTT
-        //v == team PTT
     }
 
     public override void OnStartServer()
     {
         Debug.Log("Player has been spawned on the server!");
-    }
-
-    [Command]
-    void Hola()
-    {
-        Debug.Log("Received Hola from Client!");
-        holaCount += 1;
-        ReplyHola();
-    }
-
-    [Command]
-    public void CreateSessionId()
-    {
-        Debug.Log("Creating sessionId");
-        m_SessionId = m_SessionId = System.Guid.NewGuid().ToString();
-    }
-
-    [TargetRpc]
-    void ReplyHola()
-    {
-        Debug.Log("Received Hola from Server!");
-    }
-
-    [ClientRpc]
-    void TooHigh()
-    {
-        Debug.Log("Too high!");
-    }
-
-    void OnHolaCountChanged(int oldCount, int newCount)
-    {
-        Debug.Log($"We had {oldCount} holas, but now we have {newCount} holas!");
     }
 }
