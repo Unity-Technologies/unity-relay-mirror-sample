@@ -135,7 +135,7 @@ namespace Network
         }
         public override void OnStartServer()
         {
-            Debug.Log("Server Started!");
+            Debug.Log("MyNetworkManager: Server Started!");
 
             SQPServer.Protocol protocol = SQPServer.Protocol.TF2E;
             ushort port = 0;
@@ -195,7 +195,7 @@ namespace Network
 
         public override void OnStopServer()
         {
-            Debug.Log("Server Stopped!");
+            Debug.Log("MyNetworkManager: Server Stopped!");
             sqpManager.OnDestroy();
             m_SessionId = "";
         }
@@ -204,14 +204,14 @@ namespace Network
         {
             base.OnStopClient();
 
-            Debug.Log("Left the Server!");
+            Debug.Log("MyNetworkManager: Left the Server!");
             m_VivoxManager.LeaveChannel(null);
             m_SessionId = "";
         }
 
         public override void OnClientConnect(NetworkConnection conn)
         {
-            Debug.Log($"{m_VivoxManager.GetName()} connected to Server!");
+            Debug.Log($"MyNetworkManager: {m_VivoxManager.GetName()} Connected to Server!");
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn)
