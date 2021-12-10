@@ -10,6 +10,9 @@ public class Player : NetworkBehaviour
     [SyncVar]
     public string sessionId = "";
 
+    public string username;
+    public string platform;
+
     private VivoxManager m_VivoxManager;
 
     void HandleMovement()
@@ -23,11 +26,17 @@ public class Player : NetworkBehaviour
         }
     }
 
+    private void Awake()
+    {
+        username = SystemInfo.deviceName;
+        platform = Application.platform.ToString();
+    }
+
     private void Start()
     {
         if (isLocalPlayer)
         {
-            m_VivoxManager = FindObjectOfType<VivoxManager>(); 
+            m_VivoxManager = FindObjectOfType<VivoxManager>();
         }
     }
 

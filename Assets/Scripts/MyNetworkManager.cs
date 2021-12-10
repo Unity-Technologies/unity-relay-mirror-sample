@@ -18,14 +18,17 @@ namespace Network
         private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
         private UnityRpc m_UnityRpc;
+
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
         private bool m_IsDedicatedServer;
+        private ServerQueryServer.Protocol m_Protocol;
         private string m_Version = "001";
         public bool isLoggedIn = false;
 
         private List<Player> m_Players;
+        private byte m_PlayerIndex = 1;
 
         public override void Awake()
         {
@@ -150,7 +153,9 @@ namespace Network
         {
             Debug.Log("Server Started!");
 
-            ServerQueryServer.Protocol protocol = ServerQueryServer.Protocol.SQP;
+            m_SessionId = System.Guid.NewGuid().ToString();
+            m_ServerQueryManager = GetComponent<ServerQueryManager>();
+            m_Protocol = ServerQueryServer.Protocol.SQP;
             ushort port = 0;
 
             string[] args = System.Environment.GetCommandLineArgs();
@@ -173,15 +178,15 @@ namespace Network
                 {
                     if(args[i+1] == "sqp")
                     {
-                        protocol = ServerQueryServer.Protocol.SQP;
+                        m_Protocol = ServerQueryServer.Protocol.SQP;
                     }
                     if (args[i + 1] == "a2s")
                     {
-                        protocol = ServerQueryServer.Protocol.A2S;
+                        m_Protocol = ServerQueryServer.Protocol.A2S;
                     }
                     if (args[i + 1] == "tf2e")
                     {
-                        protocol = ServerQueryServer.Protocol.TF2E;
+                        m_Protocol = ServerQueryServer.Protocol.TF2E;
                     }
                     Debug.Log($"found query protocol: {args[i + 1]}");
                 }
@@ -191,17 +196,14 @@ namespace Network
                 }
             }
 
-            m_SessionId = System.Guid.NewGuid().ToString();
-            m_ServerQueryManager = GetComponent<ServerQueryManager>();
-
 
             QueryData data = new QueryData();
 
-            if (protocol == ServerQueryServer.Protocol.SQP)
+            if (m_Protocol == ServerQueryServer.Protocol.SQP)
             {
                 // SQP Server Data
                 data.SQPServerInfo.currentPlayers = 0;
-                data.SQPServerInfo.maxPlayers = int.MaxValue;
+                data.SQPServerInfo.maxPlayers = 8;
                 data.SQPServerInfo.serverName = "Default Server Name";
                 data.SQPServerInfo.gameType = "Default Game Type";
                 data.SQPServerInfo.buildID = "Default Build ID";
@@ -271,17 +273,17 @@ namespace Network
                 data.SQPTeamInfo.teams.Add(teamTwo);
             }
 
-            if (protocol == ServerQueryServer.Protocol.A2S)
+            if (m_Protocol == ServerQueryServer.Protocol.A2S)
             {
                 // A2S Server Data
                 data.A2SServerInfo.protocol = 0;
                 data.A2SServerInfo.serverName = "Default Server Name";
                 data.A2SServerInfo.serverMap = "Default Scene";
-                data.A2SServerInfo.folder = "C:/default";
+                data.A2SServerInfo.folder = Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'));
                 data.A2SServerInfo.gameName = "Unity Mirror Sample";
                 data.A2SServerInfo.steamID = 12345;
                 data.A2SServerInfo.playerCount = 2;
-                data.A2SServerInfo.maxPlayers = byte.MaxValue;
+                data.A2SServerInfo.maxPlayers = 8;
                 data.A2SServerInfo.botCount = 2;
                 data.A2SServerInfo.serverType = (byte)'d';
                 data.A2SServerInfo.visibility = 0;
@@ -308,14 +310,14 @@ namespace Network
                 data.A2SPlayerInfo.players.Add(player);
             }
 
-            if (protocol == ServerQueryServer.Protocol.TF2E)
+            if (m_Protocol == ServerQueryServer.Protocol.TF2E)
             {
                 data.TF2EQueryInfo.buildName = "Test Build";
                 data.TF2EQueryInfo.dataCenter = "Test Datacenter";
                 data.TF2EQueryInfo.gameMode = "Test Game Mode";
 
                 data.TF2EQueryInfo.basicInfo.port = 7777;
-                data.TF2EQueryInfo.basicInfo.platform = "PC";
+                data.TF2EQueryInfo.basicInfo.platform = Application.platform.ToString();
                 data.TF2EQueryInfo.basicInfo.playlistVersion = "N/A";
                 data.TF2EQueryInfo.basicInfo.playlistNum = 0;
 
@@ -352,7 +354,7 @@ namespace Network
                 data.TF2EQueryInfo.teams.Add(teamTwo);
 
                 TF2EClient clientOne = new TF2EClient();
-                clientOne.id = 1;
+                clientOne.id = 21;
                 clientOne.name = "Titanfall";
                 clientOne.teamID = teamOne.id;
                 clientOne.address = "127.0.0.1";
@@ -364,7 +366,7 @@ namespace Network
                 clientOne.deaths = 1;
 
                 TF2EClient clientTwo = new TF2EClient();
-                clientTwo.id = 2;
+                clientTwo.id = 22;
                 clientTwo.name = "Titangebackup";
                 clientTwo.teamID = teamTwo.id;
                 clientTwo.address = "127.0.0.1";
@@ -380,13 +382,14 @@ namespace Network
             }
 
 
-            m_ServerQueryManager.ServerStart(data, protocol, port);
+            m_ServerQueryManager.ServerStart(data, m_Protocol, port);
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
             base.OnServerAddPlayer(conn);
             // Update server query if any players are added to the server
+            QueryData data = m_ServerQueryManager.GetQueryData();
             foreach (KeyValuePair<uint, NetworkIdentity> kvp in NetworkServer.spawned)
             {
                 Player comp = kvp.Value.GetComponent<Player>();
@@ -396,11 +399,74 @@ namespace Network
                 {
                     comp.sessionId = m_SessionId;
                     m_Players.Add(comp);
+
+                    if (m_Protocol == ServerQueryServer.Protocol.SQP)
+                    {
+                        data.SQPServerInfo.currentPlayers = m_Players.Count;
+                        data.SQPPlayerInfo.playerCount++;
+
+                        SQPFieldKeyValue playerField = new SQPFieldKeyValue();
+                        playerField.key = "PlayerName";
+                        playerField.type = (byte)SQPDynamicType.String;
+                        playerField.valueString = comp.username;
+
+                        List<SQPFieldKeyValue> fields = new List<SQPFieldKeyValue>();
+                        fields.Add(playerField);
+
+                        SQPFieldContainer playerOne = new SQPFieldContainer();
+                        playerOne.fields = fields;
+
+                        data.SQPPlayerInfo.players.Add(playerOne);
+                    }
+
+                    if(m_Protocol == ServerQueryServer.Protocol.A2S)
+                    {
+                        data.A2SServerInfo.playerCount++;
+                        data.A2SPlayerInfo.numPlayers++;
+
+                        A2SPlayerResponsePacketPlayer player = new A2SPlayerResponsePacketPlayer();
+                        player.index = m_PlayerIndex;
+                        player.playerName = comp.username;
+                        player.score = 0;
+                        player.duration = 0;
+
+                        data.A2SPlayerInfo.players.Add(player);
+
+                        m_PlayerIndex++;
+                    }
+
+                    if(m_Protocol == ServerQueryServer.Protocol.TF2E)
+                    {
+                        data.TF2EQueryInfo.basicInfo.numClients++;
+
+                        if (data.TF2EQueryInfo.basicInfo.platformPlayers.ContainsKey(comp.platform))
+                        {
+                            // Increment the number of players on the platform if the platform exists
+                            data.TF2EQueryInfo.basicInfo.platformPlayers[comp.platform]++;
+                        }
+                        else
+                        {
+                            // Add the new platform with a player count of 1
+                            data.TF2EQueryInfo.basicInfo.platformPlayers.Add(comp.platform, 1);
+                        }
+
+                        TF2EClient client = new TF2EClient();
+                        client.id = m_PlayerIndex;
+                        client.name = comp.username;
+                        client.teamID = 1;
+                        client.address = conn.address;
+                        client.ping = 30;
+                        client.packetsReceived = 0;
+                        client.packetsDropped = 0;
+                        client.score = 0;
+                        client.kills = 0;
+                        client.deaths = 0;
+
+                        data.TF2EQueryInfo.clients.Add(client);
+                    }
                 }
             }
 
-            QueryData data = m_ServerQueryManager.GetQueryData();
-            data.SQPServerInfo.currentPlayers = m_Players.Count;
             m_ServerQueryManager.UpdateQueryData(data);
         }
 
