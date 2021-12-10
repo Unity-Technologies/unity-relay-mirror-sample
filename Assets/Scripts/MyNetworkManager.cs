@@ -3,6 +3,7 @@ using UnityEngine;
 using Mirror;
 using Vivox;
 using Rpc;
+using kcp2k;
 using Unity.Helpers.ServerQuery.ServerQuery;
 using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery;
@@ -25,6 +26,7 @@ namespace Network
         private bool m_IsDedicatedServer;
         private ServerQueryServer.Protocol m_Protocol;
         private string m_Version = "001";
+        private ushort m_Port = 0;
         public bool isLoggedIn = false;
 
         private List<Player> m_Players;
@@ -34,6 +36,20 @@ namespace Network
         {
             base.Awake();
             m_Players = new List<Player>();
+
+            string[] args = System.Environment.GetCommandLineArgs();
+            for(int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-port")
+                {
+                    KcpTransport kcpTransport = GetComponent<KcpTransport>();
+                    if(args[i + 1].Length == 4)
+                    {
+                        m_Port = ushort.Parse(args[i + 1]);
+                        kcpTransport.Port = m_Port;
+                    }
+                }
+            }
         }
 
         public override void Start()
@@ -155,9 +171,9 @@ namespace Network
 
             m_SessionId = System.Guid.NewGuid().ToString();
             m_ServerQueryManager = GetComponent<ServerQueryManager>();
-            m_Protocol = ServerQueryServer.Protocol.SQP;
-            ushort port = 0;
-
+            m_Protocol = ServerQueryServer.Protocol.TF2E;
+            ushort queryPort = 0;
+            
             string[] args = System.Environment.GetCommandLineArgs();
 
             for (int i = 0; i < args.Length; i++)
@@ -166,8 +182,8 @@ namespace Network
                 {
                     try
                     {
-                        port = ushort.Parse(args[i+1]);
-                        Debug.Log($"found port {port}");
+                        queryPort = ushort.Parse(args[i+1]);
+                        Debug.Log($"found port {queryPort}");
                     }
                     catch 
                     {
@@ -208,7 +224,7 @@ namespace Network
                 data.SQPServerInfo.gameType = "Default Game Type";
                 data.SQPServerInfo.buildID = "Default Build ID";
                 data.SQPServerInfo.map = "Default Map Name";
-                data.SQPServerInfo.gamePort = 0;
+                data.SQPServerInfo.gamePort = m_Port;
 
                 // SQP Rule Data
                 SQPServerRule rule = new SQPServerRule();
@@ -219,31 +235,8 @@ namespace Network
                 data.SQPServerRules.rules.Add(rule);
 
                 // SQP Player Data
-                data.SQPPlayerInfo.playerCount = 2;
-                data.SQPPlayerInfo.fieldCount = 1;
-
-                SQPFieldKeyValue fieldPlayerOne = new SQPFieldKeyValue();
-                fieldPlayerOne.key = "PlayerName";
-                fieldPlayerOne.type = (byte)SQPDynamicType.String;
-                fieldPlayerOne.valueString = "Jeff";
-
-                SQPFieldKeyValue fieldPlayerTwo = new SQPFieldKeyValue();
-                fieldPlayerTwo.key = "PlayerName";
-                fieldPlayerTwo.type = (byte)SQPDynamicType.String;
-                fieldPlayerTwo.valueString = "John";
-
-                List<SQPFieldKeyValue> fieldsOne = new List<SQPFieldKeyValue>();
-                fieldsOne.Add(fieldPlayerOne);
-                List<SQPFieldKeyValue> fieldsTwo = new List<SQPFieldKeyValue>(); ;
-                fieldsTwo.Add(fieldPlayerTwo);
-
-                SQPFieldContainer playerOne = new SQPFieldContainer();
-                playerOne.fields = fieldsOne;
-                SQPFieldContainer playerTwo = new SQPFieldContainer();
-                playerTwo.fields = fieldsTwo;
-
-                data.SQPPlayerInfo.players.Add(playerOne);
-                data.SQPPlayerInfo.players.Add(playerTwo);
+                data.SQPPlayerInfo.playerCount = 0;
+                data.SQPPlayerInfo.fieldCount = 1;  
 
                 // SQP Team Data
                 data.SQPTeamInfo.teamCount = 2;
@@ -282,9 +275,9 @@ namespace Network
                 data.A2SServerInfo.folder = Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'));
                 data.A2SServerInfo.gameName = "Unity Mirror Sample";
                 data.A2SServerInfo.steamID = 12345;
-                data.A2SServerInfo.playerCount = 2;
+                data.A2SServerInfo.playerCount = 0;
                 data.A2SServerInfo.maxPlayers = 8;
-                data.A2SServerInfo.botCount = 2;
+                data.A2SServerInfo.botCount = 0;
                 data.A2SServerInfo.serverType = (byte)'d';
                 data.A2SServerInfo.visibility = 0;
                 data.A2SServerInfo.valveAntiCheat = 0;
@@ -300,14 +293,8 @@ namespace Network
                 data.A2SServerRules.rules.Add(rule);
 
                 // A2S Player data
-                A2SPlayerResponsePacketPlayer player = new A2SPlayerResponsePacketPlayer();
-                player.index = 0;
-                player.playerName = "TestName";
-                player.score = 23;
-                player.duration = 23.5f;
 
-                data.A2SPlayerInfo.numPlayers = 1;
-                data.A2SPlayerInfo.players.Add(player);
+                data.A2SPlayerInfo.numPlayers = 0;
             }
 
             if (m_Protocol == ServerQueryServer.Protocol.TF2E)
@@ -316,15 +303,13 @@ namespace Network
                 data.TF2EQueryInfo.dataCenter = "Test Datacenter";
                 data.TF2EQueryInfo.gameMode = "Test Game Mode";
 
-                data.TF2EQueryInfo.basicInfo.port = 7777;
+                data.TF2EQueryInfo.basicInfo.port = m_Port;
                 data.TF2EQueryInfo.basicInfo.platform = Application.platform.ToString();
                 data.TF2EQueryInfo.basicInfo.playlistVersion = "N/A";
                 data.TF2EQueryInfo.basicInfo.playlistNum = 0;
 
-                data.TF2EQueryInfo.basicInfo.platformPlayers.Add("PC", 1);
-
                 data.TF2EQueryInfo.basicInfo.playlistName = "Team Deathmatch";
-                data.TF2EQueryInfo.basicInfo.numClients = (byte)m_Players.Count;
+                data.TF2EQueryInfo.basicInfo.numClients = 0;
                 data.TF2EQueryInfo.basicInfo.maxClients = 16;
                 data.TF2EQueryInfo.basicInfo.map = "Highrise";
 
@@ -336,7 +321,7 @@ namespace Network
                 data.TF2EQueryInfo.matchState.phase = 0;
                 data.TF2EQueryInfo.matchState.maxRounds = 3;
                 data.TF2EQueryInfo.matchState.roundsWonIMC = 0;
-                data.TF2EQueryInfo.matchState.roundsWonMilitia = 1;
+                data.TF2EQueryInfo.matchState.roundsWonMilitia = 0;
                 data.TF2EQueryInfo.matchState.timeLimitSeconds = 60;
                 data.TF2EQueryInfo.matchState.timePassedSeconds = 5;
                 data.TF2EQueryInfo.matchState.maxScore = 20;
@@ -352,37 +337,10 @@ namespace Network
 
                 data.TF2EQueryInfo.teams.Add(teamOne);
                 data.TF2EQueryInfo.teams.Add(teamTwo);
-
-                TF2EClient clientOne = new TF2EClient();
-                clientOne.id = 21;
-                clientOne.name = "Titanfall";
-                clientOne.teamID = teamOne.id;
-                clientOne.address = "127.0.0.1";
-                clientOne.ping = 30;
-                clientOne.packetsReceived = 100;
-                clientOne.packetsDropped = 5;
-                clientOne.score = 10;
-                clientOne.kills = 11;
-                clientOne.deaths = 1;
-
-                TF2EClient clientTwo = new TF2EClient();
-                clientTwo.id = 22;
-                clientTwo.name = "Titangebackup";
-                clientTwo.teamID = teamTwo.id;
-                clientTwo.address = "127.0.0.1";
-                clientTwo.ping = 40;
-                clientTwo.packetsReceived = 105;
-                clientTwo.packetsDropped = 10;
-                clientTwo.score = 1;
-                clientTwo.kills = 1;
-                clientTwo.deaths = 10;
-
-                data.TF2EQueryInfo.clients.Add(clientOne);
-                data.TF2EQueryInfo.clients.Add(clientTwo);
             }
 
 
-            m_ServerQueryManager.ServerStart(data, m_Protocol, port);
+            m_ServerQueryManager.ServerStart(data, m_Protocol, queryPort);
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn)
