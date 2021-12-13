@@ -14,7 +14,7 @@ The game backend in this example is a [Golang](https://golang.org/) application.
 
 ## Game Client and Game Server
 
-You will need Unity Editor version 2019.4.11f1, this can be obtained through the Unity Hub or on the Unity website itself. The MirrorSample was created using this version and requires it to be opened properly.
+You will need Unity Editor version 2020.3.24f1, this can be obtained through the Unity Hub or on the Unity website itself. The MirrorSample was created using this version and requires it to be opened properly.
 
 ### Windows
 
@@ -24,7 +24,7 @@ You will need Unity Editor version 2019.4.11f1, this can be obtained through the
 
 1. To cross-compile for Linux, you will need to go into the Unity Hub and select the installs section on the left hand side.
 
-2. Find your version number (2019.4.11f1) and select the gear icon next to it. Then select add modules.
+2. Find your version number (2020.3.24f1) and select the gear icon next to it. Then select add modules.
 
 3. Scroll down and check in both the module for Linux Build Support (IL2CPP & Mono) and press the install. You will now be able to select Linux as a build option within Unity.
 

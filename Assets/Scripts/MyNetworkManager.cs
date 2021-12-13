@@ -19,7 +19,6 @@ namespace Network
         private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
         private UnityRpc m_UnityRpc;
-
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
@@ -43,11 +42,11 @@ namespace Network
             {
                 if (args[i] == "-port")
                 {
-                    KcpTransport kcpTransport = GetComponent<KcpTransport>();
+                    UtpTransport.UtpTransport utpTransport = GetComponent<UtpTransport.UtpTransport>();
                     if(args[i + 1].Length == 4)
                     {
                         m_Port = ushort.Parse(args[i + 1]);
-                        kcpTransport.Port = m_Port;
+                        utpTransport.Port = m_Port;
                     }
                 }
                 if (args[i] == "-queryport")
@@ -187,15 +186,9 @@ namespace Network
 
         }
 
-        internal void Logout()
-        {
-            m_UnityRpc.SetAuthToken("");
-            isLoggedIn = false;
-        }
-
         public override void OnStartServer()
         {
-            Debug.Log("Server Started!");
+            Debug.Log("MyNetworkManager: Server Started!");
 
             m_SessionId = System.Guid.NewGuid().ToString();
             m_ServerQueryManager = GetComponent<ServerQueryManager>();
@@ -334,6 +327,12 @@ namespace Network
             m_ServerQueryManager.ServerStart(data, m_Protocol, m_QueryPort);
         }
 
+        internal void Logout()
+        {
+            m_UnityRpc.SetAuthToken("");
+            isLoggedIn = false;
+        }
+
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
             base.OnServerAddPlayer(conn);
@@ -419,6 +418,13 @@ namespace Network
             m_ServerQueryManager.UpdateQueryData(data);
         }
 
+        public override void OnStopServer()
+        {
+            Debug.Log("MyNetworkManager: Server Stopped!");
+            m_ServerQueryManager.OnDestroy();
+            m_SessionId = "";
+        }
+
         public override void OnServerDisconnect(NetworkConnection conn)
         {
             base.OnServerDisconnect(conn);
@@ -449,18 +455,11 @@ namespace Network
             }
         }
 
-        public override void OnStopServer()
-        {
-            Debug.Log("Server Stopped!");
-            m_ServerQueryManager.OnDestroy();
-            m_SessionId = "";
-        }
-
         public override void OnStopClient()
         {
             base.OnStopClient();
 
-            Debug.Log("Left the Server!");
+            Debug.Log("MyNetworkManager: Left the Server!");
             m_VivoxManager.LeaveChannel();
             localPlayer = null;
 
@@ -469,7 +468,7 @@ namespace Network
 
         public override void OnClientConnect(NetworkConnection conn)
         {
-            Debug.Log($"{m_VivoxManager.GetName()} connected to Server!");
+            Debug.Log($"MyNetworkManager: {m_VivoxManager.GetName()} Connected to Server!");
         }
 
         public override void OnClientDisconnect(NetworkConnection conn)
