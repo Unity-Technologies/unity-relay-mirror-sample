@@ -240,8 +240,8 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E.Collections
         public TF2EBasicInfo basicInfo;
         public TF2EPerformanceInfo performanceInfo;
         public TF2EMatchState matchState;
-        public TF2ETeam[] teams;
-        public TF2EClient[] clients;
+        public List<TF2ETeam> teams;
+        public List<TF2EClient> clients;
 
         public TF2EResponsePacket() 
         {
@@ -250,6 +250,8 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E.Collections
             basicInfo = new TF2EBasicInfo();
             performanceInfo = new TF2EPerformanceInfo();
             matchState = new TF2EMatchState();
+            teams = new List<TF2ETeam>();
+            clients = new List<TF2EClient>();
         }
 
         public int Serialize(Serializer ser)

@@ -46,9 +46,9 @@ namespace UtpTransport
 		/// <summary>
 		/// Attempt to connect to a listen server at a given IP/port. Currently only supports IPV4.
 		/// </summary>
-		/// <param name="address">The address at which the listen server is running.</param>
+		/// <param name="host">The host address at which the listen server is running.</param>
 		/// <param name="port">The port which the listen server is listening on.</param>
-		public void Connect(string address, ushort port)
+		public void Connect(string host, ushort port)
 		{
 			if (IsConnected())
 			{
@@ -61,12 +61,12 @@ namespace UtpTransport
 			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 			m_Connection = new UtpClientConnection(OnConnected, OnReceivedData, OnDisconnected);
 
-			if (address == "localhost")
+			if (host == "localhost")
 			{
-				address = "127.0.0.1";
+				host = "127.0.0.1";
 			}
 
-			NetworkEndPoint endpoint = NetworkEndPoint.Parse(address, port); // TODO: also support IPV6
+			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
 			m_Connection.Connect(m_Driver, endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + endpoint.Address);

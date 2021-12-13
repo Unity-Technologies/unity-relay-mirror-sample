@@ -6,7 +6,7 @@ namespace Unity.Helpers.ServerQuery.ServerQuery
 {
     public class ServerQueryManager : MonoBehaviour
     {
-        private SQPServer m_server;
+        private ServerQueryServer m_server;
 
         [SerializeField]
         private string m_interface = "0.0.0.0";
@@ -29,9 +29,9 @@ namespace Unity.Helpers.ServerQuery.ServerQuery
             //m_server = new SQPServer(m_protocol, m_interface, m_port);
         }
 
-        public void ServerStart(QueryData data, SQPServer.Protocol protocol, ushort port)
+        public void ServerStart(QueryData data, ServerQueryServer.Protocol protocol, ushort port)
         {
-            m_server = new SQPServer(protocol, data, m_interface, port);
+            m_server = new ServerQueryServer(protocol, data, m_interface, port);
         }
 
         //./go-svrquery -addr localhost:12121 -proto sqp

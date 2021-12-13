@@ -4,7 +4,7 @@ using System.ComponentModel;
 using UnityEngine;
 using Network;
 using Mirror;
-using Rpc;
+using Vivox;
 
 namespace UI
 {
@@ -19,8 +19,9 @@ namespace UI
     [HelpURL("https://mirror-networking.com/docs/Components/NetworkManagerHUD.html")]
     public class MenuUI : MonoBehaviour
     {
-        MyNetworkManager manager;
-        private UnityRpc unityRpc;
+        private MyNetworkManager m_Manager;
+
+        private VivoxManager m_VivoxManger;
 
         /// <summary>
         /// Whether to show the default control HUD at runtime.
@@ -39,7 +40,8 @@ namespace UI
 
         void Awake()
         {
-            manager = GetComponent<MyNetworkManager>();
+            m_Manager = GetComponent<MyNetworkManager>();
+            m_VivoxManger = GetComponent<VivoxManager>();
         }
 
         void OnGUI()
@@ -49,7 +51,7 @@ namespace UI
             {
                 if (arg == "-server")
                 {
-                    manager.StartServer();
+                    m_Manager.StartServer();
                     showGUI = false;
                 }
             }
@@ -88,24 +90,6 @@ namespace UI
         {
             if (!NetworkClient.active)
             {
-                // Server + Client
-                if (Application.platform != RuntimePlatform.WebGLPlayer)
-                {
-                    if (GUILayout.Button("Host (Server + Client)"))
-                    {
-                        manager.StartHost();
-                    }
-                }
-
-                // Client + IP
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Client"))
-                {
-                    manager.StartClient();
-                }
-                manager.networkAddress = GUILayout.TextField(manager.networkAddress);
-                GUILayout.EndHorizontal();
-
                 // Server Only
                 if (Application.platform == RuntimePlatform.WebGLPlayer)
                 {
@@ -114,33 +98,76 @@ namespace UI
                 }
                 else
                 {
-                    if (GUILayout.Button("Server Only")) manager.StartServer();
+                    if (GUILayout.Button("Server Only")) m_Manager.StartServer();
                 }
 
-                if (GUILayout.Button("Auth Login"))
-                { 
-                    manager.Login(); 
-                }
-                if (GUILayout.Button("Vivox Login"))
+                if (m_Manager.isLoggedIn)
                 {
-                    manager.VivoxLogin();
+                    if (m_VivoxManger.isLoggedIn)
+                    {
+                        // Server + Client
+                        if (Application.platform != RuntimePlatform.WebGLPlayer)
+                        {
+                            if (GUILayout.Button("Host (Server + Client)"))
+                            {
+                                m_Manager.StartHost();
+                            }
+                        }
+
+                        // Client + IP
+                        GUILayout.BeginHorizontal();
+                        if (GUILayout.Button("Client"))
+                        {
+                            m_Manager.StartClient();
+                        }
+                        m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (GUILayout.Button("Auth Logout"))
+                    {
+                        m_Manager.Logout();
+                    }
+
+                    if (!m_VivoxManger.isLoggedIn)
+                    {
+                        if (GUILayout.Button("Vivox Login"))
+                        {
+                            m_Manager.VivoxLogin();
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Vivox Logout"))
+                        {
+                            m_VivoxManger.Logout();
+                        }
+                    }
+
+                    if (GUILayout.Button("Start Matchmaking"))
+                    {
+                        m_Manager.RequestMatch();
+                    }
+                    if (GUILayout.Button("Request Multiplay Server"))
+                    {
+                        m_Manager.CreateMatch();
+                    }
                 }
-                if (GUILayout.Button("Request Match"))
+                else
                 {
-                    manager.RequestMatch();
-                }
-                if (GUILayout.Button("Create Match"))
-                {
-                    manager.RequestMatch();
+                    if (GUILayout.Button("Auth Login"))
+                    {
+                        m_Manager.Login();
+                    }
                 }
             }
             else
             {
                 // Connecting
-                GUILayout.Label("Connecting to " + manager.networkAddress + "..");
+                GUILayout.Label("Connecting to " + m_Manager.networkAddress + "..");
                 if (GUILayout.Button("Cancel Connection Attempt"))
                 {
-                    manager.StopClient();
+                    m_Manager.StopClient();
                 }
             }
         }
@@ -154,7 +181,7 @@ namespace UI
             }
             if (NetworkClient.isConnected)
             {
-                GUILayout.Label("Client: address=" + manager.networkAddress);
+                GUILayout.Label("Client: address=" + m_Manager.networkAddress);
             }
         }
 
@@ -165,7 +192,7 @@ namespace UI
             {
                 if (GUILayout.Button("Stop Host"))
                 {
-                    manager.StopHost();
+                    m_Manager.StopHost();
                 }
             }
             // stop client if client-only
@@ -173,7 +200,7 @@ namespace UI
             {
                 if (GUILayout.Button("Stop Client"))
                 {
-                    manager.StopClient();
+                    m_Manager.StopClient();
                 }
             }
             // stop server if server-only
@@ -181,7 +208,7 @@ namespace UI
             {
                 if (GUILayout.Button("Stop Server"))
                 {
-                    manager.StopServer();
+                    m_Manager.StopServer();
                 }
             }
         }

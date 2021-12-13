@@ -1,5 +1,6 @@
 using System.Net;
 using UnityEngine;
+using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery.Protocols.A2S.Collections;
 
 namespace Unity.Helpers.ServerQuery.Protocols.A2S
@@ -22,7 +23,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
                 // The packet is a challenge request
                 case ((byte)'T'):
                     Debug.Log("sending A2S info packet");
-                    return SendA2SInfoPacket();
+                    return SendA2SInfoPacket(serverID);
                 // The packet is a query request
                 case ((byte)'V'):
                     if(requestPacket.challengeNumber == -1)
@@ -31,7 +32,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
                     }
                     else if (requestPacket.challengeNumber == kA2SChallengeNumber)
                     {
-                        return SendA2SRulesPacket();
+                        return SendA2SRulesPacket(serverID);
                     }
                     else
                     {
@@ -45,7 +46,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
                     }
                     else if (requestPacket.challengeNumber == kA2SChallengeNumber)
                     {
-                        return SendA2SPlayerPacket();
+                        return SendA2SPlayerPacket(serverID);
                     }
                     else
                     {
@@ -58,39 +59,28 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
             }
         }
 
-        private byte[] SendA2SInfoPacket()
+        private byte[] SendA2SInfoPacket(uint serverID)
         {
-            string version = "001";
-            string[] args = System.Environment.GetCommandLineArgs();
-
-            for(int i = 0; i < args.Length; i++)
-            {
-                if(args[i] == "-version")
-                {
-                    version = args[i + 1];
-                    break;
-                }
-            }
+            var info = QueryDataProvider.GetServerData(serverID).A2SServerInfo;
 
             int packetSize =
-                Serializer.IntSize + // default header
-                Serializer.ByteSize + // response header
-                Serializer.ByteSize + // protocol
-                Serializer.StringSize("Unity Dedicated Server") + // server name
-                Serializer.StringSize("Generic map name here") + // server map
-                Serializer.StringSize("Return a path here") + // folder
-                Serializer.StringSize("Unity Mirror Sample") + // game name
-                Serializer.ShortSize + // steam app id
-                Serializer.ByteSize + // player count
-                Serializer.ByteSize + // max players
-                Serializer.ByteSize + // bot count
-                Serializer.ByteSize + // server type
-                Serializer.ByteSize + // environment
-                Serializer.ByteSize + // visibility
-                Serializer.ByteSize + // valve anti-cheat
-                Serializer.StringSize(version) + // version
-                Serializer.ByteSize + 1; // extra data flag // TODO: off by one error here? 
-
+                Serializer.IntSize + // Default header
+                Serializer.ByteSize + // Response header
+                Serializer.ByteSize + // Protocol
+                Serializer.StringSize(info.serverName) + // Server name
+                Serializer.StringSize(info.serverMap) + // Server map
+                Serializer.StringSize(info.folder) + // Folder
+                Serializer.StringSize(info.gameName) + // Game name
+                Serializer.ShortSize + // Steam app id
+                Serializer.ByteSize + // Player count
+                Serializer.ByteSize + // Max players
+                Serializer.ByteSize + // Bot count
+                Serializer.ByteSize + // Server type
+                Serializer.ByteSize + // Environment
+                Serializer.ByteSize + // Visibility
+                Serializer.ByteSize + // Valve anti-cheat
+                Serializer.StringSize(info.version) + // Version
+                Serializer.ByteSize + 1; // Extra data flag 
 
             byte[] response = new byte[packetSize];
 
@@ -99,16 +89,16 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
             A2SInfoResponsePacket infoResponsePacket = new A2SInfoResponsePacket(); 
             infoResponsePacket.defaultHeader = -1;
             infoResponsePacket.responseHeader = (byte)'I';
-            infoResponsePacket.protocol = 0;
-            infoResponsePacket.serverName = "Unity Dedicated Server";
-            infoResponsePacket.serverMap = "Generic map name here";
-            infoResponsePacket.folder = "Return a path here";
-            infoResponsePacket.gameName = "Unity Mirror Sample";
-            infoResponsePacket.steamId = 12345;
-            infoResponsePacket.playerCount = 2;
-            infoResponsePacket.maxPlayers = 16;
-            infoResponsePacket.botCount = 2;
-            infoResponsePacket.serverType = (byte)'d';
+            infoResponsePacket.protocol = info.protocol;
+            infoResponsePacket.serverName = info.serverName;
+            infoResponsePacket.serverMap = info.serverMap;
+            infoResponsePacket.folder = info.folder;
+            infoResponsePacket.gameName = info.gameName;
+            infoResponsePacket.steamId = info.steamID;
+            infoResponsePacket.playerCount = info.playerCount;
+            infoResponsePacket.maxPlayers = info.maxPlayers;
+            infoResponsePacket.botCount = info.botCount;
+            infoResponsePacket.serverType = info.serverType;
 
             if(Application.platform == RuntimePlatform.WindowsPlayer)
             {
@@ -123,25 +113,30 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
                 infoResponsePacket.environment = (byte)'m';
             }
 
-            infoResponsePacket.visibility = 0; // All servers on multiplay are considered public
-            infoResponsePacket.valveAntiCheat = 0; // We are not using valve anti-cheat
-            infoResponsePacket.version = version;
-            infoResponsePacket.extraDataFlag = 0;
+            infoResponsePacket.visibility = info.visibility; // All servers on multiplay are considered public
+            infoResponsePacket.valveAntiCheat = info.valveAntiCheat;
+            infoResponsePacket.version = info.version;
+            infoResponsePacket.extraDataFlag = info.extraDataFlag;
 
             infoResponsePacket.Serialize(ser);
 
             return response;
         }
-        private byte[] SendA2SPlayerPacket()
+        private byte[] SendA2SPlayerPacket(uint serverID)
         {
+            var info = QueryDataProvider.GetServerData(serverID).A2SPlayerInfo;
             int packetSize =
-                Serializer.IntSize + // default header
-                Serializer.ByteSize + // response header
-                Serializer.ShortSize + // num players
-                Serializer.ByteSize + // 1st player index
-                Serializer.StringSize("TestName") + // 1st player name
-                Serializer.IntSize + // 1st player score
-                Serializer.FloatSize + 1; // 1st player duration
+                Serializer.IntSize + // Default header
+                Serializer.ByteSize + // Response header
+                Serializer.ShortSize + 1; // Num players
+
+            foreach(A2SPlayerResponsePacketPlayer player in info.players)
+            {
+                packetSize += Serializer.ByteSize + // Player index
+                    Serializer.StringSize(player.playerName) + // Player name
+                    Serializer.IntSize + // Player score
+                    Serializer.FloatSize; // player duration
+            }
 
             byte[] response = new byte[packetSize];
 
@@ -150,32 +145,27 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
             A2SPlayerResponsePacket playerResponsePacket = new A2SPlayerResponsePacket();
             playerResponsePacket.defaultHeader = -1;
             playerResponsePacket.responseHeader = (byte)'D';
-            playerResponsePacket.numPlayers = 1;
-
-            A2SPlayerResponsePacketPlayer player = new A2SPlayerResponsePacketPlayer();
-            player.index = 0;
-            player.playerName = "TestName";
-            player.score = 23;
-            player.duration = 23.5f;
-
-            A2SPlayerResponsePacketPlayer[] playerList = new A2SPlayerResponsePacketPlayer[1];
-            playerList[0] = player;
-            playerResponsePacket.players = playerList;
+            playerResponsePacket.numPlayers = info.numPlayers;
+            playerResponsePacket.players = info.players;
 
             playerResponsePacket.Serialize(ser);
 
             return response;
         }
 
-        private byte[] SendA2SRulesPacket()
+        private byte[] SendA2SRulesPacket(uint serverID)
         {
+            var info = QueryDataProvider.GetServerData(serverID).A2SServerRules;
             int packetSize =
-                Serializer.IntSize + // default header
-                Serializer.ByteSize + // response header
-                Serializer.ShortSize + // num rules
-                Serializer.StringSize("TestRule") + // 1st rule name
-                Serializer.StringSize("TestValue") + 1; // 1st rule value
+                Serializer.IntSize + // Default header
+                Serializer.ByteSize + // Response header
+                Serializer.ShortSize + 1; // Num rules
 
+            foreach(A2SRulesResponsePacketKeyValue rule in info.rules)
+            {
+                packetSize += Serializer.StringSize(rule.ruleName) + // Rule name
+                    Serializer.StringSize(rule.ruleValue); // Rule value
+            }
 
             byte[] response = new byte[packetSize];
 
@@ -184,15 +174,8 @@ namespace Unity.Helpers.ServerQuery.Protocols.A2S
             A2SRulesResponsePacket rulesResponsePacket = new A2SRulesResponsePacket();
             rulesResponsePacket.defaultHeader = -1;
             rulesResponsePacket.responseHeader = (byte)'E';
-            rulesResponsePacket.numRules = 1;
-
-            A2SRulesResponsePacketKeyValue keyValue = new A2SRulesResponsePacketKeyValue();
-            keyValue.ruleName = "TestRule";
-            keyValue.ruleValue = "TestValue";
-
-            A2SRulesResponsePacketKeyValue[] rulesList = new A2SRulesResponsePacketKeyValue[1];
-            rulesList[0] = keyValue;
-            rulesResponsePacket.rules = rulesList;
+            rulesResponsePacket.numRules = info.numRules;
+            rulesResponsePacket.rules = info.rules;
 
             rulesResponsePacket.Serialize(ser);
 

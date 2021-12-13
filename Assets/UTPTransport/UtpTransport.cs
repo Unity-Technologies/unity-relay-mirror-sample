@@ -51,7 +51,19 @@ namespace UtpTransport
 		}
 
 		// Client
-		public override void ClientConnect(string address) => client.Connect(address, Port);
+		public override void ClientConnect(string address)
+		{
+			if (address.Contains(":"))
+			{
+				string[] hostAndPort = address.Split(':');
+				client.Connect(hostAndPort[0], Convert.ToUInt16(hostAndPort[1]));
+			}
+			else
+			{
+				client.Connect(address, Port); // fallback to default port
+			}
+		}
+
 		public override bool ClientConnected() => client.IsConnected();
 		public override void ClientDisconnect() => client.Disconnect();
 		public override void ClientSend(ArraySegment<byte> segment, int channelId) => client.Send(segment, channelId);
