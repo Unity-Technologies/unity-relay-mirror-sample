@@ -3,7 +3,6 @@ using UnityEngine;
 using Mirror;
 using Vivox;
 using Rpc;
-using kcp2k;
 using Unity.Helpers.ServerQuery.ServerQuery;
 using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery;
@@ -35,6 +34,7 @@ namespace Network
         public override void Awake()
         {
             base.Awake();
+            m_Protocol = ServerQueryServer.Protocol.SQP;
             m_Players = new List<Player>();
 
             string[] args = System.Environment.GetCommandLineArgs();
@@ -42,48 +42,70 @@ namespace Network
             {
                 if (args[i] == "-port")
                 {
-                    UtpTransport.UtpTransport utpTransport = GetComponent<UtpTransport.UtpTransport>();
-                    if(args[i + 1].Length == 4)
+                    if (i + 1 < args.Length)
                     {
-                        m_Port = ushort.Parse(args[i + 1]);
-                        utpTransport.Port = m_Port;
+                        if (args[i + 1].Length == 4)
+                        {
+                            try
+                            {
+                                m_Port = ushort.Parse(args[i + 1]);
+                                UtpTransport.UtpTransport utpTransport = GetComponent<UtpTransport.UtpTransport>();
+                                utpTransport.Port = m_Port;
+                                Debug.Log($"found port {m_Port}");
+                            }
+                            catch
+                            {
+                                Debug.Log($"unable to parse {args[i + 1]} into ushort for port");
+                            }
+                        }
                     }
                 }
                 if (args[i] == "-queryport")
                 {
-                    try
+                    if (i + 1 < args.Length)
                     {
-                        m_QueryPort = ushort.Parse(args[i + 1]);
-                        Debug.Log($"found port {m_QueryPort}");
-                    }
-                    catch
-                    {
-                        Debug.Log($"unable to parse {args[i + 1]} into ushort for port");
+                        try
+                        {
+                            m_QueryPort = ushort.Parse(args[i + 1]);
+                            Debug.Log($"found query port {m_QueryPort}");
+                        }
+                        catch
+                        {
+                            Debug.Log($"unable to parse {args[i + 1]} into ushort for query port");
+                        }
                     }
                 }
                 if (args[i] == "-queryprotocol")
                 {
-                    if (args[i + 1] == "sqp")
+                    if(i+1 < args.Length)
                     {
-                        m_Protocol = ServerQueryServer.Protocol.SQP;
+                        if (args[i + 1] == "sqp")
+                        {
+                            m_Protocol = ServerQueryServer.Protocol.SQP;
+                        }
+                        if (args[i + 1] == "a2s")
+                        {
+                            m_Protocol = ServerQueryServer.Protocol.A2S;
+                        }
+                        if (args[i + 1] == "tf2e")
+                        {
+                            m_Protocol = ServerQueryServer.Protocol.TF2E;
+                        }
+                        Debug.Log($"found query protocol: {args[i + 1]}");
                     }
-                    if (args[i + 1] == "a2s")
-                    {
-                        m_Protocol = ServerQueryServer.Protocol.A2S;
-                    }
-                    if (args[i + 1] == "tf2e")
-                    {
-                        m_Protocol = ServerQueryServer.Protocol.TF2E;
-                    }
-                    Debug.Log($"found query protocol: {args[i + 1]}");
                 }
                 if (args[i] == "-version")
                 {
-                    m_Version = args[i + 1];
+                    if (i + 1 < args.Length)
+                    {
+                        m_Version = args[i + 1];
+                        Debug.Log($"found game version {m_Version}");
+                    }
                 }
                 if (args[i] == "-server")
                 {
                     m_IsDedicatedServer = true;
+                    Debug.Log($"starting as dedicated server");
                 }
             }
         }
@@ -192,7 +214,6 @@ namespace Network
 
             m_SessionId = System.Guid.NewGuid().ToString();
             m_ServerQueryManager = GetComponent<ServerQueryManager>();
-            m_Protocol = ServerQueryServer.Protocol.SQP;
 
             
 
@@ -460,7 +481,11 @@ namespace Network
             base.OnStopClient();
 
             Debug.Log("MyNetworkManager: Left the Server!");
-            m_VivoxManager.LeaveChannel();
+            if(m_VivoxManager.GetAudioState() != VivoxUnity.ConnectionState.Disconnected)
+            {
+                m_VivoxManager.LeaveChannel();
+            }
+
             localPlayer = null;
 
             m_SessionId = "";

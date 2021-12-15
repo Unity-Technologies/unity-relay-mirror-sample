@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using VivoxUnity;
+﻿using UnityEngine;
+
 using System.ComponentModel;
 using System;
+
+using VivoxUnity;
 using Rpc;
+
 
 namespace Vivox
 {
@@ -12,23 +13,29 @@ namespace Vivox
 
     public class VivoxManager : MonoBehaviour
     {
-        VivoxUnity.Client client;
+
         UnityRpc unityRpc;
 
         private Uri endpoint;
 
         private string m_UserId;
+        public bool isLoggedIn;
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
+        VivoxUnity.Client client;
 
         private ILoginSession m_LoginSession;
         private IChannelSession m_ChannelSession;
         ChannelId m_CurrentChannelId;
-        public bool isLoggedIn;
 
         private ChannelId m_PositionalChannelId;
         private ChannelId m_NonPositionalChannelId;
+#endif
 
         private void Awake()
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
+            if(Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor) { 
+            }
             isLoggedIn = false;
             unityRpc = GetComponent<UnityRpc>();
             client = new VivoxUnity.Client();
@@ -41,11 +48,14 @@ namespace Vivox
             config.InitialLogLevel = (vx_log_level)2;
             client.Initialize(config);
             DontDestroyOnLoad(this);
+#endif
         }
 
         private void OnApplicationQuit()
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             client.Uninitialize();
+#endif
         }
 
         public void BindLoginCallbackListeners(bool bind, ILoginSession LoginSession)
@@ -74,6 +84,7 @@ namespace Vivox
 
         public void Login(string username)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             OnRequestCompleteDelegate<VivoxTokenResponse> vivoxLoginTokenReceived = delegate (VivoxTokenResponse responseArgs, bool wasSuccessful)
             {
                 m_UserId = username;
@@ -96,17 +107,21 @@ namespace Vivox
                 });
             };
             unityRpc.GetVivoxLoginToken(username, vivoxLoginTokenReceived);
+#endif
         }
 
         public void Logout()
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             m_LoginSession.Logout();
             BindLoginCallbackListeners(false, m_LoginSession);
             isLoggedIn = false;
+#endif
         }
 
         public void OnLoginStatusChanged(object sender, PropertyChangedEventArgs loginArgs)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             var source = (ILoginSession)sender;
 
             switch (source.State)
@@ -122,10 +137,12 @@ namespace Vivox
 
                     // no case for logged out. Vivox Logout function changes the state for logout but doesn't send events for it
             }
+#endif
         }
 
         public void JoinChannel(string channelName, ChannelType channelType, bool connectAudio, bool connectText, OnJoinCompleteDelegate joinCompleteDelegate = null, bool transmissionSwitch = true, Channel3DProperties properties = null)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             OnRequestCompleteDelegate<VivoxTokenResponse> vivoxJoinTokenReceived = delegate (VivoxTokenResponse responseArgs, bool wasSuccessful)
             {
                 m_CurrentChannelId = new ChannelId(responseArgs.uri);
@@ -178,10 +195,12 @@ namespace Vivox
                 });
             };
             unityRpc.GetVivoxJoinToken(channelName, channelType.ToString(), vivoxJoinTokenReceived);
+#endif
         }
 
         public void OnChannelStatusChanged(object sender, PropertyChangedEventArgs channelArgs)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
 
             switch (source.ChannelState)
@@ -199,10 +218,12 @@ namespace Vivox
                     Debug.Log($"Disconnected from channel {source.Channel.Name}");
                     break;
             }
+#endif
         }
 
         public void LeaveChannel()
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             m_ChannelSession.Disconnect();
             if (m_NonPositionalChannelId != null)
             {
@@ -216,11 +237,12 @@ namespace Vivox
             m_NonPositionalChannelId = new ChannelId("");
             m_PositionalChannelId = new ChannelId("");
             m_CurrentChannelId = new ChannelId("");
-
+#endif
         }
 
         public void OnAudioStateChanged(object sender, PropertyChangedEventArgs audioArgs)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
 
             switch(source.AudioState)
@@ -238,10 +260,12 @@ namespace Vivox
                     Debug.Log("Audio Channel Disconnected");
                     break;
             }
+#endif
         }
 
         public void OnTextStateChanged(object sender, PropertyChangedEventArgs textArgs)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
 
             switch(source.TextState)
@@ -259,6 +283,7 @@ namespace Vivox
                     Debug.Log("Text Channel Disconnected");
                     break;
             }
+#endif
         }
 
         public string GetName()
@@ -268,14 +293,19 @@ namespace Vivox
 
         public void Update3DPosition(Transform curPosition)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             if (m_CurrentChannelId == m_PositionalChannelId)
             {
                 m_ChannelSession.Set3DPosition(curPosition.position, curPosition.position, curPosition.forward, curPosition.up);
             }
+#endif
         }
 
         public ConnectionState GetAudioState()
         {
+#if PLATFORM_STANDALONE_LINUX || UNITY_STANDALONE_LINUX
+            return ConnectionState.Disconnected;
+#else
             if(m_ChannelSession != null)
             {
                 return m_ChannelSession.AudioState;
@@ -284,10 +314,12 @@ namespace Vivox
             {
                 return ConnectionState.Disconnected;
             }
+#endif
         }
 
         public void ChangeChannel(KeyCode keyCode)
         {
+#if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             if(keyCode == KeyCode.N && m_CurrentChannelId != m_PositionalChannelId)
             {
                 Debug.Log($"Switching from non positional channel {m_CurrentChannelId} to positional channel {m_PositionalChannelId}");
@@ -300,6 +332,7 @@ namespace Vivox
                 m_LoginSession.SetTransmissionMode(TransmissionMode.Single, m_NonPositionalChannelId);
                 m_CurrentChannelId = m_NonPositionalChannelId;
             }
+#endif
         }
     }
 
