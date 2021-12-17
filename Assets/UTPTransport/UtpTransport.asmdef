@@ -1,0 +1,9 @@
+{
+	"name": "UtpTransport",
+	"allowUnsafeCode": true,
+	"references": [
+		"Mirror",
+		"Unity.Services.Relay",
+		"Unity.Networking.Transport"
+	]
+}

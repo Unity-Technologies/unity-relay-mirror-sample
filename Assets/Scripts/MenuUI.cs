@@ -20,7 +20,6 @@ namespace UI
     public class MenuUI : MonoBehaviour
     {
         private MyNetworkManager m_Manager;
-
         private VivoxManager m_VivoxManger;
 
         /// <summary>
@@ -86,7 +85,7 @@ namespace UI
             GUILayout.EndArea();
         }
 
-        void StartButtons()
+		void StartButtons()
         {
             if (!NetworkClient.active)
             {
@@ -98,7 +97,7 @@ namespace UI
                 }
                 else
                 {
-                    if (GUILayout.Button("Server Only")) m_Manager.StartServer();
+                    if (GUILayout.Button("Server Only")) m_Manager.StartStandardServer();
                 }
 
                 if (m_Manager.isLoggedIn)
@@ -108,21 +107,35 @@ namespace UI
                         // Server + Client
                         if (Application.platform != RuntimePlatform.WebGLPlayer)
                         {
-                            if (GUILayout.Button("Host (Server + Client)"))
+                            if (GUILayout.Button("Standard Host (Server + Client)"))
                             {
-                                m_Manager.StartHost();
+                                m_Manager.StartStandardHost();
                             }
+
+                            if (GUILayout.Button("Relay Host (Server + Client)"))
+							{
+                                m_Manager.StartRelayHost();
+							}
                         }
 
                         // Client + IP
                         GUILayout.BeginHorizontal();
-                        if (GUILayout.Button("Client"))
+                        if (GUILayout.Button("Client (DGS)"))
                         {
-                            m_Manager.StartClient();
+                            m_Manager.JoinStandardServer();
                         }
                         m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
                         GUILayout.EndHorizontal();
-                    }
+
+						// Client + Relay Join Code
+						GUILayout.BeginHorizontal();
+						if (GUILayout.Button("Client (Relay)"))
+						{
+                            m_Manager.JoinRelayServer();
+						}
+						m_Manager.relayJoinCode = GUILayout.TextField(m_Manager.relayJoinCode);
+						GUILayout.EndHorizontal();
+					}
 
                     if (GUILayout.Button("Auth Logout"))
                     {
@@ -178,6 +191,10 @@ namespace UI
             if (NetworkServer.active)
             {
                 GUILayout.Label("Server: active. Transport: " + Transport.activeTransport);
+                if (m_Manager.IsRelayEnabled())
+				{
+                    GUILayout.Label("Relay enabled. Join code: " + m_Manager.relayJoinCode);
+				}
             }
             if (NetworkClient.isConnected)
             {

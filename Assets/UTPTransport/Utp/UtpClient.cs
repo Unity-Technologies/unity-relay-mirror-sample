@@ -3,8 +3,11 @@ using System;
 using Mirror;
 
 using Unity.Networking.Transport;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 
-namespace UtpTransport
+namespace Utp
 {
 	/// <summary>
 	/// A client for Mirror using UTP.
@@ -70,6 +73,27 @@ namespace UtpTransport
 			m_Connection.Connect(m_Driver, endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
+		}
+
+		public void RelayConnect(JoinAllocation joinAllocation)
+		{
+			if (IsConnected())
+			{
+				UtpLog.Warning("Client is already connected");
+				return;
+			}
+
+			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
+			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
+
+			m_Driver = NetworkDriver.Create(new INetworkParameter[] { relayNetworkParameter }); // TODO: use Create(NetworkSettings) instead
+			m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
+			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
+			m_Connection = new UtpClientConnection(OnConnected, OnReceivedData, OnDisconnected);
+
+			m_Connection.Connect(m_Driver, relayNetworkParameter.ServerData.Endpoint);
+
+			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
 
 		/// <summary>

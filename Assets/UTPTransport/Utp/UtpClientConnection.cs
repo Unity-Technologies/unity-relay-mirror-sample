@@ -3,7 +3,7 @@ using System;
 using Unity.Collections;
 using Unity.Networking.Transport;
 
-namespace UtpTransport
+namespace Utp
 {
 	/// <summary>
 	/// A UTP connection that holds client-specific implementations. Used to manage a client's connection to a server.

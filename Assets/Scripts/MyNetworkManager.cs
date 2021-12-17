@@ -1,31 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 using Vivox;
 using Rpc;
-using kcp2k;
 using Unity.Helpers.ServerQuery.ServerQuery;
 using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery;
 using Unity.Helpers.ServerQuery.Protocols.SQP.Collections;
 using Unity.Helpers.ServerQuery.Protocols.A2S.Collections;
 using Unity.Helpers.ServerQuery.Protocols.TF2E.Collections;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+
+using Utp;
 
 namespace Network 
 {
-    public class MyNetworkManager : NetworkManager
+    public class MyNetworkManager : UtpNetworkManager
     {
         public Player localPlayer;
         private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
-        private UnityRpc m_UnityRpc;
+		private UnityRpc m_UnityRpc;
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
         private bool m_IsDedicatedServer;
         private ServerQueryServer.Protocol m_Protocol;
         private string m_Version = "001";
-        private ushort m_Port = 0;
         private ushort m_QueryPort = 0;
         public bool isLoggedIn = false;
 
@@ -35,20 +38,15 @@ namespace Network
         public override void Awake()
         {
             base.Awake();
+            m_IsDedicatedServer = false;
             m_Players = new List<Player>();
+			m_Username = SystemInfo.deviceName;
+			m_UnityRpc = GetComponent<UnityRpc>();
+			m_VivoxManager = GetComponent<VivoxManager>();
 
             string[] args = System.Environment.GetCommandLineArgs();
             for(int i = 0; i < args.Length; i++)
             {
-                if (args[i] == "-port")
-                {
-                    UtpTransport.UtpTransport utpTransport = GetComponent<UtpTransport.UtpTransport>();
-                    if(args[i + 1].Length == 4)
-                    {
-                        m_Port = ushort.Parse(args[i + 1]);
-                        utpTransport.Port = m_Port;
-                    }
-                }
                 if (args[i] == "-queryport")
                 {
                     try
@@ -88,21 +86,28 @@ namespace Network
             }
         }
 
-        public override void Start()
-        {
-            base.Start();
-            m_IsDedicatedServer = false;
-            m_Username = SystemInfo.deviceName;
-            m_UnityRpc = GetComponent<UnityRpc>();
-
-            m_VivoxManager = GetComponent<VivoxManager>();
-        }
-
         public void Login()
         {
             OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
             m_UnityRpc.Login(m_Username, loginDelegate);
-        }
+
+            // TEMP: Relay requires login to Unity
+            UnityLogin();
+		}
+
+        async void UnityLogin()
+		{
+			try
+			{
+				await UnityServices.InitializeAsync();
+				await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("Logged into Unity, player ID: " + AuthenticationService.Instance.PlayerId);
+			}
+			catch (Exception e)
+			{
+				Debug.Log(e);
+			}
+		}
 
         void OnLoginComplete(SignInResponse responseArgs, bool wasSuccessful)
         {
@@ -208,7 +213,7 @@ namespace Network
                 data.SQPServerInfo.gameType = "Default Game Type";
                 data.SQPServerInfo.buildID = "Default Build ID";
                 data.SQPServerInfo.map = "Default Map Name";
-                data.SQPServerInfo.gamePort = m_Port;
+                data.SQPServerInfo.gamePort = GetPort();
 
                 // SQP Rule Data
                 SQPServerRule rule = new SQPServerRule();
@@ -287,7 +292,7 @@ namespace Network
                 data.TF2EQueryInfo.dataCenter = "Test Datacenter";
                 data.TF2EQueryInfo.gameMode = "Test Game Mode";
 
-                data.TF2EQueryInfo.basicInfo.port = m_Port;
+                data.TF2EQueryInfo.basicInfo.port = GetPort();
                 data.TF2EQueryInfo.basicInfo.platform = Application.platform.ToString();
                 data.TF2EQueryInfo.basicInfo.playlistVersion = "N/A";
                 data.TF2EQueryInfo.basicInfo.playlistNum = 0;

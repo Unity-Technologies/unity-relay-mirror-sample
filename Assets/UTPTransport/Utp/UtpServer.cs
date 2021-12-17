@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using Mirror;
 
 using Unity.Networking.Transport;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 
-namespace UtpTransport
+namespace Utp
 {
 	/// <summary>
 	/// A listen server for Mirror using UTP. 
@@ -37,6 +40,8 @@ namespace UtpTransport
 		/// </summary>
 		private NetworkPipeline m_UnreliablePipeline;
 
+		private bool m_IsRelayServerConnected;
+
 		public UtpServer(Action<int> OnConnected,
 			Action<int, ArraySegment<byte>> OnReceivedData,
 			Action<int> OnDisconnected)
@@ -50,7 +55,7 @@ namespace UtpTransport
 		/// Initialize the server. Currently only supports IPV4.
 		/// </summary>
 		/// <param name="port">The port to listen for connections on.</param>
-		public void Start(ushort port)
+		public void Start(ushort port, bool useRelay = false, Allocation allocation = null)
 		{
 			if (IsActive())
 			{
@@ -58,22 +63,40 @@ namespace UtpTransport
 				return;
 			}
 
-			m_Driver = NetworkDriver.Create();
+			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;
+			if (useRelay)
+			{
+				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, "udp");
+				RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
+
+				m_Driver = NetworkDriver.Create(new INetworkParameter[] { relayNetworkParameter }); // TODO: use Create(NetworkSettings) instead
+			}
+			else
+			{
+				m_Driver = NetworkDriver.Create();
+				endpoint.Port = port;
+			}
+
 			m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
-			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;
-			endpoint.Port = port;
-			if (m_Driver.Bind(endpoint) != 0)
+			if (m_Driver.Bind(endpoint) != 0) // TODO: do we need to wait for bind to finish?
 			{
 				UtpLog.Error("Failed to bind to port: " + endpoint.Port);
 			}
 			else
 			{
-				m_Driver.Listen();
+				if (m_Driver.Listen() != 0)
+				{
+					UtpLog.Error("Server failed to listen");
+				}
+				else if (useRelay)
+				{
+					m_IsRelayServerConnected = true;
+				}
 			}
 
-			UtpLog.Info("Server started on port: " + endpoint.Port);
+			UtpLog.Info(useRelay ? ("Server started") : ("Server started on port: " + endpoint.Port));
 		}
 
 		/// <summary>

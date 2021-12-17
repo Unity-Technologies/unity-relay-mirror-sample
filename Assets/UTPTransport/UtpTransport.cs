@@ -5,7 +5,7 @@ using System;
 
 using Unity.Networking.Transport;
 
-namespace UtpTransport
+namespace Utp
 {
 	/// <summary>
 	/// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
@@ -16,6 +16,9 @@ namespace UtpTransport
 		// Scheme used by this transport
 		public const string Scheme = "udp";
 
+		// Relay toggle
+		public bool UseRelay;
+
 		// Common
 		[Header("Transport Configuration")]
 		public ushort Port = 7777;
@@ -25,6 +28,10 @@ namespace UtpTransport
 		// Server & Client
 		UtpServer server;
 		UtpClient client;
+
+		// Relay Manager
+		RelayManager relayManager;
+
 		private void Awake()
 		{
 			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
@@ -41,6 +48,8 @@ namespace UtpTransport
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
 				() => OnClientDisconnected.Invoke());
 
+			relayManager = gameObject.AddComponent<RelayManager>();
+
 			UtpLog.Info("UTPTransport initialized!");
 		}
 
@@ -53,14 +62,23 @@ namespace UtpTransport
 		// Client
 		public override void ClientConnect(string address)
 		{
-			if (address.Contains(":"))
+			if (UseRelay)
 			{
-				string[] hostAndPort = address.Split(':');
-				client.Connect(hostAndPort[0], Convert.ToUInt16(hostAndPort[1]));
+				// We entirely ignore the address that is passed when utilizing Relay
+				// The data we need to connect is embedded in the relayManager's JoinAllocation
+				client.RelayConnect(relayManager.joinAllocation);
 			}
 			else
 			{
-				client.Connect(address, Port); // fallback to default port
+				if (address.Contains(":"))
+				{
+					string[] hostAndPort = address.Split(':');
+					client.Connect(hostAndPort[0], Convert.ToUInt16(hostAndPort[1]));
+				}
+				else
+				{
+					client.Connect(address, Port); // fallback to default port
+				}
 			}
 		}
 
@@ -73,11 +91,22 @@ namespace UtpTransport
 			if (enabled) client.Tick();
 		}
 
+		// Relay Client (Only used if Relay is enabled)
+		public void ConfigureClientWithJoinCode(string joinCode, Action transportConfiguredCallback)
+		{
+			relayManager.OnTransportConfiguredCallback = transportConfiguredCallback;
+			relayManager.GetAllocationFromJoinCode(joinCode);
+		}
+
 		// TODO: implement OnEnable/OnDisable
 
 		// Server
 		public override bool ServerActive() => server.IsActive();
-		public override void ServerStart() => server.Start(Port);
+		public override void ServerStart()
+		{
+			server.Start(Port, UseRelay, relayManager.allocation);
+		}
+
 		public override void ServerStop() => server.Stop();
 		public override string ServerGetClientAddress(int connectionId) => server.GetClientAddress(connectionId);
 		public override void ServerDisconnect(int connectionId) => server.Disconnect(connectionId);
@@ -95,6 +124,13 @@ namespace UtpTransport
 			builder.Port = Port;
 
 			return builder.Uri;
+		}
+
+		// Relay Server (Only used if Relay is enabled)
+		public void AllocateRelayServer(Action<string> callback)
+		{
+			relayManager.OnRelayServerAllocated = callback;
+			relayManager.AllocateRelayServer(); // TODO: decouple this from fetching regions
 		}
 
 		// Common
