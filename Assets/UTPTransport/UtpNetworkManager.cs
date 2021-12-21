@@ -1,8 +1,9 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 using Mirror;
+
+using Unity.Services.Relay.Models;
 
 namespace Utp
 {
@@ -80,13 +81,21 @@ namespace Utp
 		}
 
 		/// <summary>
+		/// Gets available Relay regions.
+		/// </summary>
+		/// 
+		public void GetRelayRegions(Action<List<Region>> callback)
+		{
+			utpTransport.GetRelayRegions(callback);
+		}
+
+		/// <summary>
 		/// Ensures Relay is enabled. Starts a network "host" - a server and client in the same application
 		/// </summary>
-		public void StartRelayHost()
+		public void StartRelayHost(int maxPlayers, string regionId = null)
 		{
 			utpTransport.UseRelay = true;
-			// TODO: take the max players and an optional region as params
-			utpTransport.AllocateRelayServer((string joinCode) =>
+			utpTransport.AllocateRelayServer(maxPlayers, regionId, (string joinCode) =>
 			{
 				relayJoinCode = joinCode;
 				StartHost();

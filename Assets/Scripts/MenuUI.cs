@@ -1,10 +1,12 @@
 ﻿// vis2k: GUILayout instead of spacey += ...; removed Update hotkeys to avoid
 // confusion if someone accidentally presses one.
 using System.ComponentModel;
+using System.Collections.Generic;
 using UnityEngine;
 using Network;
 using Mirror;
 using Vivox;
+using Unity.Services.Relay.Models;
 
 namespace UI
 {
@@ -114,7 +116,8 @@ namespace UI
 
                             if (GUILayout.Button("Relay Host (Server + Client)"))
 							{
-                                m_Manager.StartRelayHost();
+                                int maxPlayers = 8;
+                                m_Manager.StartRelayHost(maxPlayers);
 							}
                         }
 
@@ -135,6 +138,26 @@ namespace UI
 						}
 						m_Manager.relayJoinCode = GUILayout.TextField(m_Manager.relayJoinCode);
 						GUILayout.EndHorizontal();
+
+                        if (GUILayout.Button("Get Relay Regions"))
+						{
+                            // Note: We are not doing anything with these regions in this example, we are just illustrating how you would go about fetching these regions
+                            m_Manager.GetRelayRegions((List<Region> regions) =>
+                            {
+								if (regions.Count > 0)
+								{
+									for (int i = 0; i < regions.Count; i++)
+									{
+										Region region = regions[i];
+										Debug.Log("Found region. ID: " + region.Id + ", Name: " + region.Description);
+									}
+								}
+								else
+								{
+									Debug.LogWarning("No regions received");
+								}
+							});
+						}
 					}
 
                     if (GUILayout.Button("Auth Logout"))

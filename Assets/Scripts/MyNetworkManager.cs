@@ -478,7 +478,7 @@ namespace Network
 
         public override void OnClientDisconnect(NetworkConnection conn)
         {
-            Debug.Log("Disconnected from Server!");
+            Debug.Log("MyNetworkManager: Disconnected from Server!");
         }
 
         void FindLocalPlayer()

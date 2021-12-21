@@ -2,8 +2,10 @@ using UnityEngine;
 
 using Mirror;
 using System;
+using System.Collections.Generic;
 
 using Unity.Networking.Transport;
+using Unity.Services.Relay.Models;
 
 namespace Utp
 {
@@ -92,10 +94,9 @@ namespace Utp
 		}
 
 		// Relay Client (Only used if Relay is enabled)
-		public void ConfigureClientWithJoinCode(string joinCode, Action transportConfiguredCallback)
+		public void ConfigureClientWithJoinCode(string joinCode, Action callback)
 		{
-			relayManager.OnTransportConfiguredCallback = transportConfiguredCallback;
-			relayManager.GetAllocationFromJoinCode(joinCode);
+			relayManager.GetAllocationFromJoinCode(joinCode, callback);
 		}
 
 		// TODO: implement OnEnable/OnDisable
@@ -127,10 +128,15 @@ namespace Utp
 		}
 
 		// Relay Server (Only used if Relay is enabled)
-		public void AllocateRelayServer(Action<string> callback)
+		public void GetRelayRegions(Action<List<Region>> callback)
+		{
+			relayManager.GetRelayRegions(callback);
+		}
+
+		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> callback)
 		{
 			relayManager.OnRelayServerAllocated = callback;
-			relayManager.AllocateRelayServer(); // TODO: decouple this from fetching regions
+			relayManager.AllocateRelayServer(maxPlayers, regionId);
 		}
 
 		// Common

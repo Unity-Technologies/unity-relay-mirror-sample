@@ -138,7 +138,6 @@ GameObject:
   - component: {fileID: 207291384}
   - component: {fileID: 207291385}
   - component: {fileID: 207291386}
-  - component: {fileID: 207291380}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -158,34 +157,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d4f9593ba7f845458730213887b5758, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  UseRelay: 1
+  UseRelay: 0
   Port: 7777
-  LoggerLevel: 300
---- !u!114 &207291380
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 207291378}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b0fecffa3f624585964b0d0eb21b18e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Port: 7777
-  DualMode: 1
-  NoDelay: 1
-  Interval: 10
-  Timeout: 10000
-  FastResend: 2
-  CongestionWindow: 0
-  SendWindowSize: 4096
-  ReceiveWindowSize: 4096
-  NonAlloc: 1
-  debugLog: 0
-  statisticsGUI: 0
-  statisticsLog: 0
+  LoggerLevel: 3
 --- !u!114 &207291381
 MonoBehaviour:
   m_ObjectHideFlags: 0

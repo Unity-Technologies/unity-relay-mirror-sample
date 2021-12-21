@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 
@@ -20,23 +19,24 @@ namespace Utp
 
 		public JoinAllocation joinAllocation; // client
 
+		/// <summary>
+		/// A callback for when a Relay server is allocated and a join code is fetched.
+		/// </summary>
 		public Action<string> OnRelayServerAllocated;
-		public Action OnTransportConfiguredCallback;
 
 		private void Awake()
 		{
 			Debug.Log("RelayManager initialized");
 
-			// m_RelayAdapter = new RelayAdapter.RelayAdapter();
 			m_UtpTransport = gameObject.GetComponentInParent<UtpTransport>();
 		}
 
-		public void GetAllocationFromJoinCode(string inJoinCode)
+		public void GetAllocationFromJoinCode(string joinCode, Action callback)
 		{
-			StartCoroutine(GetAllocationFromJoinCode(inJoinCode, OnAllocationReceived));
+			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
 		}
 
-		private IEnumerator GetAllocationFromJoinCode(string joinCode, Action<JoinAllocation> callback)
+		private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action callback)
 		{
 			Task<JoinAllocation> joinTask = Relay.Instance.JoinAllocationAsync(joinCode);
 			while (!joinTask.IsCompleted)
@@ -50,21 +50,16 @@ namespace Utp
 				yield break;
 			}
 
-			callback?.Invoke(joinTask.Result);
+			joinAllocation = joinTask.Result;
+			callback?.Invoke();
 		}
 
-		private void OnAllocationReceived(JoinAllocation inJoinAllocation)
+		public void GetRelayRegions(Action<List<Region>> callback)
 		{
-			joinAllocation = inJoinAllocation;
-			OnTransportConfiguredCallback?.Invoke();
+			StartCoroutine(GetRelayRegionsTask(callback));
 		}
 
-		public void AllocateRelayServer()
-		{
-			StartCoroutine(GetRegionList(OnGetRegionList));
-		}
-
-		private IEnumerator GetRegionList(Action<List<Region>> callback)
+		private IEnumerator GetRelayRegionsTask(Action<List<Region>> callback)
 		{
 			Task<List<Region>> regionsTask = Relay.Instance.ListRegionsAsync();
 			while (!regionsTask.IsCompleted)
@@ -81,41 +76,14 @@ namespace Utp
 			callback?.Invoke(regionsTask.Result);
 		}
 
-		private void OnGetRegionList(List<Region> regionList)
+		public void AllocateRelayServer(int maxPlayers, string regionId)
 		{
-			if (regionList.Count > 0)
-			{
-				bool foundRegion = false;
-
-				for (int i = 0; i < regionList.Count; i++)
-				{
-					Region region = regionList[i];
-
-					// For example purposes, always try to use us-east4
-					if (region.Id == "us-east4")
-					{
-						foundRegion = true;
-						Debug.Log("Found region. ID: " + region.Id + ", Name: " + region.Description);
-
-						int maxPlayers = 8;
-						StartCoroutine(AllocateRelayServer(maxPlayers, region.Id, OnAllocateRelayServer));
-					}
-				}
-
-				if (!foundRegion)
-				{
-					Debug.LogWarning("Did not find specified region, not allocating a server");
-				}
-			}
-			else
-			{
-				Debug.LogWarning("No regions received");
-			}
+			StartCoroutine(AllocateRelayServerTask(maxPlayers, regionId, OnAllocateRelayServer));
 		}
 
-		private IEnumerator AllocateRelayServer(int maxPlayers, string region, Action<Allocation> callback)
+		private IEnumerator AllocateRelayServerTask(int maxPlayers, string regionId, Action<Allocation> callback)
 		{
-			Task<Allocation> allocationTask = Relay.Instance.CreateAllocationAsync(maxPlayers, region);
+			Task<Allocation> allocationTask = Relay.Instance.CreateAllocationAsync(maxPlayers, regionId);
 			while (!allocationTask.IsCompleted)
 			{
 				yield return null;
@@ -135,10 +103,10 @@ namespace Utp
 			allocation = inAllocation;
 
 			Debug.Log("Got allocation: " + allocation.AllocationId.ToString());
-			StartCoroutine(GetJoinCode(allocation.AllocationId, OnGetJoinCode));
+			StartCoroutine(GetJoinCodeTask(allocation.AllocationId, OnGetJoinCode));
 		}
 
-		private IEnumerator GetJoinCode(Guid allocationId, Action<string> callback)
+		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string> callback)
 		{
 			Task<string> joinCodeTask = Relay.Instance.GetJoinCodeAsync(allocationId);
 			while (!joinCodeTask.IsCompleted)

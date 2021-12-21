@@ -137,9 +137,7 @@ namespace Utp
 
 			// Exit if the connection is not ready
 			if (!m_Connection.networkConnection.IsCreated)
-			{
 				return;
-			}
 
 			// Process all incoming events for this connection
 			m_Connection.ProcessIncomingEvents(m_Driver);
@@ -152,6 +150,9 @@ namespace Utp
 		/// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
 		public void Send(ArraySegment<byte> segment, int channelId)
 		{
+			if (!DriverActive() || !m_Connection.networkConnection.IsCreated)
+				return;
+
 			m_Connection.Send(m_Driver,
 				channelId == Channels.Reliable ? m_ReliablePipeline : m_UnreliablePipeline,
 				channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage),
