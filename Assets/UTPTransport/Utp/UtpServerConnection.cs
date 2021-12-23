@@ -5,48 +5,49 @@ using Unity.Networking.Transport;
 
 namespace UtpTransport
 {
-	/// <summary>
-	/// A UTP connection that holds server-specific implementations. Used to manage client connections on a server.
-	/// </summary>
-	public class UtpServerConnection : UtpConnection
-	{
-		// Events
-		public Action<int, ArraySegment<byte>> OnReceivedData;
-		public Action<int> OnDisconnected;
+    /// <summary>
+    /// A UTP connection that holds server-specific implementations. Used to manage client connections on a server.
+    /// </summary>
+    public struct UtpServerConnection
+    {
+        /// <summary>
+        /// The wrapped UTP connection.
+        /// </summary>
+        public NetworkConnection networkConnection;
 
-		public UtpServerConnection(NetworkConnection networkConnection, Action<int, ArraySegment<byte>> OnReceivedData,
-			Action<int> OnDisconnected)
-		{
-			this.networkConnection = networkConnection;
-			this.OnReceivedData = OnReceivedData;
-			this.OnDisconnected = OnDisconnected;
-		}
+        public UtpServerConnection(NetworkConnection networkConnection)
+        {
+            this.networkConnection = networkConnection;
+        }
 
-		public override void ProcessIncomingEvents(NetworkDriver driver)
-		{
-			DataStreamReader stream;
-			NetworkEvent.Type netEvent;
-			while ((netEvent = networkConnection.PopEvent(driver, out stream)) != NetworkEvent.Type.Empty)
-			{
-				m_LastReceivedTime = (uint)m_RefTime.ElapsedMilliseconds;
+        /// <summary>
+        /// Send data over the connection.
+        /// </summary>
+        /// <param name="driver">The network driver the connection is associated with.</param>
+        /// <param name="pipeline">The pipeline data should be sent through.</param>
+        /// <param name="stageType">The pipeline stage type to send data through.</param>
+        /// <param name="segment">The data to send.</param>
+        public void Send(NetworkDriver driver, NetworkPipeline pipeline, System.Type stageType, ArraySegment<byte> segment)
+        {
+            NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+            driver.GetPipelineBuffers(pipeline, stageId, networkConnection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
 
-				if (netEvent == NetworkEvent.Type.Data)
-				{
-					NativeArray<byte> nativeMessage = new NativeArray<byte>(stream.Length, Allocator.Temp);
-					stream.ReadBytes(nativeMessage);
-					OnReceivedData.Invoke(networkConnection.GetHashCode(), new ArraySegment<byte>(nativeMessage.ToArray()));
-				}
-				else if (netEvent == NetworkEvent.Type.Disconnect)
-				{
-					UtpLog.Verbose("Client disconnected from server");
-					OnDisconnected.Invoke(networkConnection.GetHashCode());
-					networkConnection = default(NetworkConnection);
-				}
-				else
-				{
-					UtpLog.Warning("Received unknown event: " + netEvent);
-				}
-			}
-		}
-	}
+            DataStreamWriter writer;
+            int writeStatus = driver.BeginSend(pipeline, networkConnection, out writer);
+            if (writeStatus == 0)
+            {
+                // segment.Array is longer than the number of bytes it holds, grab just what we need
+                byte[] segmentArray = new byte[segment.Count];
+                Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
+
+                NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
+                writer.WriteBytes(nativeMessage);
+                driver.EndSend(writer);
+            }
+            else
+            {
+                UtpLog.Warning("Write not successful: " + writeStatus);
+            }
+        }
+    }
 }

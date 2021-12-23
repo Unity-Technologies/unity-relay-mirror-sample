@@ -1,16 +1,16 @@
-using UnityEngine;
-
 using Mirror;
+
 using System;
 
 using Unity.Networking.Transport;
+using UnityEngine;
 
 namespace UtpTransport
 {
-	/// <summary>
-	/// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
-	/// </summary>
-	[DisallowMultipleComponent]
+    /// <summary>
+    /// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
+    /// </summary>
+    [DisallowMultipleComponent]
 	public class UtpTransport : Transport
 	{
 		// Scheme used by this transport

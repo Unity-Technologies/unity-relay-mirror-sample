@@ -5,65 +5,55 @@ using Unity.Networking.Transport;
 
 namespace UtpTransport
 {
-	/// <summary>
-	/// A UTP connection that holds client-specific implementations. Used to manage a client's connection to a server.
-	/// </summary>
-	public class UtpClientConnection : UtpConnection
-	{
-		// Events
-		public Action OnConnected;
-		public Action<ArraySegment<byte>> OnReceivedData;
-		public Action OnDisconnected;
+    /// <summary>
+    /// A UTP connection that holds client-specific implementations. Used to manage a client's connection to a server.
+    /// </summary>
+    public struct UtpClientConnection
+    {
+        /// <summary>
+        /// The wrapped UTP connection.
+        /// </summary>
+        public NetworkConnection networkConnection;
 
-		public UtpClientConnection(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected)
-		{
-			this.OnConnected = OnConnected;
-			this.OnReceivedData = OnReceivedData;
-			this.OnDisconnected = OnDisconnected;
-		}
+        /// <summary>
+        /// Attempt to connect to a listen server at a given endpoint. 
+        /// </summary>
+        /// <param name="driver">The driver associated with the connection.</param>
+        /// <param name="endpoint">The endpoint to connect to.</param>
+        public void Connect(NetworkDriver driver, NetworkEndPoint endpoint)
+        {
+            networkConnection = driver.Connect(endpoint);
+        }
 
-		/// <summary>
-		/// Attempt to connect to a listen server at a given endpoint. 
-		/// </summary>
-		/// <param name="driver">The driver associated with the connection.</param>
-		/// <param name="endpoint">The endpoint to connect to.</param>
-		public void Connect(NetworkDriver driver, NetworkEndPoint endpoint)
-		{
-			networkConnection = driver.Connect(endpoint);
-		}
+        /// <summary>
+        /// Send data over the connection.
+        /// </summary>
+        /// <param name="driver">The network driver the connection is associated with.</param>
+        /// <param name="pipeline">The pipeline data should be sent through.</param>
+        /// <param name="stageType">The pipeline stage type to send data through.</param>
+        /// <param name="segment">The data to send.</param>
+        public void Send(NetworkDriver driver, NetworkPipeline pipeline, System.Type stageType, ArraySegment<byte> segment)
+        {
+            NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+            driver.GetPipelineBuffers(pipeline, stageId, networkConnection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
 
-		public override void ProcessIncomingEvents(NetworkDriver driver)
-		{
-			DataStreamReader stream;
-			NetworkEvent.Type netEvent;
-			while ((netEvent = networkConnection.PopEvent(driver, out stream)) != NetworkEvent.Type.Empty)
-			{
-				m_LastReceivedTime = (uint)m_RefTime.ElapsedMilliseconds;
+            DataStreamWriter writer;
+            int writeStatus = driver.BeginSend(pipeline, networkConnection, out writer);
+            if (writeStatus == 0)
+            {
+                // segment.Array is longer than the number of bytes it holds, grab just what we need
+                byte[] segmentArray = new byte[segment.Count];
+                Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
 
-				if (netEvent == NetworkEvent.Type.Connect)
-				{
-					UtpLog.Info("Client successfully connected to server");
-					OnConnected.Invoke();
-				}
-				else if (netEvent == NetworkEvent.Type.Data)
-				{
-					NativeArray<byte> nativeMessage = new NativeArray<byte>(stream.Length, Allocator.Temp);
-					stream.ReadBytes(nativeMessage);
-					OnReceivedData.Invoke(new ArraySegment<byte>(nativeMessage.ToArray()));
-				}
-				else if (netEvent == NetworkEvent.Type.Disconnect)
-				{
-					UtpLog.Info("Client disconnected from server");
-
-					networkConnection = default(NetworkConnection);
-					OnDisconnected.Invoke();
-				}
-				else
-				{
-					UtpLog.Warning("Received unknown event: " + netEvent);
-				}
-			}
-		}
-	}
+                NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
+                writer.WriteBytes(nativeMessage);
+                driver.EndSend(writer);
+            }
+            else
+            {
+                UtpLog.Warning("Write not successful: " + writeStatus);
+            }
+        }
+    }
 }
 
