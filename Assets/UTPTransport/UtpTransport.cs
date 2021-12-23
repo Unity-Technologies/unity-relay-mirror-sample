@@ -3,14 +3,30 @@ using UnityEngine;
 using Mirror;
 using System;
 
+using Unity.Collections;
 using Unity.Networking.Transport;
 
 namespace UtpTransport
 {
-	/// <summary>
-	/// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
-	/// </summary>
-	[DisallowMultipleComponent]
+    public enum UtpConnectionEventType
+    {
+        OnConnected,
+        OnReceivedData,
+        OnDisconnected
+    }
+
+    public struct UtpConnectionEvent
+    {
+        public byte eventType;
+        public FixedList4096Bytes<Byte> eventData;
+		public Int32 connectionId;
+		public float time;
+    }
+
+    /// <summary>
+    /// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
+    /// </summary>
+    [DisallowMultipleComponent]
 	public class UtpTransport : Transport
 	{
 		// Scheme used by this transport
