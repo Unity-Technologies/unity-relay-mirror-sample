@@ -31,10 +31,5 @@ namespace UtpTransport
         /// The connection ID of the connection corresponding to this event.
         /// </summary>
         public int connectionId;
-
-        /// <summary>
-        /// The time this event was created.
-        /// </summary>
-        public float time;
     }
 }
