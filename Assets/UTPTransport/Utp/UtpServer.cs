@@ -40,8 +40,6 @@ namespace Utp
 		/// </summary>
 		private NetworkPipeline m_UnreliablePipeline;
 
-		private bool m_IsRelayServerConnected;
-
 		public UtpServer(Action<int> OnConnected,
 			Action<int, ArraySegment<byte>> OnReceivedData,
 			Action<int> OnDisconnected)
@@ -68,8 +66,9 @@ namespace Utp
 			{
 				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, "udp");
 				RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-
-				m_Driver = NetworkDriver.Create(new INetworkParameter[] { relayNetworkParameter }); // TODO: use Create(NetworkSettings) instead
+				NetworkSettings networkSettings = new NetworkSettings();
+				networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+				m_Driver = NetworkDriver.Create(networkSettings);
 			}
 			else
 			{
@@ -89,10 +88,6 @@ namespace Utp
 				if (m_Driver.Listen() != 0)
 				{
 					UtpLog.Error("Server failed to listen");
-				}
-				else if (useRelay)
-				{
-					m_IsRelayServerConnected = true;
 				}
 			}
 

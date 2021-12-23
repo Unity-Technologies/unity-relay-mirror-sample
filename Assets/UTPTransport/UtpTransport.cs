@@ -105,7 +105,7 @@ namespace Utp
 		public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
-			server.Start(Port, UseRelay, relayManager.allocation);
+			server.Start(Port, UseRelay, relayManager.serverAllocation);
 		}
 
 		public override void ServerStop() => server.Stop();

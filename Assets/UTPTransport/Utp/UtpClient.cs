@@ -85,8 +85,10 @@ namespace Utp
 
 			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
 			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
+			NetworkSettings networkSettings = new NetworkSettings();
+			networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
 
-			m_Driver = NetworkDriver.Create(new INetworkParameter[] { relayNetworkParameter }); // TODO: use Create(NetworkSettings) instead
+			m_Driver = NetworkDriver.Create(networkSettings);
 			m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 			m_Connection = new UtpClientConnection(OnConnected, OnReceivedData, OnDisconnected);

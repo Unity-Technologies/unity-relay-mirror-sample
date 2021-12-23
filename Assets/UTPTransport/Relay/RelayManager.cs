@@ -11,13 +11,15 @@ namespace Utp
 {
 	public class RelayManager : MonoBehaviour
 	{
-		// private RelayAdapter.RelayAdapter m_RelayAdapter; // TODO: this should be folded in with the UtpTransport package
-		private UtpTransport m_UtpTransport;
+		/// <summary>
+		/// The allocation managed by a host who is running as a client and server.
+		/// </summary>
+		public Allocation serverAllocation;
 
-		public string joinCode; // server
-		public Allocation allocation; // server
-
-		public JoinAllocation joinAllocation; // client
+		/// <summary>
+		/// The allocation managed by a client who is connecting to a server.
+		/// </summary>
+		public JoinAllocation joinAllocation;
 
 		/// <summary>
 		/// A callback for when a Relay server is allocated and a join code is fetched.
@@ -27,8 +29,6 @@ namespace Utp
 		private void Awake()
 		{
 			Debug.Log("RelayManager initialized");
-
-			m_UtpTransport = gameObject.GetComponentInParent<UtpTransport>();
 		}
 
 		public void GetAllocationFromJoinCode(string joinCode, Action callback)
@@ -98,12 +98,12 @@ namespace Utp
 			callback?.Invoke(allocationTask.Result);
 		}
 
-		private void OnAllocateRelayServer(Allocation inAllocation)
+		private void OnAllocateRelayServer(Allocation allocation)
 		{
-			allocation = inAllocation;
+			serverAllocation = allocation;
 
-			Debug.Log("Got allocation: " + allocation.AllocationId.ToString());
-			StartCoroutine(GetJoinCodeTask(allocation.AllocationId, OnGetJoinCode));
+			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
+			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnGetJoinCode));
 		}
 
 		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string> callback)
@@ -116,19 +116,16 @@ namespace Utp
 
 			if (joinCodeTask.IsFaulted)
 			{
-				Debug.LogError("Get join code failed"); // TODO: controlled logging
+				UtpLog.Error("Get join code failed");
 				yield break;
 			}
 
 			callback?.Invoke(joinCodeTask.Result);
 		}
 
-		private void OnGetJoinCode(string inJoinCode)
+		private void OnGetJoinCode(string joinCode)
 		{
-			joinCode = inJoinCode;
-
-			Debug.Log("Got join code: " + joinCode);
-
+			UtpLog.Verbose("Got join code: " + joinCode);
 			OnRelayServerAllocated?.Invoke(joinCode);
 		}
 	}

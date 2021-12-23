@@ -91,7 +91,7 @@ namespace Network
             OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
             m_UnityRpc.Login(m_Username, loginDelegate);
 
-            // TEMP: Relay requires login to Unity
+            // Relay requires UAT login to function. Because of this, we need to log in to both the RPC backend and UAT.
             UnityLogin();
 		}
 
