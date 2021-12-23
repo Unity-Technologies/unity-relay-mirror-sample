@@ -94,12 +94,10 @@ namespace Utp
 		}
 
 		// Relay Client (Only used if Relay is enabled)
-		public void ConfigureClientWithJoinCode(string joinCode, Action callback)
+		public void ConfigureClientWithJoinCode(string joinCode, Action<string> callback)
 		{
 			relayManager.GetAllocationFromJoinCode(joinCode, callback);
 		}
-
-		// TODO: implement OnEnable/OnDisable
 
 		// Server
 		public override bool ServerActive() => server.IsActive();
@@ -133,7 +131,7 @@ namespace Utp
 			relayManager.GetRelayRegions(callback);
 		}
 
-		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> callback)
+		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string, string> callback)
 		{
 			relayManager.OnRelayServerAllocated = callback;
 			relayManager.AllocateRelayServer(maxPlayers, regionId);

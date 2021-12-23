@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Mirror;
 
+using UnityEngine;
 using Unity.Services.Relay.Models;
 
 namespace Utp
@@ -95,8 +96,14 @@ namespace Utp
 		public void StartRelayHost(int maxPlayers, string regionId = null)
 		{
 			utpTransport.UseRelay = true;
-			utpTransport.AllocateRelayServer(maxPlayers, regionId, (string joinCode) =>
+			utpTransport.AllocateRelayServer(maxPlayers, regionId, (string joinCode, string error) =>
 			{
+				if (error != null)
+				{
+					Debug.LogWarning("Something went wrong allocating Relay Server. Error: " + error);
+					return;
+				}
+
 				relayJoinCode = joinCode;
 				StartHost();
 			});
@@ -117,8 +124,14 @@ namespace Utp
 		public void JoinRelayServer()
 		{
 			utpTransport.UseRelay = true;
-			utpTransport.ConfigureClientWithJoinCode(relayJoinCode, () =>
+			utpTransport.ConfigureClientWithJoinCode(relayJoinCode, (string error) =>
 			{
+				if (error != null)
+				{
+					Debug.LogWarning("Something went wrong joining Relay server with code: " + relayJoinCode + ", Error: " + error);
+					return;
+				}
+
 				StartClient();
 			});
 		}

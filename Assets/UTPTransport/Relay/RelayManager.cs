@@ -24,19 +24,19 @@ namespace Utp
 		/// <summary>
 		/// A callback for when a Relay server is allocated and a join code is fetched.
 		/// </summary>
-		public Action<string> OnRelayServerAllocated;
+		public Action<string, string> OnRelayServerAllocated;
 
 		private void Awake()
 		{
 			Debug.Log("RelayManager initialized");
 		}
 
-		public void GetAllocationFromJoinCode(string joinCode, Action callback)
+		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
 		{
 			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
 		}
 
-		private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action callback)
+		private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action<string> callback)
 		{
 			Task<JoinAllocation> joinTask = Relay.Instance.JoinAllocationAsync(joinCode);
 			while (!joinTask.IsCompleted)
@@ -47,11 +47,13 @@ namespace Utp
 			if (joinTask.IsFaulted)
 			{
 				Debug.LogError("Join allocation request failed");
+				callback?.Invoke(joinTask.Exception.Message);
+
 				yield break;
 			}
 
 			joinAllocation = joinTask.Result;
-			callback?.Invoke();
+			callback?.Invoke(null);
 		}
 
 		public void GetRelayRegions(Action<List<Region>> callback)
@@ -92,6 +94,8 @@ namespace Utp
 			if (allocationTask.IsFaulted)
 			{
 				UtpLog.Error("Create allocation request failed");
+				OnRelayServerAllocated?.Invoke(null, allocationTask.Exception.Message);
+
 				yield break;
 			}
 
@@ -103,10 +107,10 @@ namespace Utp
 			serverAllocation = allocation;
 
 			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
-			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnGetJoinCode));
+			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
-		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string> callback)
+		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string, string> callback)
 		{
 			Task<string> joinCodeTask = Relay.Instance.GetJoinCodeAsync(allocationId);
 			while (!joinCodeTask.IsCompleted)
@@ -117,16 +121,12 @@ namespace Utp
 			if (joinCodeTask.IsFaulted)
 			{
 				UtpLog.Error("Get join code failed");
+				callback?.Invoke(null, joinCodeTask.Exception.Message);
+
 				yield break;
 			}
 
-			callback?.Invoke(joinCodeTask.Result);
-		}
-
-		private void OnGetJoinCode(string joinCode)
-		{
-			UtpLog.Verbose("Got join code: " + joinCode);
-			OnRelayServerAllocated?.Invoke(joinCode);
+			callback?.Invoke(joinCodeTask.Result, null);
 		}
 	}
 }
