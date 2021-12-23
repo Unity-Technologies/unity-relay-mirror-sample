@@ -17,9 +17,24 @@ namespace UtpTransport
     /// </summary>
     public struct UtpConnectionEvent
     {
+        /// <summary>
+        /// The event type.
+        /// </summary>
         public byte eventType;
+
+        /// <summary>
+        /// Event data, only used for OnReceived event.
+        /// </summary>
         public FixedList4096Bytes<byte> eventData;
+
+        /// <summary>
+        /// The connection ID of the connection corresponding to this event.
+        /// </summary>
         public int connectionId;
+
+        /// <summary>
+        /// The time this event was created.
+        /// </summary>
         public float time;
     }
 }
