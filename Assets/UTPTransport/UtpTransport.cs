@@ -1,28 +1,12 @@
-using UnityEngine;
-
 using Mirror;
+
 using System;
 
-using Unity.Collections;
 using Unity.Networking.Transport;
+using UnityEngine;
 
 namespace UtpTransport
 {
-    public enum UtpConnectionEventType
-    {
-        OnConnected,
-        OnReceivedData,
-        OnDisconnected
-    }
-
-    public struct UtpConnectionEvent
-    {
-        public byte eventType;
-        public FixedList4096Bytes<Byte> eventData;
-		public Int32 connectionId;
-		public float time;
-    }
-
     /// <summary>
     /// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
     /// </summary>

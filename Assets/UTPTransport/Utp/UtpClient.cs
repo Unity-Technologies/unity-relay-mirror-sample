@@ -1,9 +1,9 @@
-using System;
-
 using Mirror;
 
-using Unity.Jobs;
+using System;
+
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Networking.Transport;
 
 namespace UtpTransport
@@ -21,7 +21,7 @@ namespace UtpTransport
         public NativeArray<Unity.Networking.Transport.NetworkConnection> connection;
 
         /// <summary>
-        /// Stores connection events as they come up, to be ran in the main thread later.
+        /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
         /// </summary>
         public NativeQueue<UtpConnectionEvent>.ParallelWriter connectionEventsQueue;
 
@@ -51,7 +51,6 @@ namespace UtpTransport
                 }
                 else if (netEvent == NetworkEvent.Type.Data)
                 {
-                    UtpLog.Info("Receiving data");
                     NativeArray<byte> nativeMessage = new NativeArray<byte>(stream.Length, Allocator.Temp);
                     stream.ReadBytes(nativeMessage);
 
@@ -101,9 +100,9 @@ namespace UtpTransport
 		public Action OnDisconnected;
 
         /// <summary>
-        /// Stores connection events as they come up, to be ran in the main thread later.
+        /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
         /// </summary>
-        public NativeQueue<UtpConnectionEvent> connectionEventsQueue;
+        private NativeQueue<UtpConnectionEvent> m_ConnectionEventsQueue;
 
         /// <summary>
         /// Used alongside a connection to connect, send, and receive data from a listen server.
@@ -128,7 +127,7 @@ namespace UtpTransport
         /// <summary>
         /// Job handle to schedule client jobs.
         /// </summary>
-		public JobHandle ClientJobHandle;
+		private JobHandle m_ClientJobHandle;
 
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected)
 		{
@@ -150,11 +149,11 @@ namespace UtpTransport
 				return;
             }
 
-            m_Connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
             m_Driver = NetworkDriver.Create();
-            connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
             m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
-			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
+            m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
+            m_Connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
+            m_ConnectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
 			if (host == "localhost")
 			{
@@ -191,20 +190,20 @@ namespace UtpTransport
 		/// </summary>
 		public void Disconnect()
 		{
-            ClientJobHandle.Complete();
-            m_Driver.Dispose();
+            m_ClientJobHandle.Complete();
+
+            if (m_ConnectionEventsQueue.IsCreated)
+            {
+                m_ConnectionEventsQueue.Dispose();
+            }
 
             if (m_Connection.IsCreated)
             {
                 m_Connection.Dispose();
             }
 
-            if (connectionEventsQueue.IsCreated)
-            {
-                connectionEventsQueue.Dispose();
-            }
-
-			m_Driver = default(NetworkDriver);
+            m_Driver.Dispose();
+            m_Driver = default(NetworkDriver);
 		}
 
 		/// <summary>
@@ -215,19 +214,23 @@ namespace UtpTransport
 			if (!DriverActive())
 				return;
 
-            ClientJobHandle.Complete();
+            // First complete the job that was initialized in the previous frame
+            m_ClientJobHandle.Complete();
 
+            // Trigger Mirror callbacks for events that resulted in the last jobs work
             ProcessIncomingEvents();
 
+            // Create a new job
             var job = new ClientUpdateJob
             {
                 driver = m_Driver,
                 connection = m_Connection,
-				connectionEventsQueue = connectionEventsQueue.AsParallelWriter()
+				connectionEventsQueue = m_ConnectionEventsQueue.AsParallelWriter()
             };
 
-            ClientJobHandle = m_Driver.ScheduleUpdate();
-            ClientJobHandle = job.Schedule(ClientJobHandle);
+            // Schedule job
+            m_ClientJobHandle = m_Driver.ScheduleUpdate();
+            m_ClientJobHandle = job.Schedule(m_ClientJobHandle);
         }
 
         /// <summary>
@@ -237,7 +240,7 @@ namespace UtpTransport
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
         public void Send(ArraySegment<byte> segment, int channelId)
 		{
-            ClientJobHandle.Complete();
+            m_ClientJobHandle.Complete();
 
             System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
             NetworkPipeline pipeline = channelId == Channels.Reliable ? m_ReliablePipeline : m_UnreliablePipeline;
@@ -272,7 +275,7 @@ namespace UtpTransport
             }
 
             UtpConnectionEvent connectionEvent;
-            while (connectionEventsQueue.TryDequeue(out connectionEvent))
+            while (m_ConnectionEventsQueue.TryDequeue(out connectionEvent))
             {
 				if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
                 {
@@ -280,7 +283,7 @@ namespace UtpTransport
                 }
 				else if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
                 {
-					OnReceivedData.Invoke(new ArraySegment<Byte>(connectionEvent.eventData.ToArray()));
+					OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                 }
 				else if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
                 {
@@ -288,7 +291,7 @@ namespace UtpTransport
                 }
                 else
                 {
-					UtpLog.Info("invalid connection event: " + connectionEvent.eventType);
+					UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
                 }
             }
         }
