@@ -149,7 +149,10 @@ namespace UtpTransport
 				return;
             }
 
-            m_Driver = NetworkDriver.Create();
+            var settings = new NetworkSettings();
+            settings.WithNetworkConfigParameters(disconnectTimeoutMS: 10000);
+
+            m_Driver = NetworkDriver.Create(settings);
             m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
             m_Connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);

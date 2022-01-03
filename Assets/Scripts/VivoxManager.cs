@@ -14,27 +14,38 @@ namespace Vivox
     public class VivoxManager : MonoBehaviour
     {
 
-        UnityRpc unityRpc;
+        private UnityRpc unityRpc;
 
         private Uri endpoint;
 
         private string m_UserId;
+
+        /// <summary>
+        /// Flag to identify if the user is logged into vivox.
+        /// </summary>
         public bool isLoggedIn;
+
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
-        VivoxUnity.Client client;
+        private VivoxUnity.Client client;
 
         private ILoginSession m_LoginSession;
         private IChannelSession m_ChannelSession;
-        ChannelId m_CurrentChannelId;
+        private ChannelId m_CurrentChannelId;
 
         private ChannelId m_PositionalChannelId;
         private ChannelId m_NonPositionalChannelId;
 #endif
 
-        private void Awake()
+        /// <summary>
+        /// Initializing function for vivox manager.
+        /// </summary>
+        /// <param name="logLevel">Logging level to initialize vivox with.</param>
+        /// <param name="loginSession">The login session to bind/unbind with.</param>
+        internal void Init(int logLevel)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
-            if(Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor) { 
+            if (Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor)
+            {
             }
             isLoggedIn = false;
             unityRpc = GetComponent<UnityRpc>();
@@ -43,9 +54,8 @@ namespace Vivox
             // Uninitialize to clean up any old instances
             client.Uninitialize();
 
-            //TODO: change to make log level dynamic
             VivoxConfig config = new VivoxConfig();
-            config.InitialLogLevel = (vx_log_level)2;
+            config.InitialLogLevel = (vx_log_level)logLevel;
             client.Initialize(config);
             DontDestroyOnLoad(this);
 #endif
@@ -58,19 +68,29 @@ namespace Vivox
 #endif
         }
 
-        public void BindLoginCallbackListeners(bool bind, ILoginSession LoginSession)
+        /// <summary>
+        /// Binds the callbacks for Vivox Login status.
+        /// </summary>
+        /// <param name="bind">Bool whether to bind or unbind the callback.</param>
+        /// <param name="loginSession">The login session to bind/unbind with.</param>
+        private void BindLoginCallbackListeners(bool bind, ILoginSession loginSession)
         {
             if (bind)
             {
-                LoginSession.PropertyChanged += OnLoginStatusChanged;
+                loginSession.PropertyChanged += OnLoginStatusChanged;
             }
             else
             {
-                LoginSession.PropertyChanged -= OnLoginStatusChanged;
+                loginSession.PropertyChanged -= OnLoginStatusChanged;
             }
         }
 
-        public void BindChannelCallbackListeners(bool bind, IChannelSession channelSession)
+        /// <summary>
+        /// Binds the callbacks for Vivox channel status.
+        /// </summary>
+        /// <param name="bind">Bool whether to bind or unbind the callback.</param>
+        /// <param name="channelSession">The channel session to bind/unbind with.</param>
+        private void BindChannelCallbackListeners(bool bind, IChannelSession channelSession)
         {
             if (bind)
             {
@@ -82,6 +102,10 @@ namespace Vivox
             }
         }
 
+        /// <summary>
+        /// Logs into the Vivox SDK.
+        /// </summary>
+        /// <param name="username">The username to login with.</param>
         public void Login(string username)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
@@ -110,6 +134,9 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Logs out of Vivox SDK.
+        /// </summary>
         public void Logout()
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
@@ -119,7 +146,12 @@ namespace Vivox
 #endif
         }
 
-        public void OnLoginStatusChanged(object sender, PropertyChangedEventArgs loginArgs)
+        /// <summary>
+        /// Callback function for logging changes to Vivox Login status.
+        /// </summary>
+        /// <param name="sender">the sender of the callback.</param>
+        /// <param name="loginArgs">The login arguments.</param>
+        private void OnLoginStatusChanged(object sender, PropertyChangedEventArgs loginArgs)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             var source = (ILoginSession)sender;
@@ -140,6 +172,16 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Uses the Vivox SDK to Join voice and text channels.
+        /// </summary>
+        /// <param name="channelName">The name of the channel to join.</param>
+        /// <param name="channelType">The channel type.</param>
+        /// <param name="connectAudio">Flag to connect to audio.</param>
+        /// <param name="connectText">Flag to connect to text.</param>
+        /// <param name="joinCompleteDelegate">Callback used for when Join is complete.</param>
+        /// <param name="transmissionSwitch">Flag to switch channels automatically when joining another channel.</param>
+        /// <param name="properties">3D channel properties.</param>
         public void JoinChannel(string channelName, ChannelType channelType, bool connectAudio, bool connectText, OnJoinCompleteDelegate joinCompleteDelegate = null, bool transmissionSwitch = true, Channel3DProperties properties = null)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
@@ -198,7 +240,12 @@ namespace Vivox
 #endif
         }
 
-        public void OnChannelStatusChanged(object sender, PropertyChangedEventArgs channelArgs)
+        /// <summary>
+        /// Callback function for logging changes to Vivox channel status.
+        /// </summary>
+        /// <param name="sender">the sender of the callback.</param>
+        /// <param name="channelArgs">The channel arguments.</param>
+        private void OnChannelStatusChanged(object sender, PropertyChangedEventArgs channelArgs)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
@@ -221,6 +268,9 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Uses Vivox SDK to leave channels.
+        /// </summary>
         public void LeaveChannel()
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
@@ -240,7 +290,12 @@ namespace Vivox
 #endif
         }
 
-        public void OnAudioStateChanged(object sender, PropertyChangedEventArgs audioArgs)
+        /// <summary>
+        /// Callback function for logging changes to audio state.
+        /// </summary>
+        /// <param name="sender">the sender of the callback.</param>
+        /// <param name="audioArgs">The audio arguments.</param>
+        private void OnAudioStateChanged(object sender, PropertyChangedEventArgs audioArgs)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
@@ -263,7 +318,12 @@ namespace Vivox
 #endif
         }
 
-        public void OnTextStateChanged(object sender, PropertyChangedEventArgs textArgs)
+        /// <summary>
+        /// Callback function for logging changes to text state.
+        /// </summary>
+        /// <param name="sender">the sender of the callback.</param>
+        /// <param name="textArgs">The text arguments.</param>
+        private void OnTextStateChanged(object sender, PropertyChangedEventArgs textArgs)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
             IChannelSession source = (IChannelSession)sender;
@@ -286,11 +346,18 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Retrieves user ID used to log into Vivox.
+        /// </summary>
         public string GetName()
         {
             return m_UserId;
         }
 
+        /// <summary>
+        /// Sends updates to the Vivox SDK of the users 3D positon for 3D channels.
+        /// </summary>
+        /// <param name="curPosition">Current position in 3D space.</param>
         public void Update3DPosition(Transform curPosition)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
@@ -301,6 +368,9 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Returns the current audio state.
+        /// </summary>
         public ConnectionState GetAudioState()
         {
 #if PLATFORM_STANDALONE_LINUX || UNITY_STANDALONE_LINUX
@@ -317,6 +387,10 @@ namespace Vivox
 #endif
         }
 
+        /// <summary>
+        /// Changes transmission mode when in mutliple channels.
+        /// </summary>
+        /// <param name="keyCode">The key code pressed.</param>
         public void ChangeChannel(KeyCode keyCode)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX

@@ -226,7 +226,10 @@ namespace UtpTransport
                 return;
             }
 
-            m_Driver = NetworkDriver.Create();
+            var settings = new NetworkSettings();
+            settings.WithNetworkConfigParameters(disconnectTimeoutMS: 1000);
+
+            m_Driver = NetworkDriver.Create(settings);
             m_Connections = new NativeList<Unity.Networking.Transport.NetworkConnection>(16, Allocator.Persistent);
             m_ConnectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
             m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
