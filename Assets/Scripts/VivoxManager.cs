@@ -232,7 +232,7 @@ namespace Vivox
                     }
                 });
             };
-            unityRpc.GetVivoxJoinToken(channelName, ChannelType.Echo.ToString(), vivoxJoinTokenReceived);
+            unityRpc.GetVivoxJoinToken(channelName, channelType.ToString(), vivoxJoinTokenReceived);
 #endif
         }
 
