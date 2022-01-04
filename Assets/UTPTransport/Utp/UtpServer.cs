@@ -198,13 +198,20 @@ namespace UtpTransport
         /// </summary>
         private NetworkPipeline m_UnreliablePipeline;
 
+        /// <summary>
+        /// Timeout(ms) to be set on drivers.
+        /// </summary>
+        private int timeout;
+
         public UtpServer(Action<int> OnConnected,
             Action<int, ArraySegment<byte>> OnReceivedData,
-            Action<int> OnDisconnected)
+            Action<int> OnDisconnected,
+            int timeout)
         {
             this.OnConnected = OnConnected;
             this.OnReceivedData = OnReceivedData;
             this.OnDisconnected = OnDisconnected;
+            this.timeout = timeout;
         }
 
         /// <summary>
@@ -220,7 +227,7 @@ namespace UtpTransport
             }
 
             var settings = new NetworkSettings();
-            settings.WithNetworkConfigParameters(disconnectTimeoutMS: 1000);
+            settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeout);
 
             m_Driver = NetworkDriver.Create(settings);
             m_Connections = new NativeList<Unity.Networking.Transport.NetworkConnection>(16, Allocator.Persistent);

@@ -25,6 +25,10 @@ namespace UtpTransport
 		// Server & Client
 		UtpServer server;
 		UtpClient client;
+
+		// Timeout for Server & Client in ms
+		private int timeout = 1000;
+
 		private void Awake()
 		{
 			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
@@ -35,11 +39,13 @@ namespace UtpTransport
 			server = new UtpServer(
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
-				(connectionId) => OnServerDisconnected.Invoke(connectionId));
+				(connectionId) => OnServerDisconnected.Invoke(connectionId),
+				timeout);
 			client = new UtpClient(
 				() => OnClientConnected.Invoke(),
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
-				() => OnClientDisconnected.Invoke());
+				() => OnClientDisconnected.Invoke(),
+				timeout);
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
