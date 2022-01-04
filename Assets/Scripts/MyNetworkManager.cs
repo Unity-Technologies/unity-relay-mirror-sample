@@ -14,6 +14,9 @@ namespace Network
 {
     public class MyNetworkManager : NetworkManager
     {
+        /// <summary>
+        /// The local player object that spawns in.
+        /// </summary>
         public Player localPlayer;
         private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
@@ -26,6 +29,10 @@ namespace Network
         private string m_Version = "001";
         private ushort m_Port = 0;
         private ushort m_QueryPort = 0;
+
+        /// <summary>
+        /// Flag to determine if the user is logged into the backend.
+        /// </summary>
         public bool isLoggedIn = false;
 
         private List<Player> m_Players;
@@ -36,6 +43,7 @@ namespace Network
             base.Awake();
             m_Protocol = ServerQueryServer.Protocol.SQP;
             m_Players = new List<Player>();
+            int logLevel = 2;
 
             string[] args = System.Environment.GetCommandLineArgs();
             for(int i = 0; i < args.Length; i++)
@@ -60,7 +68,7 @@ namespace Network
                         }
                     }
                 }
-                if (args[i] == "-queryport")
+                else if (args[i] == "-queryport")
                 {
                     if (i + 1 < args.Length)
                     {
@@ -75,7 +83,7 @@ namespace Network
                         }
                     }
                 }
-                if (args[i] == "-queryprotocol")
+                else if (args[i] == "-queryprotocol")
                 {
                     if(i+1 < args.Length)
                     {
@@ -83,18 +91,23 @@ namespace Network
                         {
                             m_Protocol = ServerQueryServer.Protocol.SQP;
                         }
-                        if (args[i + 1] == "a2s")
+                        else if (args[i + 1] == "a2s")
                         {
                             m_Protocol = ServerQueryServer.Protocol.A2S;
                         }
-                        if (args[i + 1] == "tf2e")
+                        else if (args[i + 1] == "tf2e")
                         {
                             m_Protocol = ServerQueryServer.Protocol.TF2E;
+                        }
+                        else
+                        {
+                            Debug.Log("incompatible query type found, defaulting to SQP");
+                            continue;
                         }
                         Debug.Log($"found query protocol: {args[i + 1]}");
                     }
                 }
-                if (args[i] == "-version")
+                else if (args[i] == "-version")
                 {
                     if (i + 1 < args.Length)
                     {
@@ -102,12 +115,28 @@ namespace Network
                         Debug.Log($"found game version {m_Version}");
                     }
                 }
-                if (args[i] == "-server")
+                else if (args[i] == "-server")
                 {
                     m_IsDedicatedServer = true;
                     Debug.Log($"starting as dedicated server");
                 }
+                else if (args[i] == "-log")
+                {
+                    try
+                    {
+                        logLevel = int.Parse(args[i + 1]);
+                        Debug.Log($"log level " + args[i + 1]);
+                    }
+                    catch
+                    {
+                        logLevel = 2;
+                        Debug.Log($"unable to parse {args[i + 1]} into int for logLevel. Defaulting to 2");
+                    }
+                }
             }
+
+            m_VivoxManager = GetComponent<VivoxManager>();
+            m_VivoxManager.Init(logLevel);
         }
 
         public override void Start()
@@ -116,16 +145,22 @@ namespace Network
             m_IsDedicatedServer = false;
             m_Username = SystemInfo.deviceName;
             m_UnityRpc = GetComponent<UnityRpc>();
-
-            m_VivoxManager = GetComponent<VivoxManager>();
         }
 
+        /// <summary>
+        /// Auth login for the backend.
+        /// </summary>
         public void Login()
         {
             OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
             m_UnityRpc.Login(m_Username, loginDelegate);
         }
 
+        /// <summary>
+        /// Callback function for when auth login completes.
+        /// </summary>
+        /// <param name="responseArgs">The arguments returned from the RPC.</param>
+        /// <param name="wasSuccessful">Flag to determine if the backend request was successful.</param>
         void OnLoginComplete(SignInResponse responseArgs, bool wasSuccessful)
         {
             if (wasSuccessful)
@@ -140,6 +175,9 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Uses the RPC to request a match ticket from the backend.
+        /// </summary>
         public void RequestMatch()
         {
             OnPingSitesCompleteDelegate onPingCompleteDelegate = delegate ()
@@ -150,17 +188,27 @@ namespace Network
             m_UnityRpc.PingSites(onPingCompleteDelegate); // Ping sites needs delegate to know when all finished
         }
 
-
+        /// <summary>
+        /// Initiates the process to allocate a server and create a match with Multiplay.
+        /// </summary>
         public void CreateMatch()
         {
             m_UnityRpc.AllocateServer();
         }
 
+        /// <summary>
+        /// Makes a login call to Vivox.
+        /// </summary>
         public void VivoxLogin()
         {
             m_VivoxManager.Login(m_UserId);
         }
 
+        /// <summary>
+        /// Callback function for when Request match has finished.
+        /// </summary>
+        /// <param name="responseArgs">The match request response from the RPC.</param>
+        /// <param name="wasSuccessful">Flag to determine if the backend request was successful.</param>
         void RequestMatchResponse(RequestMatchTicketResponse responseArgs, bool wasSuccessful)
         {
             if (wasSuccessful)
@@ -208,6 +256,7 @@ namespace Network
 
         }
 
+
         public override void OnStartServer()
         {
             Debug.Log("MyNetworkManager: Server Started!");
@@ -215,9 +264,7 @@ namespace Network
             m_SessionId = System.Guid.NewGuid().ToString();
             m_ServerQueryManager = GetComponent<ServerQueryManager>();
 
-            
-
-
+            // Initialize server query with server info
             QueryData data = new QueryData();
 
             if (m_Protocol == ServerQueryServer.Protocol.SQP)
@@ -304,6 +351,7 @@ namespace Network
 
             if (m_Protocol == ServerQueryServer.Protocol.TF2E)
             {
+                // TF2E data
                 data.TF2EQueryInfo.buildName = "Test Build";
                 data.TF2EQueryInfo.dataCenter = "Test Datacenter";
                 data.TF2EQueryInfo.gameMode = "Test Game Mode";
@@ -348,6 +396,9 @@ namespace Network
             m_ServerQueryManager.ServerStart(data, m_Protocol, m_QueryPort);
         }
 
+        /// <summary>
+        /// Deletes login information for user.
+        /// </summary>
         internal void Logout()
         {
             m_UnityRpc.SetAuthToken("");
@@ -363,12 +414,13 @@ namespace Network
             {
                 Player comp = kvp.Value.GetComponent<Player>();
 
-                //Add if new
+                // Add to player list if new
                 if (comp != null && !m_Players.Contains(comp))
                 {
                     comp.sessionId = m_SessionId;
                     m_Players.Add(comp);
 
+                    // Update server query data
                     if (m_Protocol == ServerQueryServer.Protocol.SQP)
                     {
                         data.SQPServerInfo.currentPlayers = m_Players.Count;
@@ -501,6 +553,9 @@ namespace Network
             Debug.Log("Disconnected from Server!");
         }
 
+        /// <summary>
+        /// Finds the local player if they are spawned in the scene.
+        /// </summary>
         void FindLocalPlayer()
         {
             //Check to see if the player is loaded in yet

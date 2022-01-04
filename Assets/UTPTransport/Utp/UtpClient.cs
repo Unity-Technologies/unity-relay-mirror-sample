@@ -129,11 +129,17 @@ namespace UtpTransport
         /// </summary>
 		private JobHandle m_ClientJobHandle;
 
-		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected)
+        /// <summary>
+        /// Timeout(ms) to be set on drivers.
+        /// </summary>
+        private int timeout;
+
+		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
 		{
 			this.OnConnected = OnConnected;
 			this.OnReceivedData = OnReceivedData;
 			this.OnDisconnected = OnDisconnected;
+            this.timeout = timeout;
 		}
 
 		/// <summary>
@@ -149,7 +155,10 @@ namespace UtpTransport
 				return;
             }
 
-            m_Driver = NetworkDriver.Create();
+            var settings = new NetworkSettings();
+            settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeout);
+
+            m_Driver = NetworkDriver.Create(settings);
             m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
             m_Connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);

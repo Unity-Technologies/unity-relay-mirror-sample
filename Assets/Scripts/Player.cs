@@ -1,20 +1,30 @@
 ﻿using Mirror;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Vivox;
 
 public class Player : NetworkBehaviour
 {
-
+    /// <summary>
+    /// The Sessions ID for the current server.
+    /// </summary>
     [SyncVar]
     public string sessionId = "";
 
+    /// <summary>
+    /// Player name.
+    /// </summary>
     public string username;
+
+    /// <summary>
+    /// Platform the user is on.
+    /// </summary>
     public string platform;
 
     private VivoxManager m_VivoxManager;
 
+    /// <summary>
+    /// Shifts the players position in space based on the inputs received.
+    /// </summary>
     void HandleMovement()
     {
         if (isLocalPlayer)
@@ -64,6 +74,9 @@ public class Player : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Called after player has spawned in the scene.
+    /// </summary>
     public override void OnStartServer()
     {
         Debug.Log("Player has been spawned on the server!");
