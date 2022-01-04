@@ -1,7 +1,10 @@
 using Mirror;
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
+using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
@@ -92,7 +95,7 @@ namespace UtpTransport
     /// <summary>
     /// A client for Mirror using UTP.
     /// </summary>
-    public class UtpClient
+    public class UtpClient : CoroutineWrapper
 	{
 		// Events
 		public Action OnConnected;
@@ -149,6 +152,8 @@ namespace UtpTransport
 		/// <param name="port">The port which the listen server is listening on.</param>
 		public void Connect(string host, ushort port)
 		{
+            m_ClientJobHandle.Complete();
+
 			if (IsConnected())
 			{
 				UtpLog.Warning("Client is already connected");
@@ -201,18 +206,39 @@ namespace UtpTransport
 		{
             m_ClientJobHandle.Complete();
 
+            if (m_Connection.IsCreated)
+			{
+                UtpLog.Info("Disconnecting from server");
+
+                m_Connection[0].Disconnect(m_Driver);
+                OnDisconnected.Invoke();
+
+               m_CoroutineRunner.StartCoroutine(DisposeAfterWait());
+			}
+		}
+
+		private IEnumerator DisposeAfterWait()
+		{
+			yield return new WaitForSeconds(0.25f);
+
+            m_ClientJobHandle.Complete();
+
             if (m_ConnectionEventsQueue.IsCreated)
-            {
-                m_ConnectionEventsQueue.Dispose();
-            }
+			{
+				ProcessIncomingEvents(); // Ensure we flush the queue
+				m_ConnectionEventsQueue.Dispose();
+			}
 
             if (m_Connection.IsCreated)
-            {
+			{
                 m_Connection.Dispose();
             }
 
-            m_Driver.Dispose();
-            m_Driver = default(NetworkDriver);
+            if (m_Driver.IsCreated)
+			{
+				m_Driver.Dispose();
+				m_Driver = default(NetworkDriver);
+			}
 		}
 
 		/// <summary>
@@ -220,14 +246,15 @@ namespace UtpTransport
 		/// </summary>
 		public void Tick()
 		{
-			if (!DriverActive())
-				return;
-
             // First complete the job that was initialized in the previous frame
             m_ClientJobHandle.Complete();
 
             // Trigger Mirror callbacks for events that resulted in the last jobs work
             ProcessIncomingEvents();
+
+            // Need to ensure the driver did not become inactive
+            if (!DriverActive())
+                return;
 
             // Create a new job
             var job = new ClientUpdateJob
@@ -277,24 +304,26 @@ namespace UtpTransport
 
 		public void ProcessIncomingEvents()
         {
-            // Exit if the connection is not ready
-            if (!m_Connection[0].IsCreated)
-            {
+            // Exit if the driver is not active
+            if (!DriverActive())
                 return;
-            }
+
+            // Exit if the connection is not ready
+            if (!m_Connection.IsCreated || !m_Connection[0].IsCreated)
+                return;
 
             UtpConnectionEvent connectionEvent;
-            while (m_ConnectionEventsQueue.TryDequeue(out connectionEvent))
+            while (m_ConnectionEventsQueue.IsCreated && m_ConnectionEventsQueue.TryDequeue(out connectionEvent))
             {
-				if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
+				if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
                 {
 					OnConnected.Invoke();
                 }
-				else if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
                 {
 					OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                 }
-				else if(connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
                 {
 					OnDisconnected.Invoke();
                 }
