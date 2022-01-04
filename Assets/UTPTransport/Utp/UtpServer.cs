@@ -288,6 +288,8 @@ namespace UtpTransport
 		/// </summary>
 		public void Stop()
         {
+            UtpLog.Info("Stopping server");
+
             // Because of the way that UTP works we need to delay our calls to dispose the driver.
             // This allows all clients that are connected to receive a NetworkEvent.Type.Disconnect event
             // TODO: Determine a less hacky way to accomplish this
