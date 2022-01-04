@@ -1,8 +1,10 @@
 using Mirror;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
+using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
@@ -168,7 +170,7 @@ namespace UtpTransport
     /// <summary>
     /// A listen server for Mirror using UTP. 
     /// </summary>
-    public class UtpServer
+    public class UtpServer : CoroutineWrapper
     {
         // Events
         public Action<int> OnConnected;
@@ -205,7 +207,7 @@ namespace UtpTransport
         /// </summary>
         private NetworkPipeline m_UnreliablePipeline;
 
-        public UtpServer(Action<int> OnConnected,
+		public UtpServer(Action<int> OnConnected,
             Action<int, ArraySegment<byte>> OnReceivedData,
             Action<int> OnDisconnected)
         {
@@ -281,19 +283,28 @@ namespace UtpTransport
             m_ServerJobHandle = serverUpdateJob.Schedule(m_Connections, 1, m_ServerJobHandle);
         }
 
-        /// <summary>
-        /// Stop a running server.
-        /// </summary>
-        public void Stop()
+		/// <summary>
+		/// Stop a running server.
+		/// </summary>
+		public void Stop()
         {
-            UtpLog.Info("Stopping server");
+            // Because of the way that UTP works we need to delay our calls to dispose the driver.
+            // This allows all clients that are connected to receive a NetworkEvent.Type.Disconnect event
+            // TODO: Determine a less hacky way to accomplish this
+            m_CoroutineRunner.StartCoroutine(DisposeAfterWait());
+		}
 
-            m_ServerJobHandle.Complete();
+        private IEnumerator DisposeAfterWait()
+		{
+			yield return new WaitForSeconds(0.25f);
+
+			m_ServerJobHandle.Complete();
+
             m_ConnectionsEventsQueue.Dispose();
-            m_Connections.Dispose();
-            m_Driver.Dispose();
-            m_Driver = default(NetworkDriver);
-        }
+			m_Connections.Dispose();
+			m_Driver.Dispose();
+			m_Driver = default(NetworkDriver);
+		}
 
         /// <summary>
         /// Disconnect and remove a connection via it's ID.
@@ -301,12 +312,14 @@ namespace UtpTransport
         /// <param name="connectionId">The ID of the connection to disconnect.</param>
         public void Disconnect(int connectionId)
         {
+            m_ServerJobHandle.Complete();
+
             Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
             if (connection.GetHashCode() == connectionId)
             {
                 UtpLog.Info("Disconnecting connection with ID: " + connectionId);
                 connection.Disconnect(m_Driver);
-                OnDisconnected(connectionId);
+                OnDisconnected.Invoke(connectionId);
             }
             else
             {
