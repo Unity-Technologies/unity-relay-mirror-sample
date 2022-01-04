@@ -40,13 +40,6 @@ namespace UtpTransport
                     {
                         connectionsToRemove.Add(connection.GetHashCode());
                     }
-                    // TODO: implement timeout with UtpServerConnection
-                    /*else if (connection.m_TimedOut)
-                    {
-                        UtpLog.Info("Client has timed out. Connection ID: " + connection);
-                        Disconnect(connection.GetHashCode());
-                        connectionsToRemove.Add(connection.GetHashCode());
-                    }*/
                 }
 
                 foreach (int connectionId in connectionsToRemove)

@@ -40,13 +40,9 @@ namespace Vivox
         /// Initializing function for vivox manager.
         /// </summary>
         /// <param name="logLevel">Logging level to initialize vivox with.</param>
-        /// <param name="loginSession">The login session to bind/unbind with.</param>
         internal void Init(int logLevel)
         {
 #if !PLATFORM_STANDALONE_LINUX && !UNITY_STANDALONE_LINUX
-            if (Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor)
-            {
-            }
             isLoggedIn = false;
             unityRpc = GetComponent<UnityRpc>();
             client = new VivoxUnity.Client();
@@ -236,7 +232,7 @@ namespace Vivox
                     }
                 });
             };
-            unityRpc.GetVivoxJoinToken(channelName, channelType.ToString(), vivoxJoinTokenReceived);
+            unityRpc.GetVivoxJoinToken(channelName, ChannelType.Echo.ToString(), vivoxJoinTokenReceived);
 #endif
         }
 

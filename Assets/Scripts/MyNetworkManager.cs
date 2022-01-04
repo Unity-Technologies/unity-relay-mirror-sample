@@ -68,7 +68,7 @@ namespace Network
                         }
                     }
                 }
-                if (args[i] == "-queryport")
+                else if (args[i] == "-queryport")
                 {
                     if (i + 1 < args.Length)
                     {
@@ -83,7 +83,7 @@ namespace Network
                         }
                     }
                 }
-                if (args[i] == "-queryprotocol")
+                else if (args[i] == "-queryprotocol")
                 {
                     if(i+1 < args.Length)
                     {
@@ -91,18 +91,23 @@ namespace Network
                         {
                             m_Protocol = ServerQueryServer.Protocol.SQP;
                         }
-                        if (args[i + 1] == "a2s")
+                        else if (args[i + 1] == "a2s")
                         {
                             m_Protocol = ServerQueryServer.Protocol.A2S;
                         }
-                        if (args[i + 1] == "tf2e")
+                        else if (args[i + 1] == "tf2e")
                         {
                             m_Protocol = ServerQueryServer.Protocol.TF2E;
+                        }
+                        else
+                        {
+                            Debug.Log("incompatible query type found, defaulting to SQP");
+                            continue;
                         }
                         Debug.Log($"found query protocol: {args[i + 1]}");
                     }
                 }
-                if (args[i] == "-version")
+                else if (args[i] == "-version")
                 {
                     if (i + 1 < args.Length)
                     {
@@ -110,12 +115,12 @@ namespace Network
                         Debug.Log($"found game version {m_Version}");
                     }
                 }
-                if (args[i] == "-server")
+                else if (args[i] == "-server")
                 {
                     m_IsDedicatedServer = true;
                     Debug.Log($"starting as dedicated server");
                 }
-                if (args[i] == "-log")
+                else if (args[i] == "-log")
                 {
                     try
                     {
