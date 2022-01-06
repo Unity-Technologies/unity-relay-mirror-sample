@@ -15,6 +15,8 @@ public class Player : NetworkBehaviour
     /// </summary>
     public string username;
 
+    public string ip;
+
     /// <summary>
     /// Platform the user is on.
     /// </summary>
@@ -40,6 +42,7 @@ public class Player : NetworkBehaviour
     {
         username = SystemInfo.deviceName;
         platform = Application.platform.ToString();
+        ip = NetworkManager.singleton.networkAddress;
     }
 
     private void Start()
