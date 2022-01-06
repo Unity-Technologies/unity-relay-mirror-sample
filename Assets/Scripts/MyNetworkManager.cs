@@ -35,7 +35,14 @@ namespace Network
         /// </summary>
         public bool isLoggedIn = false;
 
+        /// <summary>
+        /// List of players currently connected to the server.
+        /// </summary>
         private List<Player> m_Players;
+
+        /// <summary>
+        /// Player Index, used to assign player ID for server query. Increments each time player is added.
+        /// </summary>
         private byte m_PlayerIndex = 1;
 
         public override void Awake()
@@ -122,15 +129,23 @@ namespace Network
                 }
                 else if (args[i] == "-log")
                 {
-                    try
+                    if(i + 1 < args.Length)
                     {
-                        logLevel = int.Parse(args[i + 1]);
-                        Debug.Log($"log level " + args[i + 1]);
+                        try
+                        {
+                            logLevel = int.Parse(args[i + 1]);
+                            Debug.Log($"log level " + args[i + 1]);
+                        }
+                        catch
+                        {
+                            logLevel = 2;
+                            Debug.Log($"unable to parse {args[i + 1]} into int for logLevel. Defaulting to 2");
+                        }
                     }
-                    catch
+                    else
                     {
                         logLevel = 2;
-                        Debug.Log($"unable to parse {args[i + 1]} into int for logLevel. Defaulting to 2");
+                        Debug.Log($"no log value provided. Defaulting to 2");
                     }
                 }
             }
@@ -439,8 +454,7 @@ namespace Network
 
                         data.SQPPlayerInfo.players.Add(playerOne);
                     }
-
-                    if(m_Protocol == ServerQueryServer.Protocol.A2S)
+                    else if(m_Protocol == ServerQueryServer.Protocol.A2S)
                     {
                         data.A2SServerInfo.playerCount++;
                         data.A2SPlayerInfo.numPlayers++;
@@ -455,8 +469,7 @@ namespace Network
 
                         m_PlayerIndex++;
                     }
-
-                    if(m_Protocol == ServerQueryServer.Protocol.TF2E)
+                    else if(m_Protocol == ServerQueryServer.Protocol.TF2E)
                     {
                         data.TF2EQueryInfo.basicInfo.numClients++;
 
@@ -483,6 +496,8 @@ namespace Network
                         client.kills = 0;
                         client.deaths = 0;
 
+                        m_PlayerIndex++;
+
                         data.TF2EQueryInfo.clients.Add(client);
                     }
                 }
@@ -503,29 +518,99 @@ namespace Network
             base.OnServerDisconnect(conn);
             Dictionary<uint, NetworkIdentity> spawnedPlayers = NetworkServer.spawned;
 
-            // Update players list on client disconnect
-            foreach(Player player in m_Players)
+            Player removedPlayer = new Player();
+
+            if(m_Players.Count == 1)
             {
-                bool playerFound = false;
-
-                foreach (KeyValuePair<uint, NetworkIdentity> kvp in spawnedPlayers)
+                removedPlayer = m_Players[0];
+                m_Players.Remove(removedPlayer);
+            }
+            else
+            {
+                // Update players list on client disconnect
+                foreach (Player player in m_Players)
                 {
-                    Player comp = kvp.Value.GetComponent<Player>();
+                    bool playerFound = false;
 
-                    // Verify the player is still in the match
-                    if (comp != null && player == comp)
+                    foreach (KeyValuePair<uint, NetworkIdentity> kvp in spawnedPlayers)
                     {
-                        playerFound = true;
+                        Player comp = kvp.Value.GetComponent<Player>();
+
+                        // Verify the player is still in the match
+                        if (comp != null && player == comp)
+                        {
+                            removedPlayer = player;
+                            playerFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!playerFound)
+                    {
+                        m_Players.Remove(player);
                         break;
                     }
                 }
+            }
 
-                if (!playerFound)
+            // Update server query data after player is removed
+            QueryData data = m_ServerQueryManager.GetQueryData();
+
+            if (m_Protocol == ServerQueryServer.Protocol.SQP)
+            {
+                data.SQPServerInfo.currentPlayers = m_Players.Count;
+                data.SQPPlayerInfo.playerCount--;
+
+                // Find and remove the player from the fields container
+                foreach (SQPFieldContainer player in data.SQPPlayerInfo.players)
                 {
-                    m_Players.Remove(player);
-                    break;
+                    // we are only checking the first field as that is the username field we can use to identify the player
+                    if (player.fields[0].valueString == removedPlayer.username)
+                    {
+                        data.SQPPlayerInfo.players.Remove(player);
+                        break;
+                    }
                 }
             }
+            else if (m_Protocol == ServerQueryServer.Protocol.A2S)
+            {
+                data.A2SServerInfo.playerCount--;
+                data.A2SPlayerInfo.numPlayers--;
+
+                // Find and remove the player from the players container
+                foreach (A2SPlayerResponsePacketPlayer player in data.A2SPlayerInfo.players)
+                {
+                    if (player.playerName == removedPlayer.username)
+                    {
+                        data.A2SPlayerInfo.players.Remove(player);
+                        break;
+                    }
+                }
+            }
+            else if (m_Protocol == ServerQueryServer.Protocol.TF2E)
+            {
+                data.TF2EQueryInfo.basicInfo.numClients--;
+
+                data.TF2EQueryInfo.basicInfo.platformPlayers[removedPlayer.platform]++;
+
+                // If no players remain on this platform, remove it from server query
+                if (data.TF2EQueryInfo.basicInfo.platformPlayers[removedPlayer.platform] == 0)
+                {
+                    data.TF2EQueryInfo.basicInfo.platformPlayers.Remove(removedPlayer.platform);
+                }
+
+                // Find and remove the player from the clients container
+                foreach (TF2EClient client in data.TF2EQueryInfo.clients)
+                {
+                    if(client.name == removedPlayer.username)
+                    {
+                        data.TF2EQueryInfo.clients.Remove(client);
+                        break;
+                    }
+                }
+            }
+
+            m_ServerQueryManager.UpdateQueryData(data);
         }
 
         public override void OnStopClient()
@@ -550,6 +635,7 @@ namespace Network
 
         public override void OnClientDisconnect(NetworkConnection conn)
         {
+            base.OnClientDisconnect(conn);
             Debug.Log("Disconnected from Server!");
         }
 

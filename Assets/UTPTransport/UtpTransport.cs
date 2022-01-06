@@ -27,7 +27,7 @@ namespace UtpTransport
 		UtpClient client;
 
 		// Timeout for Server & Client in ms
-		private int timeout = 1000;
+		private int m_Timeout = 1000;
 
 		private void Awake()
 		{
@@ -40,12 +40,12 @@ namespace UtpTransport
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
 				(connectionId) => OnServerDisconnected.Invoke(connectionId),
-				timeout);
+				m_Timeout);
 			client = new UtpClient(
 				() => OnClientConnected.Invoke(),
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
 				() => OnClientDisconnected.Invoke(),
-				timeout);
+				m_Timeout);
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
