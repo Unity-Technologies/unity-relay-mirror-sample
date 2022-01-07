@@ -10,16 +10,33 @@ namespace Rpc
 
     public class UnityRpc : MonoBehaviour
     {
+        /// <summary>
+        /// Authorization token for the backend.
+        /// </summary>
         private string m_AuthToken = "";
 
         //Replace UPID in the endpoint with the proper UPID once one is generated
+        /// <summary>
+        /// The matchmaker ticket endpoint.
+        /// </summary>
         private string m_TicketEndpoint = "https://cloud.connected.unity3d.com/d98bfc46-6576-4059-b530-dc74eb4f1388/matchmaking/api/v1/tickets";
 
+        /// <summary>
+        /// The backend url.
+        /// </summary>
         private string m_BackendUrl = "http://104.149.129.150:8080/rpc";
         private string m_LocalBackendUrl = "http://192.168.153.148:8080/rpc";
 
+        /// <summary>
+        /// Available ping sites.
+        /// </summary>
         private PingInfo[] m_PingSites;
+
+        /// <summary>
+        /// Available multiplay profiles.
+        /// </summary>
         private MultiplayProfile[] profiles;
+
 
         private bool m_MatchFound;
         private bool m_MatchCreated;
@@ -28,6 +45,9 @@ namespace Rpc
         private const int k_TimesToPing = 10;
         private float m_PingTimeout = 0.05f;
 
+        /// <summary>
+        /// Makes an allocation request to multiplay for a server
+        /// </summary>
         public void AllocateServer()
         {
             MultiplayProfile profile = profiles[0];
@@ -54,6 +74,11 @@ namespace Rpc
             StartCoroutine(PostRequest<AllocateRequestParams, AllocateResponse>("MultiplayService.Allocate", allocateParams, onAllocateComplete));
         }
 
+        /// <summary>
+        /// Auth login for the backend.
+        /// </summary>
+        /// <param name="username">The username associated with the player.</param>
+        /// <param name="onLoginCompleteDelegate">Callback delegate for when login is finished.</param>
         public void Login(string username, OnRequestCompleteDelegate<SignInResponse> onLoginCompleteDelegate)
         {
             SignInParams signInParams = new SignInParams();
@@ -61,35 +86,55 @@ namespace Rpc
             StartCoroutine(PostRequest<SignInParams, SignInResponse>("AuthService.SignIn", signInParams, onLoginCompleteDelegate));
         }
 
-        public void GetVivoxLoginToken(string user, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
+        /// <summary>
+        /// Retrieves a vivox login token from the backend.
+        /// </summary>
+        /// <param name="user">The username associated with the player.</param>
+        /// <param name="onVivoxLoginTokenReceivedDelegate">Callback delegate for when vivox login token has been retrieved.</param>
+        public void GetVivoxLoginToken(string user, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceivedDelegate)
         {
             VivoxTokenRequestParams vivoxRequestParams = new VivoxTokenRequestParams();
             vivoxRequestParams.user = user;
-            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Login", vivoxRequestParams, onVivoxLoginTokenReceived));
+            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Login", vivoxRequestParams, onVivoxLoginTokenReceivedDelegate));
         }
 
-        public void GetVivoxJoinToken(string channelName, string channelType, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxLoginTokenReceived)
+        /// <summary>
+        /// Retrieves a vivox join token from the backend.
+        /// </summary>
+        /// <param name="channelName">The name of the channel the player is trying to join.</param>
+        /// <param name="channelType">The type of channel the player is trying to join.</param>
+        /// <param name="onVivoxJoinTokenReceivedDelegate">Callback delegate for when vivox join token has been retrieved.</param>
+        public void GetVivoxJoinToken(string channelName, string channelType, OnRequestCompleteDelegate<VivoxTokenResponse> onVivoxJoinTokenReceivedDelegate)
         {
             VivoxTokenRequestParams vivoxRequestParams = new VivoxTokenRequestParams();
             vivoxRequestParams.name = channelName;
             vivoxRequestParams.type = channelType;
-            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Join", vivoxRequestParams, onVivoxLoginTokenReceived));
+            StartCoroutine(PostRequest<VivoxTokenRequestParams, VivoxTokenResponse>("VivoxService.Join", vivoxRequestParams, onVivoxJoinTokenReceivedDelegate));
         }
 
-        public void GetRequestMatchTicket(int mode, OnRequestCompleteDelegate<RequestMatchTicketResponse> onRequestMatchTicketReceived)
+        /// <summary>
+        /// Retrieves a match request ticket.
+        /// </summary>
+        /// <param name="mode">The game mode we are searching for.</param>
+        /// <param name="onRequestMatchTicketReceivedDelegate">Callback delegate after match ticket has been retrieved.</param>
+        public void GetRequestMatchTicket(int mode, OnRequestCompleteDelegate<RequestMatchTicketResponse> onRequestMatchTicketReceivedDelegate)
         {
             foreach (PingInfo site in m_PingSites)
             {
-                // calculate packet loss here?
                 site.packetloss = site.packetloss / k_TimesToPing;
             }
 
             RequestMatchTicketParams requestMatchTicketParams = new RequestMatchTicketParams();
             requestMatchTicketParams.mode = mode;
             requestMatchTicketParams.QosResults = m_PingSites;
-            StartCoroutine(PostRequest<RequestMatchTicketParams, RequestMatchTicketResponse>("MatchMakerService.RequestMatch", requestMatchTicketParams, onRequestMatchTicketReceived));
+            StartCoroutine(PostRequest<RequestMatchTicketParams, RequestMatchTicketResponse>("MatchMakerService.RequestMatch", requestMatchTicketParams, onRequestMatchTicketReceivedDelegate));
         }
 
+        /// <summary>
+        /// Polls multiplay for a server allocation.
+        /// </summary>
+        /// <param name="uuid">The uuid for the allocated server.</param>
+        /// <param name="fleetId">The fleet id of the server.</param>
         public IEnumerator PollMultiplay(string uuid, string fleetId)
         {
             PollMultiplayParams pollMultiplayParams = new PollMultiplayParams();
@@ -123,20 +168,31 @@ namespace Rpc
             
         }
 
-        //Possibly add a delegate that way we can call invoke and this can be used to poll anything
-        public IEnumerator PollMatch(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingComplete)
+        /// <summary>
+        /// Initiates polling of matchmaker.
+        /// </summary>
+        /// <param name="ticketId">Ticket Id of requested match.</param>
+        /// <param name="delegateToken">Delegate token that was generated with match request.</param>
+        /// <param name="onMatchmakerPollingCompleteDelegate">Callback delegate for when match has been found.</param>
+        public IEnumerator PollMatch(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingCompleteDelegate)
         {
             m_TimePolling = 0;
             m_MatchFound = false;
             while (!m_MatchFound && m_TimePolling < 300)
             {
-                StartCoroutine(PollMatchmaker(ticketId, delegateToken, onMatchmakerPollingComplete));
+                StartCoroutine(PollMatchmaker(ticketId, delegateToken, onMatchmakerPollingCompleteDelegate));
                 yield return new WaitForSeconds(5.0f);
                 m_TimePolling += 5;
             }
         }
 
-        public IEnumerator PollMatchmaker(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingComplete)
+        /// <summary>
+        /// Polls matchmaker for a match.
+        /// </summary>
+        /// <param name="ticketId">Ticket Id of requested match.</param>
+        /// <param name="delegateToken">Delegate token that was generated with match request.</param>
+        /// <param name="onMatchmakerPollingCompleteDelegate">Callback delegate for when match has been found.</param>
+        public IEnumerator PollMatchmaker(string ticketId, string delegateToken, OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingCompleteDelegate)
         {
             string url = m_TicketEndpoint + "?id=" + ticketId;
 
@@ -156,7 +212,7 @@ namespace Rpc
             {
                 Debug.Log("Error While Sending: " + uwr.error);
                 m_MatchFound = true;
-                onMatchmakerPollingComplete(response, false);
+                onMatchmakerPollingCompleteDelegate(response, false);
             }
             else
             {
@@ -167,17 +223,20 @@ namespace Rpc
                 {
                     // call something to open the connection (will need delegate)
                     m_MatchFound = true;
-                    onMatchmakerPollingComplete(response, true);
+                    onMatchmakerPollingCompleteDelegate(response, true);
                 }
                 if (response.assignment.error != null) 
                 {
                     // propogate out error
                     m_MatchFound = true;
-                    onMatchmakerPollingComplete(response, true);
+                    onMatchmakerPollingCompleteDelegate(response, true);
                 }
             }
         }
 
+        /// <summary>
+        /// Retrieves multiplay environment from backend.
+        /// </summary>
         public void GetMultiplayEnvironment()
         {
             EnvironmentRequestParams environmentRequestParams = new EnvironmentRequestParams();
@@ -196,6 +255,12 @@ namespace Rpc
             StartCoroutine(PostRequest<EnvironmentRequestParams, EnvironmentResponse>("MultiplayService.Environment", environmentRequestParams, onEnvironmentReceived));
         }
 
+        /// <summary>
+        /// Generic method to send different types of post requests to the backend.
+        /// </summary>
+        /// <param name="method">Method to run on the backend.</param>
+        /// <param name="requestParams">The request body params.</param>
+        /// <param name="onRequestCompleteDelegate">Callback to use after a response has been recieved.</param>
         IEnumerator PostRequest<TRequest, TResponse>(string method, TRequest requestParams, OnRequestCompleteDelegate<TResponse> onRequestCompleteDelegate)
         {
             RequestArgs<TRequest> args = new RequestArgs<TRequest>();
@@ -237,6 +302,10 @@ namespace Rpc
             }
         }
 
+        /// <summary>
+        /// Initiates Ping to all sites returned during auth login.
+        /// </summary>
+        /// <param name="onPingCompleteDelegate">Callback to use after all sites have been pinged.</param>
         public void PingSites(OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
             m_PingsCompleted = 0;
@@ -249,6 +318,11 @@ namespace Rpc
             }
         }
 
+        /// <summary>
+        /// Sends ping to the designated ip.
+        /// </summary>
+        /// <param name="ip">The ip address to ping.</param>
+        /// <param name="onPingCompleteDelegate">Callback to use after all sites have been pinged.</param>
         IEnumerator StartPing(string ip, OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
             WaitForSeconds f = new WaitForSeconds(m_PingTimeout);
@@ -260,6 +334,11 @@ namespace Rpc
             PingFinished(p, onPingCompleteDelegate);
         }
 
+        /// <summary>
+        /// Processes the completed ping.
+        /// </summary>
+        /// <param name="p">The finished ping.</param>
+        /// <param name="onPingCompleteDelegate">Callback to use after all sites have been pinged.</param>
         void PingFinished(Ping p, OnPingSitesCompleteDelegate onPingCompleteDelegate)
         {
             if(p.time >= m_PingTimeout)
@@ -281,29 +360,40 @@ namespace Rpc
             }
         }
 
+        /// <summary>
+        /// Updates a ping sites latency.
+        /// </summary>
+        /// <param name="ip">The ip address that was pinged.</param>
+        /// <param name="time">The time(ms) the ping took.</param>
         void UpdatePingSiteLatency(string ip, int time)
         {
             PingInfo site = Array.Find<PingInfo>(m_PingSites, check => check.ipv4 == ip);
             site.latency = time;
         }
 
+        /// <summary>
+        /// Updates a ping sites packet loss. Only called when a ping fails.
+        /// </summary>
+        /// <param name="ip">The ip address that was pinged.</param>
         void UpdatePingSitePacketLoss(string ip)
         {
             PingInfo site = Array.Find<PingInfo>(m_PingSites, check => check.ipv4 == ip);
             site.packetloss++;
         }
 
-        // Not sure where to store authtoken, for now caching it in RPC and retireving it whenever there is a request
+        /// <summary>
+        /// Sets auth token for the RPC.
+        /// </summary>
+        /// <param name="token">The auth token to set.</param>
         public void SetAuthToken(string token)
         {
             m_AuthToken = token;
         }
 
-        public string GetAuthToken()
-        {
-            return m_AuthToken;
-        }
-
+        /// <summary>
+        /// Sets the RPCs ping sites.
+        /// </summary>
+        /// <param name="pingSites">An array of ping sites.</param>
         public void SetPingSites(PingInfo[] pingSites)
         {
             m_PingSites = pingSites;

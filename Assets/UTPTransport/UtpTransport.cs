@@ -1,18 +1,18 @@
-using UnityEngine;
-
 using Mirror;
+
 using System;
 using System.Collections.Generic;
 
+using UnityEngine;
 using Unity.Networking.Transport;
 using Unity.Services.Relay.Models;
 
 namespace Utp
 {
-	/// <summary>
-	/// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
-	/// </summary>
-	[DisallowMultipleComponent]
+    /// <summary>
+    /// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
+    /// </summary>
+    [DisallowMultipleComponent]
 	public class UtpTransport : Transport
 	{
 		// Scheme used by this transport
@@ -26,6 +26,8 @@ namespace Utp
 		public ushort Port = 7777;
 		[Header("Debugging")]
 		public LogLevel LoggerLevel = LogLevel.Info;
+		[Header("Timeout in MS")]
+		public int TimeoutMS = 1000;
 
 		// Server & Client
 		UtpServer server;
@@ -44,11 +46,13 @@ namespace Utp
 			server = new UtpServer(
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
-				(connectionId) => OnServerDisconnected.Invoke(connectionId));
+				(connectionId) => OnServerDisconnected.Invoke(connectionId),
+				TimeoutMS);
 			client = new UtpClient(
 				() => OnClientConnected.Invoke(),
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
-				() => OnClientDisconnected.Invoke());
+				() => OnClientDisconnected.Invoke(),
+				TimeoutMS);
 
 			relayManager = gameObject.AddComponent<RelayManager>();
 

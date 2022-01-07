@@ -87,7 +87,7 @@ namespace Unity.Helpers.ServerQuery.Protocols.TF2E
                 }
 
                 packetSize +=
-                    Serializer.ULongSize + 16; // client terminator 
+                    Serializer.ULongSize; // client terminator 
 
                 byte[] response = new byte[packetSize];
 
