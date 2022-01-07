@@ -21,13 +21,12 @@ namespace UtpTransport
 		public ushort Port = 7777;
 		[Header("Debugging")]
 		public LogLevel LoggerLevel = LogLevel.Info;
+		[Header("Timeout in MS")]
+		public int TimeoutMS = 1000;
 
 		// Server & Client
 		UtpServer server;
 		UtpClient client;
-
-		// Timeout for Server & Client in ms
-		private int timeout = 1000;
 
 		private void Awake()
 		{
@@ -40,12 +39,12 @@ namespace UtpTransport
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
 				(connectionId) => OnServerDisconnected.Invoke(connectionId),
-				timeout);
+				TimeoutMS);
 			client = new UtpClient(
 				() => OnClientConnected.Invoke(),
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
 				() => OnClientDisconnected.Invoke(),
-				timeout);
+				TimeoutMS);
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
