@@ -163,7 +163,7 @@ namespace Utp
 	/// <summary>
 	/// A listen server for Mirror using UTP. 
 	/// </summary>
-	public class UtpServer : CoroutineWrapper
+	public class UtpServer
 	{
 		// Events
 		public Action<int> OnConnected;

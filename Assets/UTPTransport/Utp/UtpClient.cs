@@ -94,7 +94,7 @@ namespace Utp
     /// <summary>
     /// A client for Mirror using UTP.
     /// </summary>
-    public class UtpClient : CoroutineWrapper
+    public class UtpClient
 	{
 		// Events
 		public Action OnConnected;
