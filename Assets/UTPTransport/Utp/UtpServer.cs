@@ -1,15 +1,12 @@
 using Mirror;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
-using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
-using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 
 namespace Utp
@@ -313,16 +310,6 @@ namespace Utp
 		{
 			UtpLog.Info("Stopping server");
 
-			// Because of the way that UTP works we need to delay our calls to dispose the driver.
-			// This allows all clients that are connected to receive a NetworkEvent.Type.Disconnect event
-			// TODO: Determine a less hacky way to accomplish this
-			m_CoroutineRunner.StartCoroutine(DisposeAfterWait());
-		}
-
-		private IEnumerator DisposeAfterWait()
-		{
-			yield return new WaitForSeconds(0.25f);
-
 			m_ServerJobHandle.Complete();
 
 			m_ConnectionsEventsQueue.Dispose();
@@ -344,6 +331,9 @@ namespace Utp
 			{
 				UtpLog.Info("Disconnecting connection with ID: " + connectionId);
 				connection.Disconnect(m_Driver);
+				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the client
+				m_Driver.ScheduleUpdate().Complete();
+
 				OnDisconnected.Invoke(connectionId);
 			}
 			else

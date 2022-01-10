@@ -1,15 +1,11 @@
 using Mirror;
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
-using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
-using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 
 namespace Utp
@@ -237,31 +233,25 @@ namespace Utp
 			{
                 UtpLog.Info("Disconnecting from server");
 
-                m_Connection[0].Disconnect(m_Driver);
-                OnDisconnected.Invoke();
+				m_Connection[0].Disconnect(m_Driver);
+				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
+				m_Driver.ScheduleUpdate().Complete();
 
-               m_CoroutineRunner.StartCoroutine(DisposeAfterWait());
-			}
-		}
+				OnDisconnected.Invoke();
+            }
 
-		private IEnumerator DisposeAfterWait()
-		{
-			yield return new WaitForSeconds(0.25f);
-
-            m_ClientJobHandle.Complete();
-
-            if (m_ConnectionEventsQueue.IsCreated)
-            {
+			if (m_ConnectionEventsQueue.IsCreated)
+			{
 				ProcessIncomingEvents(); // Ensure we flush the queue
 				m_ConnectionEventsQueue.Dispose();
 			}
 
-            if (m_Connection.IsCreated)
+			if (m_Connection.IsCreated)
 			{
-                m_Connection.Dispose();
-            }
+				m_Connection.Dispose();
+			}
 
-            if (m_Driver.IsCreated)
+			if (m_Driver.IsCreated)
 			{
 				m_Driver.Dispose();
 				m_Driver = default(NetworkDriver);
