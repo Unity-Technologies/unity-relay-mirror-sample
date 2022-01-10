@@ -57,13 +57,13 @@ namespace Network
             m_Players = new List<Player>();
             int logLevel = 2;
 
-			m_Username = SystemInfo.deviceName;
-			m_UnityRpc = GetComponent<UnityRpc>();
-			m_VivoxManager = GetComponent<VivoxManager>();
-			m_VivoxManager.Init(logLevel);
+            m_Username = SystemInfo.deviceName;
+            m_UnityRpc = GetComponent<UnityRpc>();
+            m_VivoxManager = GetComponent<VivoxManager>();
+            m_VivoxManager.Init(logLevel);
 
             string[] args = System.Environment.GetCommandLineArgs();
-            for(int i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Length; i++)
             {
 
                 if (args[i] == "-queryport")
@@ -83,7 +83,7 @@ namespace Network
                 }
                 else if (args[i] == "-queryprotocol")
                 {
-                    if(i+1 < args.Length)
+                    if (i + 1 < args.Length)
                     {
                         if (args[i + 1] == "sqp")
                         {
@@ -120,7 +120,7 @@ namespace Network
                 }
                 else if (args[i] == "-log")
                 {
-                    if(i + 1 < args.Length)
+                    if (i + 1 < args.Length)
                     {
                         try
                         {
@@ -140,6 +140,7 @@ namespace Network
                     }
                 }
             }
+        }
 
 
         /// <summary>
