@@ -157,8 +157,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d4f9593ba7f845458730213887b5758, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  UseRelay: 0
   Port: 7777
-  LoggerLevel: 300
+  LoggerLevel: 3
 --- !u!114 &207291381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,7 +188,9 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
-  m_LocalPlayer: {fileID: 0}
+  relayJoinCode: 
+  localPlayer: {fileID: 0}
+  isLoggedIn: 0
 --- !u!4 &207291382
 Transform:
   m_ObjectHideFlags: 0
@@ -214,7 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d54755ee970ce14f9380e0aebe57cd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsLoggedIn: 0
+  isLoggedIn: 0
 --- !u!114 &207291384
 MonoBehaviour:
   m_ObjectHideFlags: 0

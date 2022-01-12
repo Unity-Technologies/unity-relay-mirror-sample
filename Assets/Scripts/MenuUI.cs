@@ -1,10 +1,12 @@
 ﻿// vis2k: GUILayout instead of spacey += ...; removed Update hotkeys to avoid
 // confusion if someone accidentally presses one.
 using System.ComponentModel;
+using System.Collections.Generic;
 using UnityEngine;
 using Network;
 using Mirror;
 using Vivox;
+using Unity.Services.Relay.Models;
 
 namespace UI
 {
@@ -20,7 +22,6 @@ namespace UI
     public class MenuUI : MonoBehaviour
     {
         private MyNetworkManager m_Manager;
-
         private VivoxManager m_VivoxManger;
 
         /// <summary>
@@ -86,7 +87,7 @@ namespace UI
             GUILayout.EndArea();
         }
 
-        void StartButtons()
+		void StartButtons()
         {
             if (!NetworkClient.active)
             {
@@ -98,7 +99,7 @@ namespace UI
                 }
                 else
                 {
-                    if (GUILayout.Button("Server Only")) m_Manager.StartServer();
+                    if (GUILayout.Button("Server Only")) m_Manager.StartStandardServer();
                 }
 
                 if (m_Manager.isLoggedIn)
@@ -108,21 +109,56 @@ namespace UI
                         // Server + Client
                         if (Application.platform != RuntimePlatform.WebGLPlayer)
                         {
-                            if (GUILayout.Button("Host (Server + Client)"))
+                            if (GUILayout.Button("Standard Host (Server + Client)"))
                             {
-                                m_Manager.StartHost();
+                                m_Manager.StartStandardHost();
                             }
+
+                            if (GUILayout.Button("Relay Host (Server + Client)"))
+							{
+                                int maxPlayers = 8;
+                                m_Manager.StartRelayHost(maxPlayers);
+							}
                         }
 
                         // Client + IP
                         GUILayout.BeginHorizontal();
-                        if (GUILayout.Button("Client"))
+                        if (GUILayout.Button("Client (DGS)"))
                         {
-                            m_Manager.StartClient();
+                            m_Manager.JoinStandardServer();
                         }
                         m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
                         GUILayout.EndHorizontal();
-                    }
+
+						// Client + Relay Join Code
+						GUILayout.BeginHorizontal();
+						if (GUILayout.Button("Client (Relay)"))
+						{
+                            m_Manager.JoinRelayServer();
+						}
+						m_Manager.relayJoinCode = GUILayout.TextField(m_Manager.relayJoinCode);
+						GUILayout.EndHorizontal();
+
+                        if (GUILayout.Button("Get Relay Regions"))
+						{
+                            // Note: We are not doing anything with these regions in this example, we are just illustrating how you would go about fetching these regions
+                            m_Manager.GetRelayRegions((List<Region> regions) =>
+                            {
+								if (regions.Count > 0)
+								{
+									for (int i = 0; i < regions.Count; i++)
+									{
+										Region region = regions[i];
+										Debug.Log("Found region. ID: " + region.Id + ", Name: " + region.Description);
+									}
+								}
+								else
+								{
+									Debug.LogWarning("No regions received");
+								}
+							});
+						}
+					}
 
                     if (GUILayout.Button("Auth Logout"))
                     {
@@ -178,6 +214,10 @@ namespace UI
             if (NetworkServer.active)
             {
                 GUILayout.Label("Server: active. Transport: " + Transport.activeTransport);
+                if (m_Manager.IsRelayEnabled())
+				{
+                    GUILayout.Label("Relay enabled. Join code: " + m_Manager.relayJoinCode);
+				}
             }
             if (NetworkClient.isConnected)
             {

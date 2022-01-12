@@ -1,15 +1,14 @@
 using Mirror;
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
-using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Relay.Models;
 
-namespace UtpTransport
+namespace Utp
 {
     struct ClientUpdateJob : IJob
     {
@@ -95,7 +94,7 @@ namespace UtpTransport
     /// <summary>
     /// A client for Mirror using UTP.
     /// </summary>
-    public class UtpClient : CoroutineWrapper
+    public class UtpClient
 	{
 		// Events
 		public Action OnConnected;
@@ -180,6 +179,30 @@ namespace UtpTransport
 			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
 		}
 
+		public void RelayConnect(JoinAllocation joinAllocation)
+		{
+			if (IsConnected())
+			{
+				UtpLog.Warning("Client is already connected");
+				return;
+			}
+
+			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
+			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
+			NetworkSettings networkSettings = new NetworkSettings();
+			networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+
+			m_Driver = NetworkDriver.Create(networkSettings);
+			m_ReliablePipeline = m_Driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
+			m_UnreliablePipeline = m_Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
+			m_Connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
+			m_ConnectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
+
+			m_Connection[0] = m_Driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+
+			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
+		}
+
 		/// <summary>
 		/// Whether or not the client is connected to a server.
 		/// </summary>
@@ -210,31 +233,25 @@ namespace UtpTransport
 			{
                 UtpLog.Info("Disconnecting from server");
 
-                m_Connection[0].Disconnect(m_Driver);
-                OnDisconnected.Invoke();
+				m_Connection[0].Disconnect(m_Driver);
+				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
+				m_Driver.ScheduleUpdate().Complete();
 
-               m_CoroutineRunner.StartCoroutine(DisposeAfterWait());
-			}
-		}
+				OnDisconnected.Invoke();
+            }
 
-		private IEnumerator DisposeAfterWait()
-		{
-			yield return new WaitForSeconds(0.25f);
-
-            m_ClientJobHandle.Complete();
-
-            if (m_ConnectionEventsQueue.IsCreated)
+			if (m_ConnectionEventsQueue.IsCreated)
 			{
 				ProcessIncomingEvents(); // Ensure we flush the queue
 				m_ConnectionEventsQueue.Dispose();
 			}
 
-            if (m_Connection.IsCreated)
+			if (m_Connection.IsCreated)
 			{
-                m_Connection.Dispose();
-            }
+				m_Connection.Dispose();
+			}
 
-            if (m_Driver.IsCreated)
+			if (m_Driver.IsCreated)
 			{
 				m_Driver.Dispose();
 				m_Driver = default(NetworkDriver);
@@ -334,5 +351,4 @@ namespace UtpTransport
             }
         }
 	}
-
 }

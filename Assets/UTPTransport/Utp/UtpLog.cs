@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-namespace UtpTransport
+namespace Utp
 {
 	public enum LogLevel : int
 	{

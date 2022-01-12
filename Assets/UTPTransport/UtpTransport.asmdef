@@ -1,0 +1,11 @@
+{
+	"name": "UtpTransport",
+	"allowUnsafeCode": true,
+	"references": [
+		"Mirror",
+		"Unity.Collections",
+		"Unity.Jobs",
+		"Unity.Services.Relay",
+		"Unity.Networking.Transport"
+	]
+}

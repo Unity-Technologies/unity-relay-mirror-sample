@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 using Vivox;
@@ -9,10 +10,14 @@ using Unity.Helpers.ServerQuery;
 using Unity.Helpers.ServerQuery.Protocols.SQP.Collections;
 using Unity.Helpers.ServerQuery.Protocols.A2S.Collections;
 using Unity.Helpers.ServerQuery.Protocols.TF2E.Collections;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+
+using Utp;
 
 namespace Network 
 {
-    public class MyNetworkManager : NetworkManager
+    public class MyNetworkManager : UtpNetworkManager
     {
         /// <summary>
         /// The local player object that spawns in.
@@ -20,14 +25,13 @@ namespace Network
         public Player localPlayer;
         private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
-        private UnityRpc m_UnityRpc;
+		private UnityRpc m_UnityRpc;
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
         private bool m_IsDedicatedServer;
         private ServerQueryServer.Protocol m_Protocol;
         private string m_Version = "001";
-        private ushort m_Port = 0;
         private ushort m_QueryPort = 0;
 
         /// <summary>
@@ -49,33 +53,20 @@ namespace Network
         {
             base.Awake();
             m_Protocol = ServerQueryServer.Protocol.SQP;
+            m_IsDedicatedServer = false;
             m_Players = new List<Player>();
             int logLevel = 2;
 
+            m_Username = SystemInfo.deviceName;
+            m_UnityRpc = GetComponent<UnityRpc>();
+            m_VivoxManager = GetComponent<VivoxManager>();
+            m_VivoxManager.Init(logLevel);
+
             string[] args = System.Environment.GetCommandLineArgs();
-            for(int i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Length; i++)
             {
-                if (args[i] == "-port")
-                {
-                    if (i + 1 < args.Length)
-                    {
-                        if (args[i + 1].Length == 4)
-                        {
-                            try
-                            {
-                                m_Port = ushort.Parse(args[i + 1]);
-                                UtpTransport.UtpTransport utpTransport = GetComponent<UtpTransport.UtpTransport>();
-                                utpTransport.Port = m_Port;
-                                Debug.Log($"found port {m_Port}");
-                            }
-                            catch
-                            {
-                                Debug.Log($"unable to parse {args[i + 1]} into ushort for port");
-                            }
-                        }
-                    }
-                }
-                else if (args[i] == "-queryport")
+
+                if (args[i] == "-queryport")
                 {
                     if (i + 1 < args.Length)
                     {
@@ -92,7 +83,7 @@ namespace Network
                 }
                 else if (args[i] == "-queryprotocol")
                 {
-                    if(i+1 < args.Length)
+                    if (i + 1 < args.Length)
                     {
                         if (args[i + 1] == "sqp")
                         {
@@ -129,7 +120,7 @@ namespace Network
                 }
                 else if (args[i] == "-log")
                 {
-                    if(i + 1 < args.Length)
+                    if (i + 1 < args.Length)
                     {
                         try
                         {
@@ -149,18 +140,8 @@ namespace Network
                     }
                 }
             }
-
-            m_VivoxManager = GetComponent<VivoxManager>();
-            m_VivoxManager.Init(logLevel);
         }
 
-        public override void Start()
-        {
-            base.Start();
-            m_IsDedicatedServer = false;
-            m_Username = SystemInfo.deviceName;
-            m_UnityRpc = GetComponent<UnityRpc>();
-        }
 
         /// <summary>
         /// Auth login for the backend.
@@ -169,13 +150,30 @@ namespace Network
         {
             OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
             m_UnityRpc.Login(m_Username, loginDelegate);
-        }
 
-        /// <summary>
+            // Relay requires UAT login to function. Because of this, we need to log in to both the RPC backend and UAT.
+            UnityLogin();
+		}
+
+		/// <summary>
         /// Callback function for when auth login completes.
         /// </summary>
         /// <param name="responseArgs">The arguments returned from the RPC.</param>
         /// <param name="wasSuccessful">Flag to determine if the backend request was successful.</param>
+        async void UnityLogin()
+		{
+			try
+			{
+				await UnityServices.InitializeAsync();
+				await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("Logged into Unity, player ID: " + AuthenticationService.Instance.PlayerId);
+			}
+			catch (Exception e)
+			{
+				Debug.Log(e);
+			}
+		}
+
         void OnLoginComplete(SignInResponse responseArgs, bool wasSuccessful)
         {
             if (wasSuccessful)
@@ -292,7 +290,7 @@ namespace Network
                 data.SQPServerInfo.gameType = "Default Game Type";
                 data.SQPServerInfo.buildID = "Default Build ID";
                 data.SQPServerInfo.map = "Default Map Name";
-                data.SQPServerInfo.gamePort = m_Port;
+                data.SQPServerInfo.gamePort = GetPort();
 
                 // SQP Rule Data
                 SQPServerRule rule = new SQPServerRule();
@@ -401,7 +399,7 @@ namespace Network
                 data.TF2EQueryInfo.dataCenter = "Test Datacenter";
                 data.TF2EQueryInfo.gameMode = "Test Game Mode";
 
-                data.TF2EQueryInfo.basicInfo.port = m_Port;
+                data.TF2EQueryInfo.basicInfo.port = GetPort();
                 data.TF2EQueryInfo.basicInfo.platform = Application.platform.ToString();
                 data.TF2EQueryInfo.basicInfo.playlistVersion = "N/A";
                 data.TF2EQueryInfo.basicInfo.playlistNum = 0;
@@ -569,7 +567,7 @@ namespace Network
         public override void OnClientDisconnect(NetworkConnection conn)
         {
             base.OnClientDisconnect(conn);
-            Debug.Log("Disconnected from Server!");
+            Debug.Log("MyNetworkManager: Disconnected from Server!");
         }
 
         /// <summary>

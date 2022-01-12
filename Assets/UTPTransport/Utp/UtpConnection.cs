@@ -4,7 +4,7 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 using Unity.Collections;
 using Unity.Networking.Transport;
 
-namespace UtpTransport
+namespace Utp
 {
 	/// <summary>
 	/// Wrapper for a UTP connection. Holds state for the connection.

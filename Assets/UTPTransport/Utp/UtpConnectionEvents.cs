@@ -1,6 +1,6 @@
 using Unity.Collections;
 
-namespace UtpTransport
+namespace Utp
 {
     /// <summary>
     /// Connection events seen on a connection.
