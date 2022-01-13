@@ -28,9 +28,14 @@ namespace Utp
 
 		private void Awake()
 		{
-			Debug.Log("RelayManager initialized");
+			UtpLog.Info("RelayManager initialized");
 		}
 
+		/// <summary>
+		/// Get a Relay Service JoinAllocation from a given joinCode.
+		/// </summary>
+		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
+		/// <param name="callback">A callback to invoke on success/error.</param>
 		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
 		{
 			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
@@ -46,7 +51,7 @@ namespace Utp
 
 			if (joinTask.IsFaulted)
 			{
-				Debug.LogError("Join allocation request failed");
+				UtpLog.Error("Join allocation request failed");
 				callback?.Invoke(joinTask.Exception.Message);
 
 				yield break;
@@ -56,6 +61,10 @@ namespace Utp
 			callback?.Invoke(null);
 		}
 
+		/// <summary>
+		/// Get a list of Regions from the Relay Service.
+		/// </summary>
+		/// <param name="callback">A callback to invoke on success/error.</param>
 		public void GetRelayRegions(Action<List<Region>> callback)
 		{
 			StartCoroutine(GetRelayRegionsTask(callback));
@@ -78,6 +87,11 @@ namespace Utp
 			callback?.Invoke(regionsTask.Result);
 		}
 
+		/// <summary>
+		/// Allocate a Relay Server.
+		/// </summary>
+		/// <param name="maxPlayers">The max number of players that may connect to this server.</param>
+		/// <param name="regionId">The region to allocate the server in. May be null.</param>
 		public void AllocateRelayServer(int maxPlayers, string regionId)
 		{
 			StartCoroutine(AllocateRelayServerTask(maxPlayers, regionId, OnAllocateRelayServer));

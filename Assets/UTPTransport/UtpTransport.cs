@@ -18,9 +18,6 @@ namespace Utp
 		// Scheme used by this transport
 		public const string Scheme = "udp";
 
-		// Relay toggle
-		public bool UseRelay;
-
 		// Common
 		[Header("Transport Configuration")]
 		public ushort Port = 7777;
@@ -32,6 +29,9 @@ namespace Utp
 		// Server & Client
 		UtpServer server;
 		UtpClient client;
+
+		// Relay toggle
+		public bool useRelay;
 
 		// Relay Manager
 		RelayManager relayManager;
@@ -61,14 +61,13 @@ namespace Utp
 
 		public override bool Available()
 		{
-			// TODO: What determines if this is actually available?
-			return true;
+			return Application.platform != RuntimePlatform.WebGLPlayer;
 		}
 
 		// Client
 		public override void ClientConnect(string address)
 		{
-			if (UseRelay)
+			if (useRelay)
 			{
 				// We entirely ignore the address that is passed when utilizing Relay
 				// The data we need to connect is embedded in the relayManager's JoinAllocation
@@ -107,7 +106,7 @@ namespace Utp
 		public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
-			server.Start(Port, UseRelay, relayManager.serverAllocation);
+			server.Start(Port, useRelay, relayManager.serverAllocation);
 		}
 
 		public override void ServerStop() => server.Stop();

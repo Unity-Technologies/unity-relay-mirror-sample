@@ -17,7 +17,7 @@ using Utp;
 
 namespace Network 
 {
-    public class MyNetworkManager : UtpNetworkManager
+    public class MyNetworkManager : RelayNetworkManager
     {
         /// <summary>
         /// The local player object that spawns in.

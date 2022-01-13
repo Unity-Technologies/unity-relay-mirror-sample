@@ -9,7 +9,6 @@ namespace Utp
 {
 	public class RelayUtils
 	{
-		// Set utility functions for constructing server data objects
 		private static RelayAllocationId ConvertFromAllocationIdBytes(byte[] allocationIdBytes)
 		{
 			unsafe
@@ -42,6 +41,7 @@ namespace Utp
 				}
 			}
 		}
+
 		private static RelayServerEndpoint GetEndpointForConnectionType(List<RelayServerEndpoint> endpoints, string connectionType)
 		{
 			foreach (var endpoint in endpoints)
@@ -54,6 +54,13 @@ namespace Utp
 
 			return null;
 		}
+
+		/// <summary>
+		/// Construct the ServerData needed to create a RelayNetworkParameter for a host.
+		/// </summary>
+		/// <param name="allocation">The Allocation for the Relay Server.</param>
+		/// <param name="connectionType">The type of connection to the Relay Server.</param>
+		/// <returns>The RelayServerData.</returns>
 		public static RelayServerData HostRelayData(Allocation allocation, string connectionType = "udp")
 		{
 			// Select endpoint based on desired connectionType
@@ -80,6 +87,12 @@ namespace Utp
 			return relayServerData;
 		}
 
+		/// <summary>
+		/// Construct the ServerData needed to create a RelayNetworkParameter for a player.
+		/// </summary>
+		/// <param name="allocation">The JoinAllocation for the Relay Server.</param>
+		/// <param name="connectionType">The type of connection to the Relay Server.</param>
+		/// <returns>The RelayServerData.</returns>
 		public static RelayServerData PlayerRelayData(JoinAllocation allocation, string connectionType = "udp")
 		{
 			// Select endpoint based on desired connectionType
