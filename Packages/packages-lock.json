@@ -129,24 +129,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.services.vivox": {
-      "version": "15.1.150002-pre.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.settings-manager": "1.0.3",
-        "com.unity.services.core": "1.1.0-pre.10",
-        "com.unity.nuget.newtonsoft-json": "2.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.settings-manager": {
-      "version": "1.0.3",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
     "com.unity.sysroot": {
       "version": "0.1.19-preview",
       "depth": 1,

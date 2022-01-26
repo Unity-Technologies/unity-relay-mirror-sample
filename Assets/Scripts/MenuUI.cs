@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Network;
 using Mirror;
-using Vivox;
 using Unity.Services.Relay.Models;
 
 namespace UI
@@ -22,7 +21,6 @@ namespace UI
     public class MenuUI : MonoBehaviour
     {
         private MyNetworkManager m_Manager;
-        private VivoxManager m_VivoxManger;
 
         /// <summary>
         /// Whether to show the default control HUD at runtime.
@@ -42,7 +40,6 @@ namespace UI
         void Awake()
         {
             m_Manager = GetComponent<MyNetworkManager>();
-            m_VivoxManger = GetComponent<VivoxManager>();
         }
 
         void OnGUI()
@@ -104,96 +101,70 @@ namespace UI
 
                 if (m_Manager.isLoggedIn)
                 {
-                    if (m_VivoxManger.isLoggedIn)
+                    // Server + Client
+                    if (Application.platform != RuntimePlatform.WebGLPlayer)
                     {
-                        // Server + Client
-                        if (Application.platform != RuntimePlatform.WebGLPlayer)
+                        if (GUILayout.Button("Standard Host (Server + Client)"))
                         {
-                            if (GUILayout.Button("Standard Host (Server + Client)"))
-                            {
-                                m_Manager.StartStandardHost();
-                            }
-
-                            if (GUILayout.Button("Relay Host (Server + Client)"))
-							{
-                                int maxPlayers = 8;
-                                m_Manager.StartRelayHost(maxPlayers);
-							}
+                            m_Manager.StartStandardHost();
                         }
 
-                        // Client + IP
-                        GUILayout.BeginHorizontal();
-                        if (GUILayout.Button("Client (DGS)"))
-                        {
-                            m_Manager.JoinStandardServer();
-                        }
-                        m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
-                        GUILayout.EndHorizontal();
-
-						// Client + Relay Join Code
-						GUILayout.BeginHorizontal();
-						if (GUILayout.Button("Client (Relay)"))
+                        if (GUILayout.Button("Relay Host (Server + Client)"))
 						{
-                            m_Manager.JoinRelayServer();
+                            int maxPlayers = 8;
+                            m_Manager.StartRelayHost(maxPlayers);
 						}
-						m_Manager.relayJoinCode = GUILayout.TextField(m_Manager.relayJoinCode);
-						GUILayout.EndHorizontal();
+                    }
 
-                        if (GUILayout.Button("Get Relay Regions"))
-						{
-                            // Note: We are not doing anything with these regions in this example, we are just illustrating how you would go about fetching these regions
-                            m_Manager.GetRelayRegions((List<Region> regions) =>
-                            {
-								if (regions.Count > 0)
-								{
-									for (int i = 0; i < regions.Count; i++)
-									{
-										Region region = regions[i];
-										Debug.Log("Found region. ID: " + region.Id + ", Name: " + region.Description);
-									}
-								}
-								else
-								{
-									Debug.LogWarning("No regions received");
-								}
-							});
-						}
+                    // Client + IP
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Client (DGS)"))
+                    {
+                        m_Manager.JoinStandardServer();
+                    }
+                    m_Manager.networkAddress = GUILayout.TextField(m_Manager.networkAddress);
+                    GUILayout.EndHorizontal();
+
+					// Client + Relay Join Code
+					GUILayout.BeginHorizontal();
+					if (GUILayout.Button("Client (Relay)"))
+					{
+                        m_Manager.JoinRelayServer();
 					}
+					m_Manager.relayJoinCode = GUILayout.TextField(m_Manager.relayJoinCode);
+					GUILayout.EndHorizontal();
+
+                    if (GUILayout.Button("Get Relay Regions"))
+					{
+                        // Note: We are not doing anything with these regions in this example, we are just illustrating how you would go about fetching these regions
+                        m_Manager.GetRelayRegions((List<Region> regions) =>
+                        {
+							if (regions.Count > 0)
+							{
+								for (int i = 0; i < regions.Count; i++)
+								{
+									Region region = regions[i];
+									Debug.Log("Found region. ID: " + region.Id + ", Name: " + region.Description);
+								}
+							}
+							else
+							{
+								Debug.LogWarning("No regions received");
+							}
+						});
+					}
+					
 
                     if (GUILayout.Button("Auth Logout"))
                     {
                         m_Manager.Logout();
-                    }
-
-                    if (!m_VivoxManger.isLoggedIn)
-                    {
-                        if (GUILayout.Button("Vivox Login"))
-                        {
-                            m_Manager.VivoxLogin();
-                        }
-                    }
-                    else
-                    {
-                        if (GUILayout.Button("Vivox Logout"))
-                        {
-                            m_VivoxManger.Logout();
-                        }
-                    }
-
-                    if (GUILayout.Button("Start Matchmaking"))
-                    {
-                        m_Manager.RequestMatch();
-                    }
-                    if (GUILayout.Button("Request Multiplay Server"))
-                    {
-                        m_Manager.CreateMatch();
                     }
                 }
                 else
                 {
                     if (GUILayout.Button("Auth Login"))
                     {
-                        m_Manager.Login();
+                        m_Manager.UnityLogin();
                     }
                 }
             }

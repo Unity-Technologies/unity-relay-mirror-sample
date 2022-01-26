@@ -1,6 +1,5 @@
 ﻿using Mirror;
 using UnityEngine;
-using Vivox;
 
 public class Player : NetworkBehaviour
 {
@@ -21,8 +20,6 @@ public class Player : NetworkBehaviour
     /// Platform the user is on.
     /// </summary>
     public string platform;
-
-    private VivoxManager m_VivoxManager;
 
     /// <summary>
     /// Shifts the players position in space based on the inputs received.
@@ -47,34 +44,11 @@ public class Player : NetworkBehaviour
 
     private void Start()
     {
-        if (isLocalPlayer)
-        {
-            m_VivoxManager = FindObjectOfType<VivoxManager>();
-        }
     }
 
     void Update()
     {
         HandleMovement();
-
-        if (isLocalPlayer && Input.GetKeyDown(KeyCode.N))
-        {
-            m_VivoxManager.ChangeChannel(KeyCode.N);
-        }
-
-        if (isLocalPlayer && Input.GetKeyDown(KeyCode.M))
-        {
-            m_VivoxManager.ChangeChannel(KeyCode.M);
-        }
-
-        if (m_VivoxManager != null)
-        {
-            if (m_VivoxManager.GetAudioState() == VivoxUnity.ConnectionState.Connected && transform.hasChanged)
-            {
-                m_VivoxManager.Update3DPosition(transform);
-                transform.hasChanged = false;
-            }
-        }
     }
 
     /// <summary>

@@ -134,9 +134,7 @@ GameObject:
   - component: {fileID: 207291382}
   - component: {fileID: 207291381}
   - component: {fileID: 207291379}
-  - component: {fileID: 207291383}
   - component: {fileID: 207291384}
-  - component: {fileID: 207291385}
   - component: {fileID: 207291386}
   m_Layer: 0
   m_Name: NetworkManager
@@ -157,9 +155,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d4f9593ba7f845458730213887b5758, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  UseRelay: 0
   Port: 7777
   LoggerLevel: 3
+  TimeoutMS: 1000
+  useRelay: 0
 --- !u!114 &207291381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -205,19 +204,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &207291383
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 207291378}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d54755ee970ce14f9380e0aebe57cd0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isLoggedIn: 0
 --- !u!114 &207291384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -233,18 +219,6 @@ MonoBehaviour:
   showGUI: 1
   offsetX: 0
   offsetY: 0
---- !u!114 &207291385
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 207291378}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df2509cbeca3af24db064f156c73f0e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &207291386
 MonoBehaviour:
   m_ObjectHideFlags: 0

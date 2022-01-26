@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
-using Vivox;
-using Rpc;
 using Unity.Helpers.ServerQuery.ServerQuery;
 using Unity.Helpers.ServerQuery.Data;
 using Unity.Helpers.ServerQuery;
@@ -23,9 +21,7 @@ namespace Network
         /// The local player object that spawns in.
         /// </summary>
         public Player localPlayer;
-        private VivoxManager m_VivoxManager;
         private ServerQueryManager m_ServerQueryManager;
-		private UnityRpc m_UnityRpc;
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
@@ -55,12 +51,8 @@ namespace Network
             m_Protocol = ServerQueryServer.Protocol.SQP;
             m_IsDedicatedServer = false;
             m_Players = new List<Player>();
-            int logLevel = 2;
 
             m_Username = SystemInfo.deviceName;
-            m_UnityRpc = GetComponent<UnityRpc>();
-            m_VivoxManager = GetComponent<VivoxManager>();
-            m_VivoxManager.Init(logLevel);
 
             string[] args = System.Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
@@ -118,124 +110,24 @@ namespace Network
                     m_IsDedicatedServer = true;
                     Debug.Log($"starting as dedicated server");
                 }
-                else if (args[i] == "-log")
-                {
-                    if (i + 1 < args.Length)
-                    {
-                        try
-                        {
-                            logLevel = int.Parse(args[i + 1]);
-                            Debug.Log($"log level " + args[i + 1]);
-                        }
-                        catch
-                        {
-                            logLevel = 2;
-                            Debug.Log($"unable to parse {args[i + 1]} into int for logLevel. Defaulting to 2");
-                        }
-                    }
-                    else
-                    {
-                        logLevel = 2;
-                        Debug.Log($"no log value provided. Defaulting to 2");
-                    }
-                }
             }
         }
 
-
-        /// <summary>
-        /// Auth login for the backend.
-        /// </summary>
-        public void Login()
-        {
-            OnRequestCompleteDelegate<SignInResponse> loginDelegate = OnLoginComplete;
-            m_UnityRpc.Login(m_Username, loginDelegate);
-
-            // Relay requires UAT login to function. Because of this, we need to log in to both the RPC backend and UAT.
-            UnityLogin();
-		}
-
-		/// <summary>
-        /// Callback function for when auth login completes.
-        /// </summary>
-        /// <param name="responseArgs">The arguments returned from the RPC.</param>
-        /// <param name="wasSuccessful">Flag to determine if the backend request was successful.</param>
-        async void UnityLogin()
+        public async void UnityLogin()
 		{
 			try
 			{
 				await UnityServices.InitializeAsync();
 				await AuthenticationService.Instance.SignInAnonymouslyAsync();
                 Debug.Log("Logged into Unity, player ID: " + AuthenticationService.Instance.PlayerId);
-			}
+                isLoggedIn = true;
+            }
 			catch (Exception e)
 			{
-				Debug.Log(e);
+                isLoggedIn = false;
+                Debug.Log(e);
 			}
 		}
-
-        void OnLoginComplete(SignInResponse responseArgs, bool wasSuccessful)
-        {
-            if (wasSuccessful)
-            {
-                isLoggedIn = true;
-                m_UserId = responseArgs.userid;
-
-                m_UnityRpc.SetAuthToken(responseArgs.token);
-                m_UnityRpc.SetPingSites(responseArgs.pingsites);
-
-                m_UnityRpc.GetMultiplayEnvironment();
-            }
-        }
-
-        /// <summary>
-        /// Uses the RPC to request a match ticket from the backend.
-        /// </summary>
-        public void RequestMatch()
-        {
-            OnPingSitesCompleteDelegate onPingCompleteDelegate = delegate ()
-            {
-                OnRequestCompleteDelegate<RequestMatchTicketResponse> RequestMatchDelegate = RequestMatchResponse;
-                m_UnityRpc.GetRequestMatchTicket(1, RequestMatchDelegate);
-            };
-            m_UnityRpc.PingSites(onPingCompleteDelegate); // Ping sites needs delegate to know when all finished
-        }
-
-        /// <summary>
-        /// Initiates the process to allocate a server and create a match with Multiplay.
-        /// </summary>
-        public void CreateMatch()
-        {
-            m_UnityRpc.AllocateServer();
-        }
-
-        /// <summary>
-        /// Makes a login call to Vivox.
-        /// </summary>
-        public void VivoxLogin()
-        {
-            m_VivoxManager.Login(m_UserId);
-        }
-
-        /// <summary>
-        /// Callback function for when Request match has finished.
-        /// </summary>
-        /// <param name="responseArgs">The match request response from the RPC.</param>
-        /// <param name="wasSuccessful">Flag to determine if the backend request was successful.</param>
-        void RequestMatchResponse(RequestMatchTicketResponse responseArgs, bool wasSuccessful)
-        {
-            if (wasSuccessful)
-            {
-                OnRequestCompleteDelegate<MatchmakerPollingResponse> onMatchmakerPollingComplete = delegate (MatchmakerPollingResponse response, bool bWasSuccessful)
-                {
-                    if (bWasSuccessful)
-                    {
-                        Debug.Log($"successfully completed matchmaker polling, received connection: {response.assignment.connection}");
-                    }
-                };
-                StartCoroutine(m_UnityRpc.PollMatch(responseArgs.id, responseArgs.token, onMatchmakerPollingComplete));
-            }
-        }
 
         private void Update()
         {
@@ -244,21 +136,6 @@ namespace Network
                 if (localPlayer == null)
                 {
                     FindLocalPlayer();
-                    if(localPlayer != null) {
-                        if (m_VivoxManager.isLoggedIn &&
-                        localPlayer.sessionId != "")
-                        {
-                            OnJoinCompleteDelegate joinCompleteDelegate = delegate ()
-                            {
-                                m_VivoxManager.JoinChannel("TP_" + localPlayer.sessionId, VivoxUnity.ChannelType.Positional, true, false);
-                            };
-                            m_VivoxManager.JoinChannel("TN_" + localPlayer.sessionId, VivoxUnity.ChannelType.NonPositional, true, false, joinCompleteDelegate);
-                        }
-                        else
-                        {
-                            localPlayer = null;
-                        }
-                    }
                 }
             }
             else
@@ -485,7 +362,6 @@ namespace Network
         /// </summary>
         internal void Logout()
         {
-            m_UnityRpc.SetAuthToken("");
             isLoggedIn = false;
         }
 
@@ -549,10 +425,6 @@ namespace Network
             base.OnStopClient();
 
             Debug.Log("MyNetworkManager: Left the Server!");
-            if(m_VivoxManager.GetAudioState() != VivoxUnity.ConnectionState.Disconnected)
-            {
-                m_VivoxManager.LeaveChannel();
-            }
 
             localPlayer = null;
 
@@ -561,7 +433,7 @@ namespace Network
 
         public override void OnClientConnect(NetworkConnection conn)
         {
-            Debug.Log($"MyNetworkManager: {m_VivoxManager.GetName()} Connected to Server!");
+            Debug.Log($"MyNetworkManager: {m_Username} Connected to Server!");
         }
 
         public override void OnClientDisconnect(NetworkConnection conn)
