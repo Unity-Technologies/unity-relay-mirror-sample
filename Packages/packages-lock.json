@@ -78,12 +78,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.multipayer.online.helpers.sqp": {
-      "version": "file:com.unity.multiplayer.online.helpers.sqp",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
     "com.unity.nuget.newtonsoft-json": {
       "version": "2.0.0",
       "depth": 1,

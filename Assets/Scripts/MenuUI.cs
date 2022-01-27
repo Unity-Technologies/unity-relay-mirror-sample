@@ -153,12 +153,6 @@ namespace UI
 							}
 						});
 					}
-					
-
-                    if (GUILayout.Button("Auth Logout"))
-                    {
-                        m_Manager.Logout();
-                    }
                 }
                 else
                 {
