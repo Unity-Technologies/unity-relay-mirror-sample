@@ -18,8 +18,6 @@ namespace Network
         private string m_SessionId = "";
         private string m_Username;
         private string m_UserId;
-        private bool m_IsDedicatedServer;
-        private string m_Version = "001";
 
         /// <summary>
         /// Flag to determine if the user is logged into the backend.
@@ -34,28 +32,9 @@ namespace Network
         public override void Awake()
         {
             base.Awake();
-            m_IsDedicatedServer = false;
             m_Players = new List<Player>();
 
             m_Username = SystemInfo.deviceName;
-
-            string[] args = System.Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "-version")
-                {
-                    if (i + 1 < args.Length)
-                    {
-                        m_Version = args[i + 1];
-                        Debug.Log($"found game version {m_Version}");
-                    }
-                }
-                else if (args[i] == "-server")
-                {
-                    m_IsDedicatedServer = true;
-                    Debug.Log($"starting as dedicated server");
-                }
-            }
         }
 
         public async void UnityLogin()
