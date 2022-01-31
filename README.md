@@ -2,9 +2,9 @@
 
 Tutorial reference for this Unity + Mirror networking sample: https://www.youtube.com/c/ShrineApp
 
-This sample was created as to show an example implementation of Unity's Relay, Mirror, and UTP services.
+This sample was created to show an example implementation of Unity's Relay, Mirror, and UTP services.
 
-This sample game stripped of all services/code not relating to Unity's Relay, Mirror, and UTP as a showcase for these services.
+This sample game has been stripped of all services/code not relating to Unity's Relay, Mirror, and UTP as a showcase for these services.
 
 #  Example code
 
