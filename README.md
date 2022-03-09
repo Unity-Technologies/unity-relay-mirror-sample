@@ -1,52 +1,40 @@
 # Info
 
-Tutorial reference for this Unity + Mirror networking sample: https://www.youtube.com/c/ShrineApp
+This sample was created to demonstrate how to utilize the Unity Transport Package (UTP) and Relay service with the Mirror networking API.
 
-This sample was created to show an example implementation of Unity's Relay, Mirror, and UTP services.
-
-This sample game has been stripped of all services/code not relating to Unity's Relay, Mirror, and UTP as a showcase for these services.
+[Shrine's Mirror Networking series on YouTube](https://www.youtube.com/c/ShrineApp) was used as reference for this sample.
 
 #  Example code
 
-The specific files that pertain to Relay/Mirror/UTP are located in `Assets/UTPTransport` and `Assets/Mirror` respectively. Some files to note are:
+The files for UTP and Mirror are located in `Assets/UTPTransport` and `Assets/Mirror` respectively. 
 
-- `UTPTransport/RelayNetworkingManager.cs`
-- `UTPTransport/UtpTransport.cs`
-- `Mirror/Runtime/NetworkManager.cs`
+Mirror:
+- `Assets/Mirror/Runtime/NetworkManager.cs` - Responsible for managing the networking aspects of a multiplayer game. 
 
+UTP:
+- `Assets/UTPTransport/RelayNetworkManager.cs` - Extends `Mirror.NetworkManager` with Relay capabilities.
+- `Assets/UTPTransport/UtpTransport.cs` - A `Mirror.Transport` compatible with UTP.
 
-We have two files that deal with the implementations of these services, those files are:
-
-- `Assets/scripts/MyNetworkManager`
-	This is our custom NetworkManager which extends the RelayNetworkManager, the RelayNetworkManager in turn is extending Mirrors NetworkManager.
-	Therefore our custom NetworkManager is able to leverage and showcase the abilities of both the services through a single NetowrkManager.
-- `Assets/scripts/MenuUI`
-	The UI element to our application which makes calls to our custom NetworkManager to start up clients/servers as needed with UI interactions.
+Sample Code:
+- `Assets/Scripts/MyNetworkManager.cs` - This class is meant to demonstrate the functionality of the UTP transport for Mirror and the Relay service.
+- `Assets/Scripts/MenuUI.cs`- This class is responsible for displaying the UI that drives the sample, it interfaces with `MyNetworkManager` to launch servers and connect clients.
 
 # Testing
+Use the following steps to launch two instances of the sample project for testing purposes:
+1. Open the project in Unity Editor. 
+2. Select `ParallelSync > Clones Manager` from the editor dropdown, we use ParallelSync to launch multiple editor instances of the same project.
+3. Press the `Add new clone` button.
+4. Press the `Open in New Editor` button once the clone has been created.
+5. Press the Play button in both editor instances.
+6. Press the `Auth Login` button on both editor instances, this will authenticate with the Unity Authentication Service for Relay.
 
-Open the project in Unity Editor. 
+We are now at the point where the UTP transport and Relay functionality can be tested.
 
-We use a package called ParallelSync which allows us to launch two instances of the same project and test them in parallel. This should already be included in the sample.
+The `Standard Host` button and the `Client (DGS)` button are used to launch a server using the UTP transport and connect to a server using the UTP transport respectively.
 
-Open the drop down from the "ParallelSync" tab in the toolbar at the top of the editor. 
+The `Relay Host` button and the `Client (Relay)` button are used to launch a Relay server and connect to a Relay server respectively.
 
-Select "Clones Manager"
-
-Select "Add new clone"
-
-Once the new clone is created, a new box should appear in the "Clone Manager" as "Clone 0", select "Open in New Editor" for "Clone 0"
-
-Now you should have two editors open with the same MirrorSample project.
-
-Press play on both and select "Auth Login" on both. This will initiate a Unity login for Relay.
-
-Now Mirror/Relay functionality can be tested. Test creating a server and joining between the two editors as needed. Make sure to use matching host/client buttons.
-
-Standard Host/Client (DGS) = Mirror implementation
-
-Relay Host/Client (Relay) = Relay Implementation
+Make sure that you are using matching buttons when testing.
 
 # Further Reading
-
-More in-depth explanation on implementing these services can be found within the README for the UTP assets lcoated in "Assests/UTPTransport"
+Additional information on the sample can be found in `Assets/UTPTransport/README.md`.
