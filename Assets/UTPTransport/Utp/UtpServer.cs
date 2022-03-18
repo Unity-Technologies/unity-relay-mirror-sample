@@ -242,9 +242,8 @@ namespace Utp
 			if (useRelay)
 			{
 				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, "udp");
-				RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 				NetworkSettings networkSettings = new NetworkSettings();
-				networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+				RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 				driver = NetworkDriver.Create(networkSettings);
 			}
 			else
