@@ -300,9 +300,7 @@ namespace Utp
 
             System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
             NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-
             NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
-			driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
 
 			DataStreamWriter writer;
 			int writeStatus = driver.BeginSend(pipeline, connection, out writer);
