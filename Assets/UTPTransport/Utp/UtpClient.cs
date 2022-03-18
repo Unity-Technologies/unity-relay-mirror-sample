@@ -1,7 +1,5 @@
 using Mirror;
-
 using System;
-
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
@@ -10,6 +8,7 @@ using Unity.Services.Relay.Models;
 
 namespace Utp
 {
+    [BurstCompatible]
     struct ClientUpdateJob : IJob
     {
         /// <summary>
