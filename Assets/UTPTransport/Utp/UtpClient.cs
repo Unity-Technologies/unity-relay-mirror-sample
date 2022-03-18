@@ -80,10 +80,13 @@ namespace Utp
             }
         }
 
-        public unsafe FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
+        public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
         {
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
-            retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
+            unsafe
+            {
+                retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
+            }
             return retVal;
         }
     }
@@ -308,7 +311,7 @@ namespace Utp
 			{
 				// segment.Array is longer than the number of bytes it holds, grab just what we need
 				byte[] segmentArray = new byte[segment.Count];
-				Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
+				Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
 
 				NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
 				writer.WriteBytes(nativeMessage);
