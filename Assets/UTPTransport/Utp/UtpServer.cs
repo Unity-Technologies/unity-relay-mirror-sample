@@ -248,7 +248,7 @@ namespace Utp
 			}
 			else
 			{
-				driver = NetworkDriver.Create();
+				driver = NetworkDriver.Create(settings);
 				endpoint.Port = port;
 			}
 
