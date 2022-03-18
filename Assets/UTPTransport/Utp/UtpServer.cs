@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
@@ -154,9 +155,9 @@ namespace Utp
 		public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
 		{
 			FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
-			foreach (byte dataByte in data)
+			unsafe
 			{
-				retVal.Add(dataByte);
+				retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
 			}
 			return retVal;
 		}
