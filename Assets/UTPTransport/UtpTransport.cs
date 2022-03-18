@@ -143,8 +143,17 @@ namespace Utp
 		// Common
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
-			// TODO: better definitions for max packet size. Consider the channel type and the need for protocol and pipeline overhead.
-			// See: NetworkDriver.cs / BeginSend()
+			if (server.IsActive())
+			{
+				//Passthrough for server activity
+				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
+			}
+			else if (client.IsConnected())
+			{
+				//Client only
+				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
+			}
+
 			return NetworkParameterConstants.MTU;
 		}
 

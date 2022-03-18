@@ -469,5 +469,15 @@ namespace Utp
 			}
 			return default(Unity.Networking.Transport.NetworkConnection);
 		}
+
+		/// <summary>
+		/// Exposes driver's max header size for UTP Transport.
+		/// </summary>
+		/// <param name="channelId">The channel ID.</param>
+		/// <returns>The max header size of the network driver.</returns>
+		public int GetMaxHeaderSize(int channelId = Channels.Reliable)
+		{
+			return driver.MaxHeaderSize(reliablePipeline);
+		}
 	}
 }
