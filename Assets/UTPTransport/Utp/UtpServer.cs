@@ -95,6 +95,7 @@ namespace Utp
 	/// <summary>
 	/// Job to query incoming events for all connections. 
 	/// </summary>
+	[BurstCompatible]
 	struct ServerUpdateJob : IJobParallelForDefer
 	{
 		/// <summary>
