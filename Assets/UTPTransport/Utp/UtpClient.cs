@@ -83,13 +83,6 @@ namespace Utp
         public unsafe FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
         {
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
-
-            ////Old implementation
-            //foreach (byte dataByte in data)
-            //{
-            //    retVal.Add(dataByte);
-            //}
-
             retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
             return retVal;
         }
@@ -198,15 +191,15 @@ namespace Utp
 			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
 			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 			NetworkSettings networkSettings = new NetworkSettings();
-			networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+            RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
-			driver = NetworkDriver.Create(networkSettings);
+            driver = NetworkDriver.Create(networkSettings);
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 			connection = new Unity.Networking.Transport.NetworkConnection();
 			connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+            connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
@@ -300,6 +293,7 @@ namespace Utp
         /// </summary>
         /// <param name="segment">The data to send.</param>
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
+        [BurstCompatible]
         public void Send(ArraySegment<byte> segment, int channelId)
 		{
             clientJobHandle.Complete();
