@@ -14,6 +14,7 @@ namespace Utp
 	/// <summary>
 	/// Job used to update connections. 
 	/// </summary>
+	[BurstCompatible]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
