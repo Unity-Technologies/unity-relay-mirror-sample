@@ -157,7 +157,11 @@ namespace Utp
 			return NetworkParameterConstants.MTU;
 		}
 
-		public override void Shutdown() { }
+		public override void Shutdown() 
+		{
+			if (client.IsConnected()) client.Disconnect();
+			if (server.IsActive()) server.Stop();
+		}
 
 		public override string ToString() => "UTP";
 	}
