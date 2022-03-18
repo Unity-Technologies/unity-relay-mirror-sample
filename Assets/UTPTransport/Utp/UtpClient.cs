@@ -1,6 +1,7 @@
 using Mirror;
 using System;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
@@ -79,13 +80,17 @@ namespace Utp
             }
         }
 
-        public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
+        public unsafe FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
         {
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
-            foreach (byte dataByte in data)
-            {
-                retVal.Add(dataByte);
-            }
+
+            ////Old implementation
+            //foreach (byte dataByte in data)
+            //{
+            //    retVal.Add(dataByte);
+            //}
+
+            retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
             return retVal;
         }
     }
