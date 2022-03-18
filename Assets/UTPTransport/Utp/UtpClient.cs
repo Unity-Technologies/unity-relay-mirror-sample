@@ -19,7 +19,7 @@ namespace Utp
         /// <summary>
         /// client connections to this server.
         /// </summary>
-        public NativeArray<Unity.Networking.Transport.NetworkConnection> connection;
+        public Unity.Networking.Transport.NetworkConnection connection;
 
         /// <summary>
         /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
@@ -31,14 +31,14 @@ namespace Utp
         /// </summary>
         public void Execute()
         {
-            if (!connection[0].IsCreated)
+            if (!connection.IsCreated)
             {
                 return;
             }
 
             DataStreamReader stream;
             NetworkEvent.Type netEvent;
-            while ((netEvent = connection[0].PopEvent(driver, out stream)) != NetworkEvent.Type.Empty)
+            while ((netEvent = connection.PopEvent(driver, out stream)) != NetworkEvent.Type.Empty)
             {
                 if (netEvent == NetworkEvent.Type.Connect)
                 {
@@ -46,7 +46,7 @@ namespace Utp
 
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
-                    connectionEvent.connectionId = connection[0].GetHashCode();
+                    connectionEvent.connectionId = connection.GetHashCode();
 
                     connectionEventsQueue.Enqueue(connectionEvent);
                 }
@@ -57,7 +57,7 @@ namespace Utp
 
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnReceivedData;
-                    connectionEvent.connectionId = connection[0].GetHashCode();
+                    connectionEvent.connectionId = connection.GetHashCode();
 					connectionEvent.eventData = GetFixedList(nativeMessage);
 
 					connectionEventsQueue.Enqueue(connectionEvent);
@@ -68,7 +68,7 @@ namespace Utp
 
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
-                    connectionEvent.connectionId = connection[0].GetHashCode();
+                    connectionEvent.connectionId = connection.GetHashCode();
 
                     connectionEventsQueue.Enqueue(connectionEvent);
                 }
@@ -113,7 +113,7 @@ namespace Utp
         /// <summary>
         /// Used alongside a driver to connect, send, and receive data from a listen server.
         /// </summary>
-        private NativeArray<Unity.Networking.Transport.NetworkConnection> connection;
+        private Unity.Networking.Transport.NetworkConnection connection;
 
 		/// <summary>
 		/// A pipeline on the driver that is sequenced, and ensures messages are delivered.
@@ -164,7 +164,7 @@ namespace Utp
             driver = NetworkDriver.Create(settings);
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-            connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
+            connection = new Unity.Networking.Transport.NetworkConnection();
             connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
 			if (host == "localhost")
@@ -173,7 +173,7 @@ namespace Utp
 			}
 
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
-			connection[0] = driver.Connect(endpoint);
+			connection = driver.Connect(endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
 		}
@@ -198,10 +198,10 @@ namespace Utp
 			driver = NetworkDriver.Create(networkSettings);
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-			connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
+			connection = new Unity.Networking.Transport.NetworkConnection();
 			connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-			connection[0] = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
@@ -213,7 +213,7 @@ namespace Utp
 		public bool IsConnected()
 		{
 			return DriverActive() &&
-				connection[0].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+				connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
 		}
 
 		/// <summary>
@@ -236,7 +236,7 @@ namespace Utp
 			{
                 UtpLog.Info("Disconnecting from server");
 
-				connection[0].Disconnect(driver);
+				connection.Disconnect(driver);
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
 				driver.ScheduleUpdate().Complete();
 
@@ -251,7 +251,8 @@ namespace Utp
 
 			if (connection.IsCreated)
 			{
-				connection.Dispose();
+                //connection.Dispose();
+                connection.Close(driver);
 			}
 
 			if (driver.IsCreated)
@@ -302,10 +303,10 @@ namespace Utp
             NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
 
             NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
-			driver.GetPipelineBuffers(pipeline, stageId, connection[0], out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
+			driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
 
 			DataStreamWriter writer;
-			int writeStatus = driver.BeginSend(pipeline, connection[0], out writer);
+			int writeStatus = driver.BeginSend(pipeline, connection, out writer);
 			if (writeStatus == 0)
 			{
 				// segment.Array is longer than the number of bytes it holds, grab just what we need
@@ -332,7 +333,7 @@ namespace Utp
                 return;
 
             // Exit if the connection is not ready
-            if (!connection.IsCreated || !connection[0].IsCreated)
+            if (!connection.IsCreated || !connection.IsCreated)
                 return;
 
             UtpConnectionEvent connectionEvent;
