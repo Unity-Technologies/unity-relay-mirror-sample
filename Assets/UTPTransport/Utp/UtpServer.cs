@@ -39,7 +39,7 @@ namespace Utp
 				HashSet<int> connectionsToRemove = new HashSet<int>();
 				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
 				{
-					if (!connection.IsCreated)
+					if (driver.GetConnectionState(connection) == Unity.Networking.Transport.NetworkConnection.State.Connected)
 					{
 						connectionsToRemove.Add(connection.GetHashCode());
 					}
