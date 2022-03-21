@@ -163,6 +163,78 @@ namespace Utp
 		}
 	}
 
+	[BurstCompatible]
+	struct ServerSendJob : IJob
+	{
+		/// <summary>
+		/// Used to bind, listen, and send data to connections.
+		/// </summary>
+		public NetworkDriver driver;
+
+		/// <summary>
+		/// client connections to this server.
+		/// </summary>
+		public Unity.Networking.Transport.NetworkConnection connection;
+
+		/// <summary>
+		/// The buffer to copy from.
+		/// </summary>
+		public ArraySegment<byte> segment;
+
+		/// <summary>
+		/// The specific channel ID to operate on.
+		/// </summary>
+		public int channelId;
+
+		/// <summary>
+		/// The specific connection ID to operate on.
+		/// </summary>
+		public int connectionId;
+
+		/// <summary>
+		/// The reliable network pipeline for ensured packet send order.
+		/// </summary>
+		public NetworkPipeline reliablePipeline;
+
+		/// <summary>
+		/// Unreliable pipeline for fast, unensured packet send order.
+		/// </summary>
+		public NetworkPipeline unreliablePipeline;
+
+		public void Execute()
+		{
+			System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
+			NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
+
+			if (connection.GetHashCode() == connectionId)
+			{
+				NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+				driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
+
+				DataStreamWriter writer;
+				int writeStatus = driver.BeginSend(pipeline, connection, out writer);
+				if (writeStatus == 0)
+				{
+					// segment.Array is longer than the number of bytes it holds, grab just what we need
+					byte[] segmentArray = new byte[segment.Count];
+					Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
+
+					NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
+					writer.WriteBytes(nativeMessage);
+					driver.EndSend(writer);
+				}
+				else
+				{
+					UtpLog.Warning("Write not successful: " + writeStatus);
+				}
+			}
+			else
+			{
+				UtpLog.Warning("connection not found: " + connectionId);
+			}
+		}
+	}
+
 	/// <summary>
 	/// A listen server for Mirror using UTP. 
 	/// </summary>
@@ -354,38 +426,27 @@ namespace Utp
 		/// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
 		public void Send(int connectionId, ArraySegment<byte> segment, int channelId)
 		{
-			serverJobHandle.Complete();
-
-			System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
-			NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-
+			//Find connection
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
-			if (connection.GetHashCode() == connectionId)
-			{
-				NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
-				driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
 
-				DataStreamWriter writer;
-				int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-				if (writeStatus == 0)
-				{
-					// segment.Array is longer than the number of bytes it holds, grab just what we need
-					byte[] segmentArray = new byte[segment.Count];
-					Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
+			// Trigger Mirror callbacks for events that resulted in the last jobs work
+			ProcessIncomingEvents();
 
-					NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
-					writer.WriteBytes(nativeMessage);
-					driver.EndSend(writer);
-				}
-				else
-				{
-					UtpLog.Warning("Write not successful: " + writeStatus);
-				}
-			}
-			else
+			// Create a new job
+			var job = new ServerSendJob
 			{
-				UtpLog.Warning("connection not found: " + connectionId);
-			}
+				driver = driver,
+				connection = connection,
+				segment = segment,
+				channelId = channelId,
+				connectionId = connectionId,
+				reliablePipeline = reliablePipeline,
+				unreliablePipeline = unreliablePipeline
+			};
+
+			// Schedule job
+			serverJobHandle = driver.ScheduleUpdate();
+			serverJobHandle = job.Schedule(serverJobHandle);
 		}
 
 		/// <summary>
