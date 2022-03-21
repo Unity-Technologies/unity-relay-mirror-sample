@@ -91,6 +91,66 @@ namespace Utp
         }
     }
 
+    [BurstCompatible]
+    struct ClientSendJob : IJob
+    {
+        /// <summary>
+        /// Used to bind, listen, and send data to connections.
+        /// </summary>
+        public NetworkDriver driver;
+
+        /// <summary>
+        /// client connections to this server.
+        /// </summary>
+        public Unity.Networking.Transport.NetworkConnection connection;
+
+        /// <summary>
+        /// The buffer to copy from.
+        /// </summary>
+        public ArraySegment<byte> segment;
+
+        /// <summary>
+        /// The specific channel ID to operate on.
+        /// </summary>
+        public int channelId;
+
+        /// <summary>
+        /// The reliable network pipeline for ensured packet send order.
+        /// </summary>
+        public NetworkPipeline reliablePipeline;
+
+        /// <summary>
+        /// Unreliable pipeline for fast, unensured packet send order.
+        /// </summary>
+        public NetworkPipeline unreliablePipeline;
+
+        public void Execute()
+        {
+
+            System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
+            NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
+            NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+
+            DataStreamWriter writer;
+            int writeStatus = driver.BeginSend(pipeline, connection, out writer);
+            if (writeStatus == 0)
+            {
+                // segment.Array is longer than the number of bytes it holds, grab just what we need
+                byte[] segmentArray = new byte[segment.Count];
+                Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
+
+                NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
+                writer.WriteBytes(nativeMessage);
+                driver.EndSend(writer);
+            }
+            else
+            {
+                UtpLog.Warning("Write not successful: " + writeStatus);
+            }
+
+        }
+    }
+
     /// <summary>
     /// A client for Mirror using UTP.
     /// </summary>
@@ -296,37 +356,35 @@ namespace Utp
         /// </summary>
         /// <param name="segment">The data to send.</param>
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
-        [BurstCompatible]
         public void Send(ArraySegment<byte> segment, int channelId)
 		{
-            clientJobHandle.Complete();
+            // Trigger Mirror callbacks for events that resulted in the last jobs work
+            ProcessIncomingEvents();
 
-            System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
-            NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-            NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+            // Need to ensure the driver did not become inactive
+            if (!DriverActive())
+                return;
 
-			DataStreamWriter writer;
-			int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-			if (writeStatus == 0)
-			{
-				// segment.Array is longer than the number of bytes it holds, grab just what we need
-				byte[] segmentArray = new byte[segment.Count];
-				Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
+            // Create a new job
+            var job = new ClientSendJob
+            {
+                driver = driver,
+                connection = connection,
+                segment = segment,
+                channelId = channelId,
+                reliablePipeline = reliablePipeline,
+                unreliablePipeline = unreliablePipeline
+            };
 
-				NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
-				writer.WriteBytes(nativeMessage);
-				driver.EndSend(writer);
-			}
-			else
-			{
-				UtpLog.Warning("Write not successful: " + writeStatus);
-			}
-		}
+            // Schedule job
+            clientJobHandle = driver.ScheduleUpdate();
+            clientJobHandle = job.Schedule(clientJobHandle);
+        }
 
-		/// <summary>
-		/// Processes connection events from the queue.
-		/// </summary>
-		public void ProcessIncomingEvents()
+        /// <summary>
+        /// Processes connection events from the queue.
+        /// </summary>
+        public void ProcessIncomingEvents()
         {
             // Exit if the driver is not active
             if (!DriverActive() || !NetworkClient.active)
