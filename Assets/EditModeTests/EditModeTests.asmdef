@@ -1,0 +1,13 @@
+{
+    "name": "EditModeTests",
+    "references": [
+        "Mirror",
+        "UtpTransport"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
