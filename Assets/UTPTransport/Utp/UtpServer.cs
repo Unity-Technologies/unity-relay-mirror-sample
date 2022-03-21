@@ -459,8 +459,7 @@ namespace Utp
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
 			if (connection.GetHashCode() == connectionId)
 			{
-				//NetworkEndPoint endpoint = driver.RemoteEndPoint(connection);
-				NetworkEndPoint endpoint = driver.LocalEndPoint(); 
+				NetworkEndPoint endpoint = driver.RemoteEndPoint(connection);
 				return endpoint.Address;
 			}
 			else
