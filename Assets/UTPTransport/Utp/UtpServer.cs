@@ -16,7 +16,7 @@ namespace Utp
 	/// <summary>
 	/// Job used to update connections. 
 	/// </summary>
-	[BurstCompile]
+	[BurstCompatible]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
@@ -159,7 +159,7 @@ namespace Utp
 			FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
 			unsafe
 			{
-				retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
+				retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length - 1);
 			}
 			return retVal;
 		}

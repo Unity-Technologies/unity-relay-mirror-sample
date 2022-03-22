@@ -85,7 +85,7 @@ namespace Utp
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
             unsafe
             {
-                retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
+                retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length - 1);
             }
             return retVal;
         }
