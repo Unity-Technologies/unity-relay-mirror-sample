@@ -455,7 +455,7 @@ namespace Utp
 		}
 
 		/// <summary>
-		/// Look up a client's address via it's ID.
+		/// Look up a client's address via it's connection ID. If Relay is being used, this method will return the IP of the Relay server.
 		/// </summary>
 		/// <param name="connectionId">The ID of the connection.</param>
 		/// <returns>The client address.</returns>
