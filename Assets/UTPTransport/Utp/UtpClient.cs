@@ -312,7 +312,6 @@ namespace Utp
 
 			if (connection.IsCreated)
 			{
-                //connection.Dispose();
                 connection.Close(driver);
 			}
 
