@@ -6,10 +6,11 @@ using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
+using Unity.Burst;
 
 namespace Utp
 {
-    [BurstCompatible]
+    [BurstCompile]
     struct ClientUpdateJob : IJob
     {
         /// <summary>
@@ -91,7 +92,7 @@ namespace Utp
         }
     }
 
-    [BurstCompatible]
+    [BurstCompile]
     struct ClientSendJob : IJob
     {
         /// <summary>

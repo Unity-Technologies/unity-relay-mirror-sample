@@ -16,7 +16,7 @@ namespace Utp
 	/// <summary>
 	/// Job used to update connections. 
 	/// </summary>
-	[BurstCompatible]
+	[BurstCompile]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
@@ -98,7 +98,7 @@ namespace Utp
 	/// <summary>
 	/// Job to query incoming events for all connections. 
 	/// </summary>
-	[BurstCompatible]
+	[BurstCompile]
 	struct ServerUpdateJob : IJobParallelForDefer
 	{
 		/// <summary>
@@ -165,7 +165,7 @@ namespace Utp
 		}
 	}
 
-	[BurstCompatible]
+	[BurstCompile]
 	struct ServerSendJob : IJob
 	{
 		/// <summary>
