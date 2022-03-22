@@ -37,7 +37,7 @@ namespace Utp
 		{
 			// Clean up connections
 			{
-				HashSet<int> connectionsToRemove = new HashSet<int>();
+				NativeList<int> connectionsToRemove = new NativeList<int>();
 				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
 				{
 					if (driver.GetConnectionState(connection) == Unity.Networking.Transport.NetworkConnection.State.Connected)
