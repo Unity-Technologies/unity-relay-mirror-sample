@@ -9,13 +9,14 @@ using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
+using Unity.Burst;
 
 namespace Utp
 {
 	/// <summary>
 	/// Job used to update connections. 
 	/// </summary>
-	[BurstCompatible]
+	[BurstCompile]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
@@ -68,6 +69,7 @@ namespace Utp
 
 					connections.Add(networkConnection);
 				}
+
 			}
 		}
 
@@ -426,6 +428,9 @@ namespace Utp
 		/// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
 		public void Send(int connectionId, ArraySegment<byte> segment, int channelId)
 		{
+			// First complete the job that was initialized in the previous frame
+			serverJobHandle.Complete();
+
 			//Find connection
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
 

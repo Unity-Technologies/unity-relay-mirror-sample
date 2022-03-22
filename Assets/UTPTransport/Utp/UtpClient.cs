@@ -357,6 +357,9 @@ namespace Utp
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
         public void Send(ArraySegment<byte> segment, int channelId)
 		{
+            // First complete the job that was initialized in the previous frame
+            clientJobHandle.Complete();
+
             // Trigger Mirror callbacks for events that resulted in the last jobs work
             ProcessIncomingEvents();
 
