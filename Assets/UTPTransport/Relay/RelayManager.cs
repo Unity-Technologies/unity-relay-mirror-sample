@@ -12,6 +12,11 @@ namespace Utp
 	public class RelayManager : MonoBehaviour
 	{
 		/// <summary>
+		/// An instance of the UTP logger.
+		/// </summary>
+		public UtpLog logger;
+
+		/// <summary>
 		/// The allocation managed by a host who is running as a client and server.
 		/// </summary>
 		public Allocation serverAllocation;
@@ -26,9 +31,14 @@ namespace Utp
 		/// </summary>
 		public Action<string, string> OnRelayServerAllocated;
 
+		public RelayManager()
+        {
+			logger = new UtpLog("[RelayManager] ");
+        }
+
 		private void Awake()
 		{
-			UtpLog.Info("RelayManager initialized");
+			logger.Info("Initialized!");
 		}
 
 		/// <summary>
@@ -51,7 +61,7 @@ namespace Utp
 
 			if (joinTask.IsFaulted)
 			{
-				UtpLog.Error("Join allocation request failed");
+				logger.Error("Join allocation request failed");
 				callback?.Invoke(joinTask.Exception.Message);
 
 				yield break;
@@ -80,7 +90,7 @@ namespace Utp
 
 			if (regionsTask.IsFaulted)
 			{
-				UtpLog.Error("List regions request failed");
+				logger.Error("List regions request failed");
 				yield break;
 			}
 
@@ -107,7 +117,7 @@ namespace Utp
 
 			if (allocationTask.IsFaulted)
 			{
-				UtpLog.Error("Create allocation request failed");
+				logger.Error("Create allocation request failed");
 				OnRelayServerAllocated?.Invoke(null, allocationTask.Exception.Message);
 
 				yield break;
@@ -120,7 +130,7 @@ namespace Utp
 		{
 			serverAllocation = allocation;
 
-			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
+			logger.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
 			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
@@ -134,7 +144,7 @@ namespace Utp
 
 			if (joinCodeTask.IsFaulted)
 			{
-				UtpLog.Error("Get join code failed");
+				logger.Error("Get join code failed");
 				callback?.Invoke(null, joinCodeTask.Exception.Message);
 
 				yield break;

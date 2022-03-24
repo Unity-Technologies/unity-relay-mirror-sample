@@ -36,13 +36,16 @@ namespace Utp
 		// Relay Manager
 		RelayManager relayManager;
 
+		//UTP Logger
+		UtpLog logger;
+
+		public UtpTransport()
+        {
+			logger = new UtpLog("[UtpTransport] ");
+        }
+
 		private void Awake()
 		{
-			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
-			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => {};
-			if (LoggerLevel < LogLevel.Warning) UtpLog.Warning = _ => {};
-			if (LoggerLevel < LogLevel.Error) UtpLog.Error = _ => {};
-
 			server = new UtpServer(
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
@@ -56,7 +59,7 @@ namespace Utp
 
 			relayManager = gameObject.AddComponent<RelayManager>();
 
-			UtpLog.Info("UTPTransport initialized!");
+			logger.Info("Initialized!");
 		}
 
 		public override bool Available()

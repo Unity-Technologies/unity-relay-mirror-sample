@@ -17,6 +17,16 @@ namespace Utp
 		/// </summary>
 		public string relayJoinCode = "";
 
+		/// <summary>
+		/// An instance of the UTP logger.
+		/// </summary>
+		public UtpLog logger;
+
+		public RelayNetworkManager()
+        {
+			logger = new UtpLog("[RelayNetworkManager] ");
+        }
+
 		public override void Awake()
 		{
 			base.Awake();
@@ -38,7 +48,7 @@ namespace Utp
 						}
 						catch
 						{
-							UtpLog.Warning($"Unable to parse {value} into transport Port");
+							logger.Warning($"Unable to parse {value} into transport Port");
 						}
 					}
 				}

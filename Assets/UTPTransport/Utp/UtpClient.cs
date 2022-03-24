@@ -7,6 +7,8 @@ using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Burst;
+using UnityEngine;
+using System.Collections.Generic;
 
 namespace Utp
 {
@@ -44,7 +46,7 @@ namespace Utp
             {
                 if (netEvent == NetworkEvent.Type.Connect)
                 {
-                    UtpLog.Info("Client successfully connected to server");
+                    Debug.Log("[Client] Successfully connected to server");
 
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
@@ -66,7 +68,7 @@ namespace Utp
                 }
                 else if (netEvent == NetworkEvent.Type.Disconnect)
                 {
-                    UtpLog.Info("Client disconnected from server");
+                    Debug.LogWarning("[Client] Disconnected from server");
 
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
@@ -76,7 +78,7 @@ namespace Utp
                 }
                 else
                 {
-                    UtpLog.Warning("Received unknown event: " + netEvent);
+                    Debug.LogError("[Client] Received unknown event");
                 }
             }
         }
@@ -108,6 +110,7 @@ namespace Utp
         /// <summary>
         /// The buffer to copy from.
         /// </summary>
+        //public ArraySegment<byte> segment;
         public ArraySegment<byte> segment;
 
         /// <summary>
@@ -127,7 +130,6 @@ namespace Utp
 
         public void Execute()
         {
-
             System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
             NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
             NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
@@ -136,7 +138,7 @@ namespace Utp
             int writeStatus = driver.BeginSend(pipeline, connection, out writer);
             if (writeStatus == 0)
             {
-                // segment.Array is longer than the number of bytes it holds, grab just what we need
+                //segment.Array is longer than the number of bytes it holds, grab just what we need
                 byte[] segmentArray = new byte[segment.Count];
                 Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
 
@@ -146,7 +148,7 @@ namespace Utp
             }
             else
             {
-                UtpLog.Warning("Write not successful: " + writeStatus);
+                Debug.LogWarning("[Client] Write not successful");
             }
 
         }
@@ -161,6 +163,11 @@ namespace Utp
 		public Action OnConnected;
 		public Action<ArraySegment<byte>> OnReceivedData;
 		public Action OnDisconnected;
+
+        /// <summary>
+        /// The UTP logger.
+        /// </summary>
+        public UtpLog logger;
 
         /// <summary>
         /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
@@ -199,7 +206,8 @@ namespace Utp
 
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
 		{
-			this.OnConnected = OnConnected;
+            logger = new UtpLog("[Client] ");
+            this.OnConnected = OnConnected;
 			this.OnReceivedData = OnReceivedData;
 			this.OnDisconnected = OnDisconnected;
             this.timeout = timeout;
@@ -216,7 +224,7 @@ namespace Utp
 
 			if (IsConnected())
 			{
-				UtpLog.Warning("Client is already connected");
+                logger.Warning("Client is already connected");
 				return;
             }
 
@@ -237,7 +245,7 @@ namespace Utp
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
 			connection = driver.Connect(endpoint);
 
-			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
+            logger.Info("Client connecting to server at: " + endpoint.Address);
 		}
 
         /// <summary>
@@ -248,7 +256,7 @@ namespace Utp
 		{
 			if (IsConnected())
 			{
-				UtpLog.Warning("Client is already connected");
+                logger.Warning("Client is already connected");
 				return;
 			}
 
@@ -265,7 +273,7 @@ namespace Utp
 
             connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
-			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
+            logger.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
 
 		/// <summary>
@@ -296,7 +304,7 @@ namespace Utp
 
             if (connection.IsCreated)
 			{
-                UtpLog.Info("Disconnecting from server");
+                logger.Info("Disconnecting from server");
 
 				connection.Disconnect(driver);
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
@@ -414,7 +422,7 @@ namespace Utp
                 }
                 else
                 {
-					UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
+                    logger.Warning("invalid connection event: " + connectionEvent.eventType);
                 }
             }
         }
