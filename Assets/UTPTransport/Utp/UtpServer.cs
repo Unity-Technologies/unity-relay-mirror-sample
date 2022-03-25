@@ -38,41 +38,24 @@ namespace Utp
 		public void Execute()
 		{
 			// Clean up connections
-			{
-				NativeList<int> connectionsToRemove = new NativeList<int>();
-				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
-				{
-					if (driver.GetConnectionState(connection) == Unity.Networking.Transport.NetworkConnection.State.Connected)
-					{
-						connectionsToRemove.Add(connection.GetHashCode());
-					}
-				}
+            foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
+            {
+                if (driver.GetConnectionState(connection) == Unity.Networking.Transport.NetworkConnection.State.Connected)
+                {
+					connections.RemoveAt(connection.GetHashCode()); 
+                }
+            }
 
-				//Potential issue -------- TODO
-				foreach (int connectionId in connectionsToRemove)
-				{
-					Debug.Log("[Server] Removing connection...");
-					connections.RemoveAt(connectionId);
-				}
-				connectionsToRemove.Clear();
-			}
-
-			// Accept new connections
-			{
-				Unity.Networking.Transport.NetworkConnection networkConnection;
-				while ((networkConnection = driver.Accept()) != default(Unity.Networking.Transport.NetworkConnection))
-				{
-					Debug.Log("[Server] Adding connection...");
-
-					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
-					connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
-					connectionEvent.connectionId = networkConnection.GetHashCode();
-					connectionsEventsQueue.Enqueue(connectionEvent);
-
-					connections.Add(networkConnection);
-				}
-
-			}
+            // Accept new connections
+            Unity.Networking.Transport.NetworkConnection networkConnection;
+            while ((networkConnection = driver.Accept()) != default(Unity.Networking.Transport.NetworkConnection))
+            {
+                UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
+                connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
+                connectionEvent.connectionId = networkConnection.GetHashCode();
+                connectionsEventsQueue.Enqueue(connectionEvent);
+                connections.Add(networkConnection);
+            }
 		}
 
 		/// <summary>
