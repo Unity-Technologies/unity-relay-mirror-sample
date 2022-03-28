@@ -398,7 +398,7 @@ namespace Utp
 					NativeSlice<byte> segmentSlice = new NativeSlice<byte>(
 						new NativeArray<byte>(
 							segment.Array,
-							Allocator.Persistent
+							Allocator.TempJob
 						)
 					);
 
@@ -411,7 +411,6 @@ namespace Utp
 					};
 
 					// Schedule job
-					serverJobHandle = driver.ScheduleUpdate();
 					serverJobHandle = job.Schedule(serverJobHandle);
 				}
 				else

@@ -71,15 +71,6 @@ namespace Utp
 		}
 
 		/// <summary>
-		/// Ensures the server is shutdown upon sudden exit.
-		/// </summary>
-		public override void OnApplicationQuit()
-		{
-			logger.Verbose("Shutting down...");
-			Shutdown();
-		}
-
-		/// <summary>
 		/// Connects a client to the Utp server.
 		/// </summary>
 		/// <param name="address">The address of the client.</param>

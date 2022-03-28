@@ -289,15 +289,18 @@ namespace Utp
 		{
             clientJobHandle.Complete();
 
-            if (connection.IsCreated)
-			{
-                logger.Info("Disconnecting from server");
+            if(IsConnected())
+            {
+                if (connection.IsCreated)
+                {
+                    logger.Info("Disconnecting from server");
 
-				connection.Disconnect(driver);
-				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
-				driver.ScheduleUpdate().Complete();
+                    connection.Disconnect(driver);
+                    // When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
+                    driver.ScheduleUpdate().Complete();
 
-				OnDisconnected.Invoke();
+                    OnDisconnected.Invoke();
+                }
             }
 
 			if (connectionEventsQueue.IsCreated)
@@ -306,14 +309,14 @@ namespace Utp
 				connectionEventsQueue.Dispose();
 			}
 
-			if (connection.IsCreated)
-			{
-                connection.Close(driver);
-			}
-
 			if (driver.IsCreated)
 			{
-				driver.Dispose();
+                if (connection.IsCreated)
+                {
+                    connection.Close(driver);
+                }
+
+                driver.Dispose();
 				driver = default(NetworkDriver);
 			}
 		}
@@ -342,7 +345,6 @@ namespace Utp
             };
 
             // Schedule job
-            clientJobHandle = driver.ScheduleUpdate();
             clientJobHandle = job.Schedule(clientJobHandle);
         }
 
@@ -367,7 +369,7 @@ namespace Utp
             NativeSlice<byte> segmentSlice = new NativeSlice<byte>(
                 new NativeArray<byte>(
                     segment.Array, 
-                    Allocator.Persistent
+                    Allocator.TempJob
                 )
             );
 
@@ -383,7 +385,6 @@ namespace Utp
             };
 
             // Schedule job
-            clientJobHandle = driver.ScheduleUpdate();
             clientJobHandle = job.Schedule(clientJobHandle);
         }
 
