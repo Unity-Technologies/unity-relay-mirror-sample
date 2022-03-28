@@ -46,8 +46,6 @@ namespace Utp
             {
                 if (netEvent == NetworkEvent.Type.Connect)
                 {
-                    Debug.Log("[Client] Successfully connected to server");
-
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
                     connectionEvent.connectionId = connection.GetHashCode();
@@ -68,21 +66,20 @@ namespace Utp
                 }
                 else if (netEvent == NetworkEvent.Type.Disconnect)
                 {
-                    Debug.LogWarning("[Client] Disconnected from server");
-
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
                     connectionEvent.connectionId = connection.GetHashCode();
 
                     connectionEventsQueue.Enqueue(connectionEvent);
                 }
-                else
-                {
-                    Debug.LogError("[Client] Received unknown event");
-                }
             }
         }
 
+        /// <summary>
+        /// Translates a native array into a fixed list to send as event data.
+        /// </summary>
+        /// <param name="data">The message data in a native array.</param>
+        /// <returns>The message data in a fixed list.</returns>
         public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
         {
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
@@ -111,7 +108,7 @@ namespace Utp
         /// The buffer to copy from.
         /// </summary>
         //public ArraySegment<byte> segment;
-        public ArraySegment<byte> segment;
+        public NativeSlice<byte> segment;
 
         /// <summary>
         /// The specific channel ID to operate on.
@@ -130,27 +127,17 @@ namespace Utp
 
         public void Execute()
         {
-            System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
             NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-            NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
 
             DataStreamWriter writer;
             int writeStatus = driver.BeginSend(pipeline, connection, out writer);
             if (writeStatus == 0)
             {
-                //segment.Array is longer than the number of bytes it holds, grab just what we need
-                byte[] segmentArray = new byte[segment.Count];
-                Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
-
-                NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
+                NativeArray<byte> nativeMessage = new NativeArray<byte>(segment.Length, Allocator.Temp);
+                segment.CopyTo(nativeMessage);
                 writer.WriteBytes(nativeMessage);
                 driver.EndSend(writer);
             }
-            else
-            {
-                Debug.LogWarning("[Client] Write not successful");
-            }
-
         }
     }
 
@@ -245,7 +232,7 @@ namespace Utp
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
 			connection = driver.Connect(endpoint);
 
-            logger.Info("Client connecting to server at: " + endpoint.Address);
+            logger.Info("Client connecting to server at " + endpoint.Address);
 		}
 
         /// <summary>
@@ -273,7 +260,7 @@ namespace Utp
 
             connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
-            logger.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
+            logger.Info("Client connecting to server at " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
 
 		/// <summary>
@@ -376,12 +363,20 @@ namespace Utp
             if (!DriverActive())
                 return;
 
+            //Convert ArraySegment to non-managed NativeSlice
+            NativeSlice<byte> segmentSlice = new NativeSlice<byte>(
+                new NativeArray<byte>(
+                    segment.Array, 
+                    Allocator.Persistent
+                )
+            );
+
             // Create a new job
             var job = new ClientSendJob
             {
                 driver = driver,
                 connection = connection,
-                segment = segment,
+                segment = segmentSlice,
                 channelId = channelId,
                 reliablePipeline = reliablePipeline,
                 unreliablePipeline = unreliablePipeline
@@ -435,6 +430,23 @@ namespace Utp
 		public int GetMaxHeaderSize(int channelId = Channels.Reliable)
         {
             return driver.MaxHeaderSize(reliablePipeline);
+        }
+
+        /// <summary>
+		/// Enables logging for this module.
+		/// </summary>
+		/// <param name="logLevel">The log level to set this logger to.</param>
+		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
+        {
+            logger.SetLogLevel(logLevel);
+        }
+
+        /// <summary>
+        /// Disables logging for this module.
+        /// </summary>
+        public void DisableLogging()
+        {
+            logger.SetLogLevel(LogLevel.Off);
         }
     }
 }

@@ -55,11 +55,11 @@ namespace Utp
 			}
 		}
 
-		/// <summary>
-		/// Get the port the server is listening on.
-		/// </summary>
-		/// <returns>The port.</returns>
-		public ushort GetPort()
+        /// <summary>
+        /// Get the port the server is listening on.
+        /// </summary>
+        /// <returns>The port.</returns>
+        public ushort GetPort()
 		{
 			return utpTransport.Port;
 		}
@@ -144,6 +144,23 @@ namespace Utp
 
 				StartClient();
 			});
+		}
+
+		/// <summary>
+		/// Enables logging for this module.
+		/// </summary>
+		/// <param name="logLevel">The log level to set this logger to.</param>
+		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
+		{
+			logger.SetLogLevel(logLevel);
+		}
+
+		/// <summary>
+		/// Disables logging for this module.
+		/// </summary>
+		public void DisableLogging()
+		{
+			logger.SetLogLevel(LogLevel.Off);
 		}
 	}
 }

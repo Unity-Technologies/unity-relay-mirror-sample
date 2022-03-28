@@ -39,6 +39,9 @@ namespace Utp
 		//UTP Logger
 		UtpLog logger;
 
+		/// <summary>
+		/// Instantiates a new UtpTransport instance.
+		/// </summary>
 		public UtpTransport()
         {
 			logger = new UtpLog("[UtpTransport] ");
@@ -67,7 +70,19 @@ namespace Utp
 			return Application.platform != RuntimePlatform.WebGLPlayer;
 		}
 
-		// Client
+		/// <summary>
+		/// Ensures the server is shutdown upon sudden exit.
+		/// </summary>
+		public override void OnApplicationQuit()
+		{
+			logger.Verbose("Shutting down...");
+			Shutdown();
+		}
+
+		/// <summary>
+		/// Connects a client to the Utp server.
+		/// </summary>
+		/// <param name="address">The address of the client.</param>
 		public override void ClientConnect(string address)
 		{
 			if (useRelay)
@@ -164,6 +179,23 @@ namespace Utp
 		{
 			if (client.IsConnected()) client.Disconnect();
 			if (server.IsActive()) server.Stop();
+		}
+
+		/// <summary>
+		/// Enables logging for this module.
+		/// </summary>
+		/// <param name="logLevel">The log level to set this logger to.</param>
+		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
+		{
+			logger.SetLogLevel(logLevel);
+		}
+
+		/// <summary>
+		/// Disables logging for this module.
+		/// </summary>
+		public void DisableLogging()
+		{
+			logger.SetLogLevel(LogLevel.Off);
 		}
 
 		public override string ToString() => "UTP";

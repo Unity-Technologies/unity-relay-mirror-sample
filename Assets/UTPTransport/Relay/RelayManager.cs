@@ -31,6 +31,9 @@ namespace Utp
 		/// </summary>
 		public Action<string, string> OnRelayServerAllocated;
 
+		/// <summary>
+		/// Instantiates a new relay manager instance.
+		/// </summary>
 		public RelayManager()
         {
 			logger = new UtpLog("[RelayManager] ");
@@ -41,12 +44,12 @@ namespace Utp
 			logger.Info("Initialized!");
 		}
 
-		/// <summary>
-		/// Get a Relay Service JoinAllocation from a given joinCode.
-		/// </summary>
-		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
-		/// <param name="callback">A callback to invoke on success/error.</param>
-		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
+        /// <summary>
+        /// Get a Relay Service JoinAllocation from a given joinCode.
+        /// </summary>
+        /// <param name="joinCode">The code to look up the joinAllocation for.</param>
+        /// <param name="callback">A callback to invoke on success/error.</param>
+        public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
 		{
 			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
 		}
@@ -151,6 +154,23 @@ namespace Utp
 			}
 
 			callback?.Invoke(joinCodeTask.Result, null);
+		}
+
+		/// <summary>
+		/// Enables logging for this module.
+		/// </summary>
+		/// <param name="logLevel">The log level to set this logger to.</param>
+		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
+		{
+			logger.SetLogLevel(logLevel);
+		}
+
+		/// <summary>
+		/// Disables logging for this module.
+		/// </summary>
+		public void DisableLogging()
+		{
+			logger.SetLogLevel(LogLevel.Off);
 		}
 	}
 }

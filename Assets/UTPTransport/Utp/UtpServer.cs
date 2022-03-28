@@ -68,7 +68,6 @@ namespace Utp
 			{
 				if (connection.GetHashCode() == connectionId)
 				{
-					Debug.LogWarning("[Server] Disconnecting connection...");
 					connection.Disconnect(driver);
 					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
 					connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
@@ -120,25 +119,25 @@ namespace Utp
 					connectionEvent.eventType = (byte)UtpConnectionEventType.OnReceivedData;
 					connectionEvent.eventData = GetFixedList(nativeMessage);
 					connectionEvent.connectionId = connections[index].GetHashCode();
+
 					connectionsEventsQueue.Enqueue(connectionEvent);
 				}
 				else if (netEvent == NetworkEvent.Type.Disconnect)
 				{
-					Debug.LogWarning("[Server] Client disconnected from server");
-
 					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
 					connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
 					connectionEvent.connectionId = connections[index].GetHashCode();
 
 					connectionsEventsQueue.Enqueue(connectionEvent);
 				}
-				else if(netEvent != NetworkEvent.Type.Connect)
-				{
-					Debug.LogError("[Server] Received unknown event");
-				}
 			}
 		}
 
+		/// <summary>
+		/// Translates a native array into a fixed list to send as event data.
+		/// </summary>
+		/// <param name="data">The message data in a native array.</param>
+		/// <returns>The message data in a fixed list.</returns>
 		public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
 		{
 			FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
@@ -159,66 +158,21 @@ namespace Utp
 		public NetworkDriver driver;
 
 		/// <summary>
-		/// client connections to this server.
+		/// The data stream writer to use.
 		/// </summary>
-		public Unity.Networking.Transport.NetworkConnection connection;
+		public DataStreamWriter writer;
 
 		/// <summary>
 		/// The buffer to copy from.
 		/// </summary>
-		public ArraySegment<byte> segment;
-
-		/// <summary>
-		/// The specific channel ID to operate on.
-		/// </summary>
-		public int channelId;
-
-		/// <summary>
-		/// The specific connection ID to operate on.
-		/// </summary>
-		public int connectionId;
-
-		/// <summary>
-		/// The reliable network pipeline for ensured packet send order.
-		/// </summary>
-		public NetworkPipeline reliablePipeline;
-
-		/// <summary>
-		/// Unreliable pipeline for fast, unensured packet send order.
-		/// </summary>
-		public NetworkPipeline unreliablePipeline;
+		public NativeSlice<byte> segment;
 
 		public void Execute()
 		{
-			System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
-			NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-
-			if (connection.GetHashCode() == connectionId)
-			{
-				NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
-				driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
-
-				DataStreamWriter writer;
-				int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-				if (writeStatus == 0)
-				{
-					// segment.Array is longer than the number of bytes it holds, grab just what we need
-					byte[] segmentArray = new byte[segment.Count];
-					Array.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
-
-					NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
-					writer.WriteBytes(nativeMessage);
-					driver.EndSend(writer);
-				}
-				else
-				{
-					Debug.LogWarning("Write not successful");
-				}
-			}
-			else
-			{
-				Debug.LogError("Connection not found");
-			}
+			NativeArray<byte> nativeMessage = new NativeArray<byte>(segment.Length, Allocator.Temp);
+			segment.CopyTo(nativeMessage);
+			writer.WriteBytes(nativeMessage);
+			driver.EndSend(writer);
 		}
 	}
 
@@ -324,7 +278,7 @@ namespace Utp
 
 			if (driver.Bind(endpoint) != 0)
 			{
-				logger.Error("Failed to bind to port: " + endpoint.Port);
+				logger.Error("Failed to bind to port " + endpoint.Port);
 			}
 			else
 			{
@@ -334,7 +288,7 @@ namespace Utp
 				}
 			}
 
-			logger.Info(useRelay ? ("Server started") : ("Server started on port: " + endpoint.Port));
+			logger.Info(useRelay ? ("Server started") : ("Server started on port " + endpoint.Port));
 		}
 
 		/// <summary>
@@ -398,7 +352,7 @@ namespace Utp
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
 			if (connection.GetHashCode() == connectionId)
 			{
-				logger.Info("Disconnecting connection with ID: " + connectionId);
+				logger.Info($"Disconnecting connection with ID (connectionId: {connectionId})");
 				connection.Disconnect(driver);
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the client
 				driver.ScheduleUpdate().Complete();
@@ -407,7 +361,7 @@ namespace Utp
 			}
 			else
 			{
-				logger.Warning("connection not found: " + connectionId);
+				logger.Warning($"Connection not found (connectionId: {connectionId})");
 			}
 		}
 
@@ -428,21 +382,47 @@ namespace Utp
 			// Trigger Mirror callbacks for events that resulted in the last jobs work
 			ProcessIncomingEvents();
 
-			// Create a new job
-			var job = new ServerSendJob
-			{
-				driver = driver,
-				connection = connection,
-				segment = segment,
-				channelId = channelId,
-				connectionId = connectionId,
-				reliablePipeline = reliablePipeline,
-				unreliablePipeline = unreliablePipeline
-			};
+			System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
+			NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
 
-			// Schedule job
-			serverJobHandle = driver.ScheduleUpdate();
-			serverJobHandle = job.Schedule(serverJobHandle);
+			if (connection.GetHashCode() == connectionId)
+			{
+				NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
+				driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
+
+				DataStreamWriter writer;
+				int writeStatus = driver.BeginSend(pipeline, connection, out writer);
+				if (writeStatus == 0)
+				{
+					//Convert ArraySegment to non-managed NativeSlice
+					NativeSlice<byte> segmentSlice = new NativeSlice<byte>(
+						new NativeArray<byte>(
+							segment.Array,
+							Allocator.Persistent
+						)
+					);
+
+					// Create a new job
+					var job = new ServerSendJob
+					{
+						driver = driver,
+						writer = writer,
+						segment = segmentSlice,
+					};
+
+					// Schedule job
+					serverJobHandle = driver.ScheduleUpdate();
+					serverJobHandle = job.Schedule(serverJobHandle);
+				}
+				else
+				{
+					logger.Warning($"Write not successful (stageid: {stageId}, writeStatus: {writeStatus})");
+				}
+			}
+			else
+			{
+				logger.Error($"Connection not found (connectionId: {connectionId})");
+			}
 		}
 
 		/// <summary>
@@ -460,7 +440,7 @@ namespace Utp
 			}
 			else
 			{
-				logger.Warning("connection not found: " + connectionId);
+				logger.Warning($"Connection not found (connectionId: {connectionId})");
 				return "";
 			}
 		}
@@ -502,12 +482,12 @@ namespace Utp
 					}
 					else
 					{
-						logger.Warning("invalid connection event: " + connectionEvent.eventType);
+						logger.Warning($"Invalid connection event (eventType: {connectionEvent.eventType}");
 					}
 				}
 				else
 				{
-					logger.Warning("connection not found: " + connectionEvent.connectionId);
+					logger.Warning($"Connection not found (connectionId: {connectionEvent.connectionId})");
 				}
 			}
 		}
@@ -538,5 +518,22 @@ namespace Utp
 		{
 			return driver.MaxHeaderSize(reliablePipeline);
 		}
+
+		/// <summary>
+		/// Enables logging for this module.
+		/// </summary>
+		/// <param name="logLevel">The log level to set this logger to.</param>
+		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
+        {
+			logger.SetLogLevel(logLevel);
+        }
+
+		/// <summary>
+		/// Disables logging for this module.
+		/// </summary>
+		public void DisableLogging()
+        {
+			logger.SetLogLevel(LogLevel.Off);
+        }
 	}
 }
