@@ -1,14 +1,13 @@
 {
-    "name": "EditModeTests",
+    "name": "PlayModeTests",
     "references": [
         "Mirror",
         "UtpTransport",
-        "Unity.Services.Relay"
+        "Unity.Services.Relay",
+        "Unity.Services.Core",
+        "Unity.Services.Authentication"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
-    ],
-    "includePlatforms": [
-        "Editor"
     ]
 }
