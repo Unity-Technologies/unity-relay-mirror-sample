@@ -17,16 +17,6 @@ namespace Utp
 		/// </summary>
 		public string relayJoinCode = "";
 
-		/// <summary>
-		/// An instance of the UTP logger.
-		/// </summary>
-		public UtpLog logger;
-
-		public RelayNetworkManager()
-        {
-			logger = new UtpLog("[RelayNetworkManager] ");
-        }
-
 		public override void Awake()
 		{
 			base.Awake();
@@ -48,18 +38,18 @@ namespace Utp
 						}
 						catch
 						{
-							logger.Warning($"Unable to parse {value} into transport Port");
+							UtpLog.Warning($"Unable to parse {value} into transport Port");
 						}
 					}
 				}
 			}
 		}
 
-        /// <summary>
-        /// Get the port the server is listening on.
-        /// </summary>
-        /// <returns>The port.</returns>
-        public ushort GetPort()
+		/// <summary>
+		/// Get the port the server is listening on.
+		/// </summary>
+		/// <returns>The port.</returns>
+		public ushort GetPort()
 		{
 			return utpTransport.Port;
 		}
@@ -144,23 +134,6 @@ namespace Utp
 
 				StartClient();
 			});
-		}
-
-		/// <summary>
-		/// Enables logging for this module.
-		/// </summary>
-		/// <param name="logLevel">The log level to set this logger to.</param>
-		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
-		{
-			logger.SetLogLevel(logLevel);
-		}
-
-		/// <summary>
-		/// Disables logging for this module.
-		/// </summary>
-		public void DisableLogging()
-		{
-			logger.SetLogLevel(LogLevel.Off);
 		}
 	}
 }

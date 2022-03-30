@@ -36,19 +36,13 @@ namespace Utp
 		// Relay Manager
 		RelayManager relayManager;
 
-		//UTP Logger
-		UtpLog logger;
-
-		/// <summary>
-		/// Instantiates a new UtpTransport instance.
-		/// </summary>
-		public UtpTransport()
-        {
-			logger = new UtpLog("[UtpTransport] ");
-        }
-
 		private void Awake()
 		{
+			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
+			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => {};
+			if (LoggerLevel < LogLevel.Warning) UtpLog.Warning = _ => {};
+			if (LoggerLevel < LogLevel.Error) UtpLog.Error = _ => {};
+
 			server = new UtpServer(
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
@@ -62,7 +56,7 @@ namespace Utp
 
 			relayManager = gameObject.AddComponent<RelayManager>();
 
-			logger.Info("Initialized!");
+			UtpLog.Info("UTPTransport initialized!");
 		}
 
 		public override bool Available()
@@ -70,10 +64,7 @@ namespace Utp
 			return Application.platform != RuntimePlatform.WebGLPlayer;
 		}
 
-		/// <summary>
-		/// Connects a client to the Utp server.
-		/// </summary>
-		/// <param name="address">The address of the client.</param>
+		// Client
 		public override void ClientConnect(string address)
 		{
 			if (useRelay)
@@ -149,44 +140,18 @@ namespace Utp
 			relayManager.AllocateRelayServer(maxPlayers, regionId);
 		}
 
-		// Common
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
-			if (server.IsActive())
-			{
-				//Passthrough for server activity
-				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
-			}
-			else if (client.IsConnected())
-			{
-				//Client only
-				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
-			}
-
 			return NetworkParameterConstants.MTU;
 		}
 
+		/// <summary>
+		/// Shuts down the Utp tansport server and disconnects all clients.
+		/// </summary>
 		public override void Shutdown() 
 		{
 			if (client.IsConnected()) client.Disconnect();
 			if (server.IsActive()) server.Stop();
-		}
-
-		/// <summary>
-		/// Enables logging for this module.
-		/// </summary>
-		/// <param name="logLevel">The log level to set this logger to.</param>
-		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
-		{
-			logger.SetLogLevel(logLevel);
-		}
-
-		/// <summary>
-		/// Disables logging for this module.
-		/// </summary>
-		public void DisableLogging()
-		{
-			logger.SetLogLevel(LogLevel.Off);
 		}
 
 		public override string ToString() => "UTP";

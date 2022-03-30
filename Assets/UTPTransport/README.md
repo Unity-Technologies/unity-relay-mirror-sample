@@ -1,29 +1,35 @@
 # UTP Transport for Mirror
 
-This is the [Unity Transport Package](https://docs.unity3d.com/Packages/com.unity.transport@1.0/manual/index.html) (UTP) transport for [Mirror](https://github.com/vis2k/Mirror). It is actively in development and is not considered stable.
+This sample contains a [Unity Transport Package](https://docs.unity3d.com/Packages/com.unity.transport@1.0/manual/index.html) (UTP) transport for [Mirror](https://github.com/vis2k/Mirror). 
 
 ## Dependencies
 
 - Mirror ([Documentation](https://mirror-networking.gitbook.io/docs/))
 - UTP ([Documentation](https://docs.unity3d.com/Packages/com.unity.transport@1.0/manual/index.html))
+- Relay ([Documentation](https://docs.unity.com/relay/introduction.html))
 
 ## Installation
 
-1. Visit the [Mirror Asset Store Page](https://assetstore.unity.com/packages/tools/network/mirror-129321) and add Mirror to "My Assets"
-2. Import Mirror with Package Manager (Window -> Package Manager -> Packages: My Assets -> Mirror -> Download/Import)
-3. Import UTP with Package Manager (Window -> Package Manager -> Add -> Add package from git URL... -> "com.unity.transport@1.0.0-pre.10")
-4. Copy the directory that this README is in to your "Assets" folder
-5. Attach a "NetworkManager" to a "GameObject" in your "Scene".
-6. Attach a "UtpTransport" component to the same "GameObject" as your "NetworkManager"
-7. Select the "UtpTransport" as the transport for your "NetworkManager"
+1. Visit the [Mirror page in the Asset Store](https://assetstore.unity.com/packages/tools/network/mirror-129321) and add Mirror to `My Assets`.
+2. Import Mirror using the Package Manager (Window -> Package Manager -> Packages: My Assets -> Mirror -> Download/Import).
+3. Import UTP using the Package Manager (Window -> Package Manager -> Add -> Add package from git URL... -> "com.unity.transport@1.0.0-pre.10").
+4. Copy `Assets\UTPTransport` from this sample into your project.
+5. Attach the `Mirror.NetworkManager` component to your `GameObject`.
+6. Attach the `UTP.UtpTransport` component to your `GameObject`.
+7. Assign the `UTP.UtpTransport` component to the `Transport` field of the `Mirror.NetworkManager` component.
 
 ## Utilizing Relay
 
-If you would like to utilize Relay, instead of attaching a standard "NetworkManager" to a "GameObject" in your "Scene", you will want to attach a "RelayNetworkManager". The "RelayNetworkManager" class inherits from "NetworkManager", adding some additional functionality that enables an easy way to interact with the Relay service.
+If you want to use Relay, you must use `UTP.RelayNetworkManager` instead of `Mirror.NetworkManager`.
 
-From there, you must authenticate witih [Unity Authentication Service](https://docs.unity.com/authentication/IntroUnityAuthentication.htm). _Note:_ This is a requirement even if you are using your own authentication service as well. The simplest implementation for this is the following:
+`UTP.RelayNetworkManager` inherits from `Mirror.NetworkManager` and adds additional functionality to interact with the Relay service.
 
-```
+_Note:_ 
+In order to use Relay, you must authenticate with the [Unity Authentication Service](https://docs.unity.com/authentication/IntroUnityAuthentication.htm). 
+This is required regardless of whether or not you are utilizing your own authentication service.
+
+The following snippet demonstrates how to authenticate with the Unity Authentication Service:
+```csharp
 try
 {
     await UnityServices.InitializeAsync();
@@ -32,8 +38,8 @@ try
 }
 catch (Exception e)
 {
-    Debug.Log(e);
+    Debug.LogError(e);
 }
 ```
 
-You may now call the public functions in the "RelayNetworkManager" to either allocate a Relay server or join one via a join code.
+Once authenticated, you may use `UTP.RelayNetworkManager` to either allocate a Relay server or join a Relay server using a join code.

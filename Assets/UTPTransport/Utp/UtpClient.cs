@@ -1,17 +1,19 @@
 using Mirror;
 using System;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Burst;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using System.Collections.Generic;
+using System.Text;
 
 namespace Utp
 {
+    #region Jobs
+
     [BurstCompile]
     struct ClientUpdateJob : IJob
     {
@@ -75,17 +77,12 @@ namespace Utp
             }
         }
 
-        /// <summary>
-        /// Translates a native array into a fixed list to send as event data.
-        /// </summary>
-        /// <param name="data">The message data in a native array.</param>
-        /// <returns>The message data in a fixed list.</returns>
         public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
         {
             FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
             unsafe
             {
-                retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length - 1);
+                retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
             }
             return retVal;
         }
@@ -100,46 +97,35 @@ namespace Utp
         public NetworkDriver driver;
 
         /// <summary>
-        /// client connections to this server.
+        /// The network pipeline to stream data.
+        /// </summary>
+        public NetworkPipeline pipeline;
+
+        /// <summary>
+        /// The client's network connection instance.
         /// </summary>
         public Unity.Networking.Transport.NetworkConnection connection;
 
         /// <summary>
-        /// The buffer to copy from.
+        /// The segment of data to send over (deallocates after use).
         /// </summary>
-        //public ArraySegment<byte> segment;
-        public NativeSlice<byte> segment;
-
-        /// <summary>
-        /// The specific channel ID to operate on.
-        /// </summary>
-        public int channelId;
-
-        /// <summary>
-        /// The reliable network pipeline for ensured packet send order.
-        /// </summary>
-        public NetworkPipeline reliablePipeline;
-
-        /// <summary>
-        /// Unreliable pipeline for fast, unensured packet send order.
-        /// </summary>
-        public NetworkPipeline unreliablePipeline;
+        [DeallocateOnJobCompletion]
+        public NativeArray<byte> data;
 
         public void Execute()
         {
-            NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-
             DataStreamWriter writer;
             int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-            if (writeStatus == 0)
+
+            if (writeStatus == (int)Unity.Networking.Transport.Error.StatusCode.Success)
             {
-                NativeArray<byte> nativeMessage = new NativeArray<byte>(segment.Length, Allocator.Temp);
-                segment.CopyTo(nativeMessage);
-                writer.WriteBytes(nativeMessage);
+                writer.WriteBytes(data);
                 driver.EndSend(writer);
             }
         }
     }
+
+    #endregion
 
     /// <summary>
     /// A client for Mirror using UTP.
@@ -150,11 +136,6 @@ namespace Utp
 		public Action OnConnected;
 		public Action<ArraySegment<byte>> OnReceivedData;
 		public Action OnDisconnected;
-
-        /// <summary>
-        /// The UTP logger.
-        /// </summary>
-        public UtpLog logger;
 
         /// <summary>
         /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
@@ -169,7 +150,7 @@ namespace Utp
         /// <summary>
         /// Used alongside a driver to connect, send, and receive data from a listen server.
         /// </summary>
-        private Unity.Networking.Transport.NetworkConnection connection;
+        private NativeArray<Unity.Networking.Transport.NetworkConnection> connection;
 
 		/// <summary>
 		/// A pipeline on the driver that is sequenced, and ensures messages are delivered.
@@ -193,8 +174,7 @@ namespace Utp
 
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
 		{
-            logger = new UtpLog("[Client] ");
-            this.OnConnected = OnConnected;
+			this.OnConnected = OnConnected;
 			this.OnReceivedData = OnReceivedData;
 			this.OnDisconnected = OnDisconnected;
             this.timeout = timeout;
@@ -211,7 +191,7 @@ namespace Utp
 
 			if (IsConnected())
 			{
-                logger.Warning("Client is already connected");
+				UtpLog.Warning("Client is already connected");
 				return;
             }
 
@@ -221,7 +201,7 @@ namespace Utp
             driver = NetworkDriver.Create(settings);
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-            connection = new Unity.Networking.Transport.NetworkConnection();
+            connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
             connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
 			if (host == "localhost")
@@ -230,9 +210,9 @@ namespace Utp
 			}
 
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
-			connection = driver.Connect(endpoint);
+			connection[0] = driver.Connect(endpoint);
 
-            logger.Info("Client connecting to server at " + endpoint.Address);
+			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
 		}
 
         /// <summary>
@@ -243,7 +223,7 @@ namespace Utp
 		{
 			if (IsConnected())
 			{
-                logger.Warning("Client is already connected");
+				UtpLog.Warning("Client is already connected");
 				return;
 			}
 
@@ -255,12 +235,12 @@ namespace Utp
             driver = NetworkDriver.Create(networkSettings);
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-			connection = new Unity.Networking.Transport.NetworkConnection();
+			connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
 			connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-            connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+			connection[0] = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
-            logger.Info("Client connecting to server at " + relayNetworkParameter.ServerData.Endpoint.Address);
+			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
 
 		/// <summary>
@@ -270,7 +250,7 @@ namespace Utp
 		public bool IsConnected()
 		{
 			return DriverActive() &&
-				connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+				connection[0].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
 		}
 
 		/// <summary>
@@ -289,18 +269,16 @@ namespace Utp
 		{
             clientJobHandle.Complete();
 
-            if(IsConnected())
-            {
-                if (connection.IsCreated)
-                {
-                    logger.Info("Disconnecting from server");
+            if (connection.IsCreated)
+			{
+                UtpLog.Info("Disconnecting from server");
 
-                    connection.Disconnect(driver);
-                    // When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
-                    driver.ScheduleUpdate().Complete();
+				connection[0].Disconnect(driver);
 
-                    OnDisconnected.Invoke();
-                }
+				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
+				driver.ScheduleUpdate().Complete();
+
+				OnDisconnected.Invoke();
             }
 
 			if (connectionEventsQueue.IsCreated)
@@ -309,14 +287,14 @@ namespace Utp
 				connectionEventsQueue.Dispose();
 			}
 
+			if (connection.IsCreated)
+			{
+				connection.Dispose();
+			}
+
 			if (driver.IsCreated)
 			{
-                if (connection.IsCreated)
-                {
-                    connection.Close(driver);
-                }
-
-                driver.Dispose();
+				driver.Dispose();
 				driver = default(NetworkDriver);
 			}
 		}
@@ -340,11 +318,12 @@ namespace Utp
             var job = new ClientUpdateJob
             {
                 driver = driver,
-                connection = connection,
+                connection = connection[0],
 				connectionEventsQueue = connectionEventsQueue.AsParallelWriter()
             };
 
             // Schedule job
+            clientJobHandle = driver.ScheduleUpdate();
             clientJobHandle = job.Schedule(clientJobHandle);
         }
 
@@ -355,33 +334,20 @@ namespace Utp
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
         public void Send(ArraySegment<byte> segment, int channelId)
 		{
-            // First complete the job that was initialized in the previous frame
-            clientJobHandle.Complete();
+            //Get pipeline for job
+            NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
 
-            // Trigger Mirror callbacks for events that resulted in the last jobs work
-            ProcessIncomingEvents();
-
-            // Need to ensure the driver did not become inactive
-            if (!DriverActive())
-                return;
-
-            //Convert ArraySegment to non-managed NativeSlice
-            NativeSlice<byte> segmentSlice = new NativeSlice<byte>(
-                new NativeArray<byte>(
-                    segment.Array, 
-                    Allocator.TempJob
-                )
-            );
+            //Convert ArraySegment to NativeArray for burst compile
+            NativeArray<byte> segmentArray = new NativeArray<byte>(segment.Count, Allocator.Persistent);
+            NativeArray<byte>.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
 
             // Create a new job
             var job = new ClientSendJob
             {
                 driver = driver,
-                connection = connection,
-                segment = segmentSlice,
-                channelId = channelId,
-                reliablePipeline = reliablePipeline,
-                unreliablePipeline = unreliablePipeline
+                pipeline = pipeline,
+                connection = connection[0],
+                data = segmentArray
             };
 
             // Schedule job
@@ -398,7 +364,7 @@ namespace Utp
                 return;
 
             // Exit if the connection is not ready
-            if (!connection.IsCreated || !connection.IsCreated)
+            if (!connection.IsCreated || !connection[0].IsCreated)
                 return;
 
             UtpConnectionEvent connectionEvent;
@@ -418,36 +384,10 @@ namespace Utp
                 }
                 else
                 {
-                    logger.Warning("invalid connection event: " + connectionEvent.eventType);
+					UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
                 }
             }
         }
 
-        /// <summary>
-		/// Exposes driver's max header size for UTP Transport.
-		/// </summary>
-		/// <param name="channelId">The channel ID.</param>
-		/// <returns>The max header size of the network driver.</returns>
-		public int GetMaxHeaderSize(int channelId = Channels.Reliable)
-        {
-            return driver.MaxHeaderSize(reliablePipeline);
-        }
-
-        /// <summary>
-		/// Enables logging for this module.
-		/// </summary>
-		/// <param name="logLevel">The log level to set this logger to.</param>
-		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
-        {
-            logger.SetLogLevel(logLevel);
-        }
-
-        /// <summary>
-        /// Disables logging for this module.
-        /// </summary>
-        public void DisableLogging()
-        {
-            logger.SetLogLevel(LogLevel.Off);
-        }
     }
 }

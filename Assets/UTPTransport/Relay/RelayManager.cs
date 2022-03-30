@@ -12,11 +12,6 @@ namespace Utp
 	public class RelayManager : MonoBehaviour
 	{
 		/// <summary>
-		/// An instance of the UTP logger.
-		/// </summary>
-		public UtpLog logger;
-
-		/// <summary>
 		/// The allocation managed by a host who is running as a client and server.
 		/// </summary>
 		public Allocation serverAllocation;
@@ -31,25 +26,17 @@ namespace Utp
 		/// </summary>
 		public Action<string, string> OnRelayServerAllocated;
 
-		/// <summary>
-		/// Instantiates a new relay manager instance.
-		/// </summary>
-		public RelayManager()
-        {
-			logger = new UtpLog("[RelayManager] ");
-        }
-
 		private void Awake()
 		{
-			logger.Info("Initialized!");
+			UtpLog.Info("RelayManager initialized");
 		}
 
-        /// <summary>
-        /// Get a Relay Service JoinAllocation from a given joinCode.
-        /// </summary>
-        /// <param name="joinCode">The code to look up the joinAllocation for.</param>
-        /// <param name="callback">A callback to invoke on success/error.</param>
-        public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
+		/// <summary>
+		/// Get a Relay Service JoinAllocation from a given joinCode.
+		/// </summary>
+		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
+		/// <param name="callback">A callback to invoke on success/error.</param>
+		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
 		{
 			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
 		}
@@ -64,7 +51,7 @@ namespace Utp
 
 			if (joinTask.IsFaulted)
 			{
-				logger.Error("Join allocation request failed");
+				UtpLog.Error("Join allocation request failed");
 				callback?.Invoke(joinTask.Exception.Message);
 
 				yield break;
@@ -93,7 +80,7 @@ namespace Utp
 
 			if (regionsTask.IsFaulted)
 			{
-				logger.Error("List regions request failed");
+				UtpLog.Error("List regions request failed");
 				yield break;
 			}
 
@@ -120,7 +107,7 @@ namespace Utp
 
 			if (allocationTask.IsFaulted)
 			{
-				logger.Error("Create allocation request failed");
+				UtpLog.Error("Create allocation request failed");
 				OnRelayServerAllocated?.Invoke(null, allocationTask.Exception.Message);
 
 				yield break;
@@ -133,7 +120,7 @@ namespace Utp
 		{
 			serverAllocation = allocation;
 
-			logger.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
+			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
 			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
@@ -147,30 +134,13 @@ namespace Utp
 
 			if (joinCodeTask.IsFaulted)
 			{
-				logger.Error("Get join code failed");
+				UtpLog.Error("Get join code failed");
 				callback?.Invoke(null, joinCodeTask.Exception.Message);
 
 				yield break;
 			}
 
 			callback?.Invoke(joinCodeTask.Result, null);
-		}
-
-		/// <summary>
-		/// Enables logging for this module.
-		/// </summary>
-		/// <param name="logLevel">The log level to set this logger to.</param>
-		public void EnableLogging(LogLevel logLevel = LogLevel.Verbose)
-		{
-			logger.SetLogLevel(logLevel);
-		}
-
-		/// <summary>
-		/// Disables logging for this module.
-		/// </summary>
-		public void DisableLogging()
-		{
-			logger.SetLogLevel(LogLevel.Off);
 		}
 	}
 }
