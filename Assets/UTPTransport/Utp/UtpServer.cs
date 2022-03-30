@@ -37,7 +37,7 @@ namespace Utp
 
 		public void Execute()
 		{
-			for (int i = 0; i < connections.Length; i++)
+			for (int i = 0; i < connections.Length; i++) 
 			{
 				//If a connection is no longer established...
 				if (!connections[i].IsCreated)
