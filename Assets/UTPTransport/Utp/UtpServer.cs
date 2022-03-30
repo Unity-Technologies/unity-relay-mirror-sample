@@ -214,6 +214,8 @@ namespace Utp
 			this.OnReceivedData = OnReceivedData;
 			this.OnDisconnected = OnDisconnected;
 			this.timeout = timeout;
+			this.connections = new NativeList<Unity.Networking.Transport.NetworkConnection>(16, Allocator.Persistent);
+			this.connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 		}
 
 		/// <summary>
@@ -250,8 +252,7 @@ namespace Utp
 				endpoint.Port = port;
 			}
 
-			connections = new NativeList<Unity.Networking.Transport.NetworkConnection>(16, Allocator.Persistent);
-			connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
+
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
