@@ -5,7 +5,8 @@
         "UtpTransport",
         "Unity.Services.Relay",
         "Unity.Services.Core",
-        "Unity.Services.Authentication"
+        "Unity.Services.Authentication",
+        "Unity.Networking.Transport"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

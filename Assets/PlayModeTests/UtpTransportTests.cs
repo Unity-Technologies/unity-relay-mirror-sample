@@ -51,10 +51,11 @@ public class UtpTransportTests
     public void ClientConnected_NotConnected_False() {
         Assert.IsFalse(_Client.ClientConnected(), "Client is connected, but should not be.");
     }
-    [Test]
-    public void ClientConnected_IsConnected_True() {
+    [UnityTest]
+    public IEnumerator ClientConnected_IsConnected_True() {
         _Server.ServerStart();
         _Client.ClientConnect(_Server.ServerUri());
+        yield return new WaitForSeconds(10f);
         Assert.IsTrue(_Client.ClientConnected(), "Client is not connected, but should be.");
     }
 }
