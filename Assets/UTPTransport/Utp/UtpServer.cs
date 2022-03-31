@@ -491,6 +491,5 @@ namespace Utp
 			}
 			return default(Unity.Networking.Transport.NetworkConnection);
 		}
-
 	}
 }

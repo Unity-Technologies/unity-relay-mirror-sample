@@ -150,7 +150,7 @@ namespace Utp
         /// <summary>
         /// Used alongside a driver to connect, send, and receive data from a listen server.
         /// </summary>
-        private NativeArray<Unity.Networking.Transport.NetworkConnection> connection;
+        private Unity.Networking.Transport.NetworkConnection connection;
 
 		/// <summary>
 		/// A pipeline on the driver that is sequenced, and ensures messages are delivered.
@@ -201,7 +201,6 @@ namespace Utp
             driver = NetworkDriver.Create(settings);
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-            connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
             connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
 			if (host == "localhost")
@@ -210,7 +209,7 @@ namespace Utp
 			}
 
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
-			connection[0] = driver.Connect(endpoint);
+			connection = driver.Connect(endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
 		}
@@ -235,10 +234,9 @@ namespace Utp
             driver = NetworkDriver.Create(networkSettings);
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-			connection = new NativeArray<Unity.Networking.Transport.NetworkConnection>(1, Allocator.Persistent);
 			connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-			connection[0] = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
 			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
 		}
@@ -250,7 +248,7 @@ namespace Utp
 		public bool IsConnected()
 		{
 			return DriverActive() &&
-				connection[0].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+				connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
 		}
 
 		/// <summary>
@@ -273,7 +271,7 @@ namespace Utp
 			{
                 UtpLog.Info("Disconnecting from server");
 
-				connection[0].Disconnect(driver);
+				connection.Disconnect(driver);
 
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
 				driver.ScheduleUpdate().Complete();
@@ -285,11 +283,6 @@ namespace Utp
 			{
 				ProcessIncomingEvents(); // Ensure we flush the queue
 				connectionEventsQueue.Dispose();
-			}
-
-			if (connection.IsCreated)
-			{
-				connection.Dispose();
 			}
 
 			if (driver.IsCreated)
@@ -318,7 +311,7 @@ namespace Utp
             var job = new ClientUpdateJob
             {
                 driver = driver,
-                connection = connection[0],
+                connection = connection,
 				connectionEventsQueue = connectionEventsQueue.AsParallelWriter()
             };
 
@@ -346,7 +339,7 @@ namespace Utp
             {
                 driver = driver,
                 pipeline = pipeline,
-                connection = connection[0],
+                connection = connection,
                 data = segmentArray
             };
 
@@ -364,7 +357,7 @@ namespace Utp
                 return;
 
             // Exit if the connection is not ready
-            if (!connection.IsCreated || !connection[0].IsCreated)
+            if (!connection.IsCreated || !connection.IsCreated)
                 return;
 
             UtpConnectionEvent connectionEvent;
@@ -389,5 +382,14 @@ namespace Utp
             }
         }
 
+        /// <summary>
+        /// Retrieves the driver's max header size. Calling this method completes the client job handle.
+        /// </summary>
+        /// <returns>The client driver's max header size.</returns>
+        public int GetMaxHeaderSize()
+        {
+            clientJobHandle.Complete();
+            return driver.MaxHeaderSize(unreliablePipeline);
+        }
     }
 }

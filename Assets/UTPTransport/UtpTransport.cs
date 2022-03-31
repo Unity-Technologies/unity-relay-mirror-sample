@@ -142,12 +142,16 @@ namespace Utp
 
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
-			return NetworkParameterConstants.MTU;
+			if(client != null && client != default(UtpClient))
+            {
+				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize();
+			} 
+			else
+            {
+				return NetworkParameterConstants.MTU;
+            }
 		}
 
-		/// <summary>
-		/// Shuts down the Utp tansport server and disconnects all clients.
-		/// </summary>
 		public override void Shutdown() 
 		{
 			if (client.IsConnected()) client.Disconnect();
