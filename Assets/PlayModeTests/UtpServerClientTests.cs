@@ -83,6 +83,7 @@ public class UtpServerClientTests
         );
     }
 
+    [TearDown]
     public void TearDown()
     {
         _client.Disconnect();
