@@ -144,7 +144,7 @@ namespace Utp
 		{
 			if(client != null)
             {
-				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize();
+				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
 			} 
 			else
             {

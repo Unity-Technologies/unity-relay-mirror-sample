@@ -172,13 +172,21 @@ namespace Utp
         /// </summary>
         private int timeout;
 
+        /// <summary>
+        /// The driver's max header size for UTP transport.
+        /// </summary>
+        private int[] driverMaxHeaderSize;
+
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
 		{
 			this.OnConnected = OnConnected;
 			this.OnReceivedData = OnReceivedData;
 			this.OnDisconnected = OnDisconnected;
             this.timeout = timeout;
-		}
+
+            //Allocate max header size array 
+            driverMaxHeaderSize = new int[2];
+        }
 
 		/// <summary>
 		/// Attempt to connect to a listen server at a given IP/port. Currently only supports IPV4.
@@ -305,7 +313,14 @@ namespace Utp
 
             // Need to ensure the driver did not become inactive
             if (!DriverActive())
+            {
+                driverMaxHeaderSize = new int[2];
                 return;
+            }
+
+            //If driver is active, cache its max header size for UTP transport
+            driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
+            driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
 
             // Create a new job
             var job = new ClientUpdateJob
@@ -383,13 +398,13 @@ namespace Utp
         }
 
         /// <summary>
-        /// Retrieves the driver's max header size. Calling this method completes the client job handle.
+        /// Returns this client's driver's max header size based on the requested channel.
         /// </summary>
-        /// <returns>The client driver's max header size.</returns>
-        public int GetMaxHeaderSize()
+        /// <param name="channelId">The channel to check.</param>
+        /// <returns>This client's max header size.</returns>
+        public int GetMaxHeaderSize(int channelId = Channels.Reliable)
         {
-            clientJobHandle.Complete();
-            return driver.MaxHeaderSize(unreliablePipeline);
+            return DriverActive() ? driverMaxHeaderSize[channelId] : 0;
         }
     }
 }
