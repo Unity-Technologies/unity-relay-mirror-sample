@@ -1,88 +1,150 @@
-using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Utp;
-using System.Threading.Tasks;
-using Mirror;
 
 public class UtpServerClientTests
 {
+    private UtpServer _server;
+    private UtpClient _client;
 
-
-    UtpServer _Server;
-    UtpClient _Client;
-    Transport _Transport;
-    int TimeoutMS = 10000;
-    IEnumerator DoTick(UtpClient client, UtpServer server) {
-        int frameCounter = 5;
-        while (frameCounter > 0)
+    private class WaitForConnectionOrTimeout : IEnumerator
+    {
+        public enum Status
         {
-            client.Tick();
-            server.Tick();
-        frameCounter -= 1;
-        yield return null;
+            Undetermined,
+            ClientConnected,
+            TimedOut,
         }
-        yield return new WaitForSeconds(1f);
+
+        public Status Result { get; private set; } = Status.Undetermined;
+
+        public object Current => null;
+
+        private float _elapsedTime = 0f;
+        private float _timeout = 0f;
+
+        private UtpClient _client = null;
+        private UtpServer _server = null;
+
+        public WaitForConnectionOrTimeout(UtpClient client, UtpServer server, float timeoutInSeconds)
+        {
+            _client = client;
+            _server = server;
+            _timeout = timeoutInSeconds;
+        }
+
+        public bool MoveNext()
+        {
+            _client.Tick();
+            _server.Tick();
+
+            _elapsedTime += Time.deltaTime;
+
+            if (_elapsedTime >= _timeout)
+            {
+                Result = Status.TimedOut;
+                return false;
+            }
+            else if (_client.IsConnected())
+            {
+                Result = Status.ClientConnected;
+                return false;
+            }
+
+            return true;
+        }
+
+        public void Reset()
+        {
+            _elapsedTime = 0f;
+            _timeout = 0f;
+            Result = Status.Undetermined;
+        }
     }
+
     [SetUp]
-    public void SetUp() {
-        var Obj = new GameObject();
-        _Server = new UtpServer(
-			(connectionId) => _Transport.OnServerConnected.Invoke(connectionId),
-			(connectionId, message) => _Transport.OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
-			(connectionId) => _Transport.OnServerDisconnected.Invoke(connectionId),
-			TimeoutMS
+    public void SetUp()
+    {
+        _server = new UtpServer
+        (
+            (connectionId) => { },
+            (connectionId, message) => { },
+            (connectionId) => { },
+            timeout: 1000
         );
-        _Client = new UtpClient(
-			() => _Transport.OnClientConnected.Invoke(),
-			(message) => _Transport.OnClientDataReceived.Invoke(message, Channels.Reliable),
-			() => _Transport.OnClientDisconnected.Invoke(),
-			TimeoutMS
+
+        _client = new UtpClient(
+            () => { },
+            (message) => { },
+            () => { },
+            timeout: 1000
         );
     }
-    [Test]
-    public void Server_IsActive_NotStarted_False() {
-        Assert.IsFalse(_Server.IsActive());
+
+    public void TearDown()
+    {
+        _client.Disconnect();
+        _server.Stop();
     }
+
     [Test]
-    public void Server_IsActive_Started_True() {
-        _Server.Start(7777);
-        Assert.IsTrue(_Server.IsActive());
+    public void Server_IsActive_NotStarted_False()
+    {
+        Assert.IsFalse(_server.IsActive());
     }
+
+    [Test]
+    public void Server_IsActive_Started_True()
+    {
+        _server.Start(7777);
+        Assert.IsTrue(_server.IsActive());
+    }
+
     [UnityTest]
-    public IEnumerator Client_IsConnected_NotConnected_False() {
-        Assert.IsFalse(_Client.IsConnected());
+    public IEnumerator Client_IsConnected_NotConnected_False()
+    {
+        Assert.IsFalse(_client.IsConnected());
         yield return null;
     }
+
     [UnityTest]
-    public IEnumerator Client_IsConnected_NoServer_False() {
-        _Client.Connect("localhost", 7777);
-        Assert.IsFalse(_Client.IsConnected());
+    public IEnumerator Client_IsConnected_NoServer_False()
+    {
+        _client.Connect("localhost", 7777);
+        Assert.IsFalse(_client.IsConnected());
         yield return null;
     }
+
     [UnityTest]
-    public IEnumerator Client_IsConnected_WithServer_True() {
-        _Server.Start(7777);
-        _Client.Connect("localhost", 7777);
-        yield return DoTick(_Client, _Server);
-        Assert.IsTrue(_Client.IsConnected());
+    public IEnumerator Client_IsConnected_WithServer_True()
+    {
+        _server.Start(7777);
+        _client.Connect("localhost", 7777);
+
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+
+        Assert.IsTrue(_client.IsConnected());
     }
+
     [Test]
-    public void Server_GetClientAddress_NotConnected_EmptyString() {
-        string clientAddress = _Server.GetClientAddress(0);
+    public void Server_GetClientAddress_NotConnected_EmptyString()
+    {
+        string clientAddress = _server.GetClientAddress(0);
         Assert.IsEmpty(clientAddress);
     }
+
     [UnityTest]
-    public IEnumerator Server_GetClientAddress_Connected_NonEmptyString() {
-        _Server.Start(7777);
-        _Client.Connect("localhost", 7777);
-        yield return DoTick(_Client, _Server);
-        Assert.IsTrue(_Client.IsConnected());
-        string clientAddress = _Server.GetClientAddress(1);
+    public IEnumerator Server_GetClientAddress_Connected_NonEmptyString()
+    {
+        _server.Start(7777);
+        _client.Connect("localhost", 7777);
+
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+
+        int idOfFirstClient = 1;
+        string clientAddress = _server.GetClientAddress(idOfFirstClient);
         Assert.IsNotEmpty(clientAddress);
     }
 }
