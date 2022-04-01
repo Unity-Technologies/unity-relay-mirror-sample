@@ -142,7 +142,7 @@ namespace Utp
 
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
-			if(client != null && client != default(UtpClient))
+			if(client != null)
             {
 				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize();
 			} 
