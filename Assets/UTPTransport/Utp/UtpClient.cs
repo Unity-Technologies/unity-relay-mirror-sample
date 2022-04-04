@@ -177,6 +177,11 @@ namespace Utp
         /// </summary>
         private int[] driverMaxHeaderSize;
 
+        /// <summary>
+        /// Whether the client is connected to the server or not.
+        /// </summary>
+        private bool connected;
+
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
 		{
 			this.OnConnected = OnConnected;
@@ -255,9 +260,8 @@ namespace Utp
 		/// <returns>True if connected to a server, false otherwise.</returns>
 		public bool IsConnected()
 		{
-			return DriverActive() &&
-				connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
-		}
+            return connected;
+        }
 
 		/// <summary>
 		/// Whether or not the network driver has been initialized.
@@ -311,16 +315,15 @@ namespace Utp
             // Trigger Mirror callbacks for events that resulted in the last jobs work
             ProcessIncomingEvents();
 
+            //Cache driver & connection info
+            CacheConnectionInfo();
+
             // Need to ensure the driver did not become inactive
             if (!DriverActive())
             {
                 driverMaxHeaderSize = new int[2];
                 return;
             }
-
-            //If driver is active, cache its max header size for UTP transport
-            driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
-            driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
 
             // Create a new job
             var job = new ClientUpdateJob
@@ -333,6 +336,16 @@ namespace Utp
             // Schedule job
             clientJobHandle = driver.ScheduleUpdate();
             clientJobHandle = job.Schedule(clientJobHandle);
+        }
+
+        private void CacheConnectionInfo()
+        {
+            //If driver is active, cache its max header size for UTP transport
+            driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
+            driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
+
+            //Check for an active connection from this client
+            connected = DriverActive() && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
         }
 
         /// <summary>
