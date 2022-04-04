@@ -1,5 +1,5 @@
 {
-    "name": "PlayModeTests",
+    "name": "UTPTests",
     "references": [
         "Mirror",
         "UtpTransport",

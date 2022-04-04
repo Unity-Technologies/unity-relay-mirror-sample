@@ -394,6 +394,8 @@ namespace Utp
 		/// <returns>The client address.</returns>
 		public string GetClientAddress(int connectionId)
 		{
+			serverJobHandle.Complete();
+
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
 			if (connection.GetHashCode() == connectionId)
 			{

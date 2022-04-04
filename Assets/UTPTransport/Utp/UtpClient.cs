@@ -213,6 +213,8 @@ namespace Utp
 		/// <returns>True if connected to a server, false otherwise.</returns>
 		public bool IsConnected()
 		{
+            clientJobHandle.Complete();
+
 			return DriverActive() &&
 				connection[0].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
 		}
