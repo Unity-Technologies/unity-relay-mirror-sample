@@ -284,6 +284,7 @@ namespace Utp
                 UtpLog.Info("Disconnecting from server");
 
 				connection.Disconnect(driver);
+                connection = default(Unity.Networking.Transport.NetworkConnection);
 
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
 				driver.ScheduleUpdate().Complete();
@@ -338,14 +339,31 @@ namespace Utp
             clientJobHandle = job.Schedule(clientJobHandle);
         }
 
+        /// <summary>
+        /// Caches important properties to allow for getter methods to be called without interfering with the job system.
+        /// </summary>
         private void CacheConnectionInfo()
         {
-            //If driver is active, cache its max header size for UTP transport
-            driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
-            driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
-
             //Check for an active connection from this client
-            connected = DriverActive() && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+            if(connection != default(Unity.Networking.Transport.NetworkConnection))
+            {
+                //If driver is active, cache its max header size for UTP transport
+                if (DriverActive())
+                {
+                    driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
+                    driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
+                }
+                
+                //Set connection state
+                connected = DriverActive() && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+            }
+            else
+            {
+                //If there is no valid connection, set values accordingly
+                driverMaxHeaderSize[Channels.Reliable] = 0;
+                driverMaxHeaderSize[Channels.Unreliable] = 0;
+                connected = false;
+            }
         }
 
         /// <summary>

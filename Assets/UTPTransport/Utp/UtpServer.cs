@@ -1,13 +1,13 @@
 using Mirror;
 using System;
-using System.Collections.Generic;
+using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
-using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Burst;
 
 namespace Utp
 {
@@ -40,10 +40,11 @@ namespace Utp
 			for (int i = 0; i < connections.Length; i++)
 			{
 				//If a connection is no longer established...
-				if (!connections[i].IsCreated)
+				//if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
+				if(!connections[i].IsCreated)
 				{
 					//Remove connection and then decrement to continue search
-					connections.RemoveAtSwapBack(i--);
+					connections.RemoveAt(i--);
 				}
 			}
 
