@@ -40,7 +40,6 @@ namespace Utp
 			for (int i = 0; i < connections.Length; i++)
 			{
 				//If a connection is no longer established...
-				//if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				if(!connections[i].IsCreated)
 				{
 					//Remove connection and then decrement to continue search
