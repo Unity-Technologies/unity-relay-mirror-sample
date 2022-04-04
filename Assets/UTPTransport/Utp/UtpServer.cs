@@ -40,10 +40,10 @@ namespace Utp
 			for (int i = 0; i < connections.Length; i++)
 			{
 				//If a connection is no longer established...
-				if(!connections[i].IsCreated)
+				if(connections[i].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				{
 					//Remove connection and then decrement to continue search
-					connections.RemoveAt(i--);
+					connections.RemoveAtSwapBack(i--);
 				}
 			}
 
@@ -325,9 +325,10 @@ namespace Utp
 			};
 
 			// Schedule jobs
+			// We are explicitly scheduling ServerUpdateJob before ServerUpdateConnectionsJob so that disconnect events are enqueued before the corresponding NetworkConnection is removed.
 			serverJobHandle = driver.ScheduleUpdate();
-			serverJobHandle = connectionJob.Schedule(serverJobHandle);
 			serverJobHandle = serverUpdateJob.Schedule(connections, 1, serverJobHandle);
+			serverJobHandle = connectionJob.Schedule(serverJobHandle);
 		}
 
 		/// <summary>
@@ -448,29 +449,21 @@ namespace Utp
 			UtpConnectionEvent connectionEvent;
 			while (connectionsEventsQueue.TryDequeue(out connectionEvent))
 			{
-				Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionEvent.connectionId);
-				if (connection.GetHashCode() == connectionEvent.connectionId)
+				if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
 				{
-					if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
-					{
-						OnConnected.Invoke(connectionEvent.connectionId);
-					}
-					else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
-					{
-						OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
-					}
-					else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
-					{
-						OnDisconnected.Invoke(connectionEvent.connectionId);
-					}
-					else
-					{
-						UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
-					}
+					OnConnected.Invoke(connectionEvent.connectionId);
+				}
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
+				{
+					OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+				}
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
+				{
+					OnDisconnected.Invoke(connectionEvent.connectionId);
 				}
 				else
 				{
-					UtpLog.Warning($"Connection not found: {connectionEvent.connectionId}");
+					UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
 				}
 			}
 		}
