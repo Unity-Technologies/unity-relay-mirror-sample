@@ -37,15 +37,15 @@ namespace Utp
 
 		public void Execute()
 		{
-			for (int i = 0; i < connections.Length; i++)
-			{
+            for (int i = 0; i < connections.Length; i++)
+            {
 				//If a connection is no longer established...
-				if(connections[i].GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
+				if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				{
-					//Remove connection and then decrement to continue search
-					connections.RemoveAtSwapBack(i--);
+					Debug.Log($"UTP: Cleaning up connections, removed connection {connections[i].GetHashCode()} [{i}].");
+                    connections.RemoveAt(i--);
 				}
-			}
+            }
 
 			// Accept new connections
 			Unity.Networking.Transport.NetworkConnection networkConnection;
@@ -310,13 +310,6 @@ namespace Utp
 			ProcessIncomingEvents();
 
 			// Create a new jobs
-			var connectionJob = new ServerUpdateConnectionsJob
-			{
-				driver = driver,
-				connections = connections,
-				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
-			};
-
 			var serverUpdateJob = new ServerUpdateJob
 			{
 				driver = driver.ToConcurrent(),
@@ -324,11 +317,18 @@ namespace Utp
 				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
 			};
 
+			var connectionJob = new ServerUpdateConnectionsJob
+			{
+				driver = driver,
+				connections = connections,
+				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
+			};
+
 			// Schedule jobs
-			// We are explicitly scheduling ServerUpdateJob before ServerUpdateConnectionsJob so that disconnect events are enqueued before the corresponding NetworkConnection is removed.
 			serverJobHandle = driver.ScheduleUpdate();
 			serverJobHandle = serverUpdateJob.Schedule(connections, 1, serverJobHandle);
 			serverJobHandle = connectionJob.Schedule(serverJobHandle);
+
 		}
 
 		/// <summary>
@@ -443,9 +443,11 @@ namespace Utp
 		/// </summary>
 		public void ProcessIncomingEvents()
 		{
+			//Check if the server is active
 			if (!IsActive() || !NetworkServer.active)
 				return;
 
+			//Process the events in the event list
 			UtpConnectionEvent connectionEvent;
 			while (connectionsEventsQueue.TryDequeue(out connectionEvent))
 			{
