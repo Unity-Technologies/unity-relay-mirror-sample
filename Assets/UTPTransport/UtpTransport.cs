@@ -140,23 +140,15 @@ namespace Utp
 			relayManager.AllocateRelayServer(maxPlayers, regionId);
 		}
 
+		// Common
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
-			if(client != null && client.IsConnected())
-            {
-				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
-			} 
-			else
-            {
-				return NetworkParameterConstants.MTU;
-            }
+			// TODO: better definitions for max packet size. Consider the channel type and the need for protocol and pipeline overhead.
+			// See: NetworkDriver.cs / BeginSend()
+			return NetworkParameterConstants.MTU;
 		}
 
-		public override void Shutdown() 
-		{
-			if (client.IsConnected()) client.Disconnect();
-			if (server.IsActive()) server.Stop();
-		}
+		public override void Shutdown() { }
 
 		public override string ToString() => "UTP";
 	}
