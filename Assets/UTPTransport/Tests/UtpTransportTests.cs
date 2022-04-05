@@ -74,21 +74,18 @@ public class UtpTransportTests
     [SetUp]
     public void SetUp() {
         var ServerObj = new GameObject();
-        var ClientObj = new GameObject();
         _Server = ServerObj.AddComponent<UtpTransport>();
+
+        var ClientObj = new GameObject();
         _Client = ClientObj.AddComponent<UtpTransport>();
     }
     [TearDown]
     public void TearDown() {
         _Client.ClientDisconnect();
-        try
-        {
-            _Server.ServerStop();
-        } catch (ObjectDisposedException) {
-            Debug.Log("Server already disposed, ignoring in Teardown.");
-        }
-        GameObject.Destroy(_Server.gameObject);
         GameObject.Destroy(_Client.gameObject);
+
+        _Server.ServerStop();
+        GameObject.Destroy(_Server.gameObject);
     }
     [Test]
     public void ServerActive_IsNotActive_False()
