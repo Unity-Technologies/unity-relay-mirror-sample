@@ -62,9 +62,9 @@ namespace Utp
                     UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
                     connectionEvent.eventType = (byte)UtpConnectionEventType.OnReceivedData;
                     connectionEvent.connectionId = connection.GetHashCode();
-					connectionEvent.eventData = GetFixedList(nativeMessage);
+                    connectionEvent.eventData = GetFixedList(nativeMessage);
 
-					connectionEventsQueue.Enqueue(connectionEvent);
+                    connectionEventsQueue.Enqueue(connectionEvent);
                 }
                 else if (netEvent == NetworkEvent.Type.Disconnect)
                 {
@@ -131,11 +131,11 @@ namespace Utp
     /// A client for Mirror using UTP.
     /// </summary>
     public class UtpClient
-	{
-		// Events
-		public Action OnConnected;
-		public Action<ArraySegment<byte>> OnReceivedData;
-		public Action OnDisconnected;
+    {
+        // Events
+        public Action OnConnected;
+        public Action<ArraySegment<byte>> OnReceivedData;
+        public Action OnDisconnected;
 
         /// <summary>
         /// Temporary storage for connection events that occur on job threads so they may be dequeued on the main thread.
@@ -152,15 +152,15 @@ namespace Utp
         /// </summary>
         private Unity.Networking.Transport.NetworkConnection connection;
 
-		/// <summary>
-		/// A pipeline on the driver that is sequenced, and ensures messages are delivered.
-		/// </summary>
-		private NetworkPipeline reliablePipeline;
+        /// <summary>
+        /// A pipeline on the driver that is sequenced, and ensures messages are delivered.
+        /// </summary>
+        private NetworkPipeline reliablePipeline;
 
-		/// <summary>
-		/// A pipeline on the driver that is sequenced, but does not ensure messages are delivered.
-		/// </summary>
-		private NetworkPipeline unreliablePipeline;
+        /// <summary>
+        /// A pipeline on the driver that is sequenced, but does not ensure messages are delivered.
+        /// </summary>
+        private NetworkPipeline unreliablePipeline;
 
         /// <summary>
         /// Job handle to schedule client jobs.
@@ -182,30 +182,30 @@ namespace Utp
         /// </summary>
         private bool connected;
 
-		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
-		{
-			this.OnConnected = OnConnected;
-			this.OnReceivedData = OnReceivedData;
-			this.OnDisconnected = OnDisconnected;
+        public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
+        {
+            this.OnConnected = OnConnected;
+            this.OnReceivedData = OnReceivedData;
+            this.OnDisconnected = OnDisconnected;
             this.timeout = timeout;
 
             //Allocate max header size array 
             driverMaxHeaderSize = new int[2];
         }
 
-		/// <summary>
-		/// Attempt to connect to a listen server at a given IP/port. Currently only supports IPV4.
-		/// </summary>
-		/// <param name="host">The host address at which the listen server is running.</param>
-		/// <param name="port">The port which the listen server is listening on.</param>
-		public void Connect(string host, ushort port)
-		{
+        /// <summary>
+        /// Attempt to connect to a listen server at a given IP/port. Currently only supports IPV4.
+        /// </summary>
+        /// <param name="host">The host address at which the listen server is running.</param>
+        /// <param name="port">The port which the listen server is listening on.</param>
+        public void Connect(string host, ushort port)
+        {
             clientJobHandle.Complete();
 
-			if (IsConnected())
-			{
-				UtpLog.Warning("Client is already connected");
-				return;
+            if (IsConnected())
+            {
+                UtpLog.Warning("Client is already connected");
+                return;
             }
 
             var settings = new NetworkSettings();
@@ -216,100 +216,100 @@ namespace Utp
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
             connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-			if (host == "localhost")
-			{
-				host = "127.0.0.1";
-			}
+            if (host == "localhost")
+            {
+                host = "127.0.0.1";
+            }
 
-			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
-			connection = driver.Connect(endpoint);
+            NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
+            connection = driver.Connect(endpoint);
 
-			UtpLog.Info("Client connecting to server at: " + endpoint.Address);
-		}
+            UtpLog.Info("Client connecting to server at: " + endpoint.Address);
+        }
 
         /// <summary>
         /// Attempt to connect to a Relay host given a join allocation.
         /// </summary>
         /// <param name="joinAllocation"></param>
 		public void RelayConnect(JoinAllocation joinAllocation)
-		{
-			if (IsConnected())
-			{
-				UtpLog.Warning("Client is already connected");
-				return;
-			}
+        {
+            if (IsConnected())
+            {
+                UtpLog.Warning("Client is already connected");
+                return;
+            }
 
-			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
-			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-			NetworkSettings networkSettings = new NetworkSettings();
+            RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
+            RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
+            NetworkSettings networkSettings = new NetworkSettings();
             RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
             driver = NetworkDriver.Create(networkSettings);
-			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
-			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-			connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
+            reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
+            unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
+            connectionEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
+            connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
 
-			UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
-		}
+            UtpLog.Info("Client connecting to server at: " + relayNetworkParameter.ServerData.Endpoint.Address);
+        }
 
-		/// <summary>
-		/// Whether or not the client is connected to a server.
-		/// </summary>
-		/// <returns>True if connected to a server, false otherwise.</returns>
-		public bool IsConnected()
-		{
+        /// <summary>
+        /// Whether or not the client is connected to a server.
+        /// </summary>
+        /// <returns>True if connected to a server, false otherwise.</returns>
+        public bool IsConnected()
+        {
             return connected;
         }
 
-		/// <summary>
-		/// Whether or not the network driver has been initialized.
-		/// </summary>
-		/// <returns>True if initialized, false otherwise.</returns>
-		private bool DriverActive()
-		{
-			return !Equals(driver, default(NetworkDriver));
-		}
+        /// <summary>
+        /// Whether or not the network driver has been initialized.
+        /// </summary>
+        /// <returns>True if initialized, false otherwise.</returns>
+        private bool DriverActive()
+        {
+            return !Equals(driver, default(NetworkDriver));
+        }
 
-		/// <summary>
-		/// Disconnect from a listen server.
-		/// </summary>
-		public void Disconnect()
-		{
+        /// <summary>
+        /// Disconnect from a listen server.
+        /// </summary>
+        public void Disconnect()
+        {
             clientJobHandle.Complete();
 
             if (connection.IsCreated)
-			{
+            {
                 UtpLog.Info("Disconnecting from server");
 
-				connection.Disconnect(driver);
+                connection.Disconnect(driver);
                 connection = default(Unity.Networking.Transport.NetworkConnection);
 
-				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
-				driver.ScheduleUpdate().Complete();
+                // When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
+                driver.ScheduleUpdate().Complete();
 
-				OnDisconnected.Invoke();
+                OnDisconnected.Invoke();
             }
 
-			if (connectionEventsQueue.IsCreated)
-			{
-				ProcessIncomingEvents(); // Ensure we flush the queue
-				connectionEventsQueue.Dispose();
-			}
+            if (connectionEventsQueue.IsCreated)
+            {
+                ProcessIncomingEvents(); // Ensure we flush the queue
+                connectionEventsQueue.Dispose();
+            }
 
-			if (driver.IsCreated)
-			{
-				driver.Dispose();
-				driver = default(NetworkDriver);
-			}
-		}
+            if (driver.IsCreated)
+            {
+                driver.Dispose();
+                driver = default(NetworkDriver);
+            }
+        }
 
-		/// <summary>
-		/// Tick the client, creating the client job and scheduling it. Processes incoming events 
-		/// </summary>
-		public void Tick()
-		{
+        /// <summary>
+        /// Tick the client, creating the client job and scheduling it. Processes incoming events 
+        /// </summary>
+        public void Tick()
+        {
             // First complete the job that was initialized in the previous frame
             clientJobHandle.Complete();
 
@@ -331,7 +331,7 @@ namespace Utp
             {
                 driver = driver,
                 connection = connection,
-				connectionEventsQueue = connectionEventsQueue.AsParallelWriter()
+                connectionEventsQueue = connectionEventsQueue.AsParallelWriter()
             };
 
             // Schedule job
@@ -345,7 +345,7 @@ namespace Utp
         private void CacheConnectionInfo()
         {
             //Check for an active connection from this client
-            if(connection != default(Unity.Networking.Transport.NetworkConnection))
+            if (connection != default(Unity.Networking.Transport.NetworkConnection))
             {
                 //If driver is active, cache its max header size for UTP transport
                 if (DriverActive())
@@ -353,7 +353,7 @@ namespace Utp
                     driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
                     driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
                 }
-                
+
                 //Set connection state
                 connected = DriverActive() && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
             }
@@ -372,7 +372,7 @@ namespace Utp
         /// <param name="segment">The data to send.</param>
         /// <param name="channelId">The 'Mirror.Channels' channel to send the data over.</param>
         public void Send(ArraySegment<byte> segment, int channelId)
-		{
+        {
             //Get pipeline for job
             NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
 
@@ -399,7 +399,7 @@ namespace Utp
         public void ProcessIncomingEvents()
         {
             // Exit if the driver is not active
-            if (!DriverActive() || !NetworkClient.active)
+            if (!DriverActive())
                 return;
 
             // Exit if the connection is not ready
@@ -409,21 +409,21 @@ namespace Utp
             UtpConnectionEvent connectionEvent;
             while (connectionEventsQueue.IsCreated && connectionEventsQueue.TryDequeue(out connectionEvent))
             {
-				if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
+                if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
                 {
-					OnConnected.Invoke();
+                    OnConnected.Invoke();
                 }
-				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
+                else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
                 {
-					OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+                    OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                 }
-				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
+                else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
                 {
-					OnDisconnected.Invoke();
+                    OnDisconnected.Invoke();
                 }
                 else
                 {
-					UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
+                    UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
                 }
             }
         }

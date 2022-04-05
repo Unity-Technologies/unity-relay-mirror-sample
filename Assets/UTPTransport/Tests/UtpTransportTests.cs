@@ -15,6 +15,7 @@ public class UtpTransportTests
 
     UtpTransport _Server;
     UtpTransport _Client;
+    RelayManager _RelayManager;
 
 
     private class WaitForConnectionOrTimeout : IEnumerator
@@ -72,15 +73,18 @@ public class UtpTransportTests
         }
     }
     [SetUp]
-    public void SetUp() {
+    public void SetUp()
+    {
         var ServerObj = new GameObject();
         _Server = ServerObj.AddComponent<UtpTransport>();
+        _RelayManager = ServerObj.AddComponent<RelayManager>();
 
         var ClientObj = new GameObject();
         _Client = ClientObj.AddComponent<UtpTransport>();
     }
     [TearDown]
-    public void TearDown() {
+    public void TearDown()
+    {
         _Client.ClientDisconnect();
         GameObject.Destroy(_Client.gameObject);
 
@@ -93,30 +97,53 @@ public class UtpTransportTests
         Assert.IsFalse(_Server.ServerActive(), "Server is running, but should not be.");
     }
     [Test]
-    public void ServerActive_IsActive_True() {
+    public void ServerActive_IsActive_True()
+    {
         _Server.ServerStart();
         Assert.IsTrue(_Server.ServerActive(), "Server is not running, but should be.");
     }
     [Test]
-    public void ServerStop_IsActive_False() {
+    public void ServerStop_IsActive_False()
+    {
         _Server.ServerStart();
         _Server.ServerStop();
         Assert.IsFalse(_Server.ServerActive(), "Server is running, but should not be.");
     }
     [Test]
-    public void ServerGetClientAddress_InvalidAddress_EmptyString() {
+    public void ServerGetClientAddress_InvalidAddress_EmptyString()
+    {
         string clientAddress = _Server.ServerGetClientAddress(0);
         Assert.IsEmpty(clientAddress, "A client address was returned instead of an empty string.");
     }
+    [UnityTest]
+    public IEnumerator ServerGetClientAddress_ClientConnected_NonEmptyString()
+    {
+        _Server.ServerStart();
+        _Client.ClientConnect(_Server.ServerUri());
+        yield return new WaitForConnectionOrTimeout(_Client, _Server, 30f);
+        int idOfFirstClient = 1;
+        string clientAddress = _Server.ServerGetClientAddress(idOfFirstClient);
+        Assert.IsNotEmpty(clientAddress, "A client address was not returned, connection possibly timed out..");
+    }
     [Test]
-    public void ClientConnected_NotConnected_False() {
+    public void ClientConnected_NotConnected_False()
+    {
         Assert.IsFalse(_Client.ClientConnected(), "Client is connected, but should not be.");
     }
     [UnityTest]
-    public IEnumerator ClientConnected_IsConnected_True() {
+    public IEnumerator ClientConnected_IsConnected_True()
+    {
         _Server.ServerStart();
         _Client.ClientConnect(_Server.ServerUri());
         yield return new WaitForConnectionOrTimeout(_Client, _Server, 30f);
         Assert.IsTrue(_Client.ClientConnected(), "Client is not connected, but should be.");
+    }
+    [UnityTest]
+    public IEnumerator Server_GetRelayRegions_Success()
+    {
+        _RelayManager.GetRelayRegions(
+            (regions) => { }
+        );
+        yield return null;
     }
 }

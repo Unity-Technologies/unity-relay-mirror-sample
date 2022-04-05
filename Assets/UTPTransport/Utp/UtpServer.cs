@@ -454,7 +454,7 @@ namespace Utp
         public void ProcessIncomingEvents()
         {
             //Check if the server is active
-            if (!IsActive() || !NetworkServer.active)
+            if (!IsActive())
                 return;
 
             //Process the events in the event list
