@@ -55,7 +55,7 @@ namespace Utp
         /// <returns>True or false, whether the connection is valid.</returns>
         public bool ConnectionIsActive(Unity.Networking.Transport.NetworkConnection connection)
         {
-            return connection != default(Unity.Networking.Transport.NetworkConnection);
+            return !Equals(connection, default(Unity.Networking.Transport.NetworkConnection));
         }
 
         /// <summary>
