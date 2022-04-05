@@ -1,19 +1,23 @@
 using Mirror;
-
 using System;
-using System.Collections.Generic;
-
+using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Burst;
 
 namespace Utp
 {
-	/// <summary>
-	/// Job used to update connections. 
-	/// </summary>
+
+    #region Jobs
+
+    /// <summary>
+    /// Job used to update connections. 
+    /// </summary>
+    [BurstCompile]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
@@ -33,39 +37,26 @@ namespace Utp
 
 		public void Execute()
 		{
-			// Clean up connections
-			{
-				HashSet<int> connectionsToRemove = new HashSet<int>();
-				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
+            for (int i = 0; i < connections.Length; i++)
+            {
+				//If a connection is no longer established...
+				if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				{
-					if (!connection.IsCreated)
-					{
-						connectionsToRemove.Add(connection.GetHashCode());
-					}
+					Debug.Log($"UTP: Cleaning up connections, removed connection {connections[i].GetHashCode()} [{i}].");
+                    connections.RemoveAtSwapBack(i--);
 				}
-
-				foreach (int connectionId in connectionsToRemove)
-				{
-					UtpLog.Info("Removing connection with ID: " + connectionId);
-					connections.RemoveAt(connectionId);
-				}
-				connectionsToRemove.Clear();
-			}
+            }
 
 			// Accept new connections
+			Unity.Networking.Transport.NetworkConnection networkConnection;
+			while ((networkConnection = driver.Accept()) != default(Unity.Networking.Transport.NetworkConnection))
 			{
-				Unity.Networking.Transport.NetworkConnection networkConnection;
-				while ((networkConnection = driver.Accept()) != default(Unity.Networking.Transport.NetworkConnection))
-				{
-					UtpLog.Info("Adding connection with ID: " + networkConnection.GetHashCode());
+				UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
+				connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
+				connectionEvent.connectionId = networkConnection.GetHashCode();
+				connectionsEventsQueue.Enqueue(connectionEvent);
 
-					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
-					connectionEvent.eventType = (byte)UtpConnectionEventType.OnConnected;
-					connectionEvent.connectionId = networkConnection.GetHashCode();
-					connectionsEventsQueue.Enqueue(connectionEvent);
-
-					connections.Add(networkConnection);
-				}
+				connections.Add(networkConnection);
 			}
 		}
 
@@ -79,7 +70,6 @@ namespace Utp
 			{
 				if (connection.GetHashCode() == connectionId)
 				{
-					UtpLog.Info("Disconnecting connection with ID: " + connectionId);
 					connection.Disconnect(driver);
 					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
 					connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
@@ -94,6 +84,7 @@ namespace Utp
 	/// <summary>
 	/// Job to query incoming events for all connections. 
 	/// </summary>
+	[BurstCompile]
 	struct ServerUpdateJob : IJobParallelForDefer
 	{
 		/// <summary>
@@ -134,17 +125,10 @@ namespace Utp
 				}
 				else if (netEvent == NetworkEvent.Type.Disconnect)
 				{
-					UtpLog.Verbose("Client disconnected from server");
-
 					UtpConnectionEvent connectionEvent = new UtpConnectionEvent();
 					connectionEvent.eventType = (byte)UtpConnectionEventType.OnDisconnected;
 					connectionEvent.connectionId = connections[index].GetHashCode();
-
 					connectionsEventsQueue.Enqueue(connectionEvent);
-				}
-				else
-				{
-					UtpLog.Warning("Received unknown event: " + netEvent);
 				}
 			}
 		}
@@ -152,13 +136,53 @@ namespace Utp
 		public FixedList4096Bytes<byte> GetFixedList(NativeArray<byte> data)
 		{
 			FixedList4096Bytes<byte> retVal = new FixedList4096Bytes<byte>();
-			foreach (byte dataByte in data)
+			unsafe
 			{
-				retVal.Add(dataByte);
+				retVal.AddRange(NativeArrayUnsafeUtility.GetUnsafePtr(data), data.Length);
 			}
 			return retVal;
 		}
 	}
+
+	[BurstCompile]
+	struct ServerSendJob : IJob
+	{
+		/// <summary>
+		/// Used to bind, listen, and send data to connections.
+		/// </summary>
+		public NetworkDriver driver;
+
+		/// <summary>
+		/// The network pipeline to stream data.
+		/// </summary>
+		public NetworkPipeline pipeline;
+
+		/// <summary>
+		/// The client's network connection instance.
+		/// </summary>
+		public Unity.Networking.Transport.NetworkConnection connection;
+
+		/// <summary>
+		/// The segment of data to send over (deallocates after use).
+		/// </summary>
+		[DeallocateOnJobCompletion]
+		public NativeArray<byte> data;
+
+		public void Execute()
+		{
+			DataStreamWriter writer;
+			int writeStatus = driver.BeginSend(pipeline, connection, out writer);
+			
+			//If Acquire was success
+			if (writeStatus == (int)Unity.Networking.Transport.Error.StatusCode.Success)
+			{
+				writer.WriteBytes(data);
+				driver.EndSend(writer);
+			}
+		}
+	}
+
+	#endregion
 
 	/// <summary>
 	/// A listen server for Mirror using UTP. 
@@ -241,12 +265,13 @@ namespace Utp
 				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, "udp");
 				RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 				NetworkSettings networkSettings = new NetworkSettings();
-				networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+				RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 				driver = NetworkDriver.Create(networkSettings);
 			}
 			else
 			{
-				driver = NetworkDriver.Create();
+				NetworkSettings networkSettings = new NetworkSettings();
+				driver = NetworkDriver.Create(networkSettings);
 				endpoint.Port = port;
 			}
 
@@ -257,7 +282,7 @@ namespace Utp
 
 			if (driver.Bind(endpoint) != 0)
 			{
-				UtpLog.Error("Failed to bind to port: " + endpoint.Port);
+				UtpLog.Error($"Failed to bind to port: {endpoint.Port}");
 			}
 			else
 			{
@@ -267,7 +292,7 @@ namespace Utp
 				}
 			}
 
-			UtpLog.Info(useRelay ? ("Server started") : ("Server started on port: " + endpoint.Port));
+			UtpLog.Info(useRelay ? ("Server started") : ($"Server started on port: {endpoint.Port}"));
 		}
 
 		/// <summary>
@@ -285,13 +310,6 @@ namespace Utp
 			ProcessIncomingEvents();
 
 			// Create a new jobs
-			var connectionJob = new ServerUpdateConnectionsJob
-			{
-				driver = driver,
-				connections = connections,
-				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
-			};
-
 			var serverUpdateJob = new ServerUpdateJob
 			{
 				driver = driver.ToConcurrent(),
@@ -299,10 +317,19 @@ namespace Utp
 				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
 			};
 
+			var connectionJob = new ServerUpdateConnectionsJob
+			{
+				driver = driver,
+				connections = connections,
+				connectionsEventsQueue = connectionsEventsQueue.AsParallelWriter()
+			};
+
 			// Schedule jobs
+			// We are explicitly scheduling ServerUpdateJob before ServerUpdateConnectionsJob so that disconnect events are enqueued before the corresponding NetworkConnection is removed.
 			serverJobHandle = driver.ScheduleUpdate();
-			serverJobHandle = connectionJob.Schedule(serverJobHandle);
 			serverJobHandle = serverUpdateJob.Schedule(connections, 1, serverJobHandle);
+			serverJobHandle = connectionJob.Schedule(serverJobHandle);
+
 		}
 
 		/// <summary>
@@ -313,7 +340,6 @@ namespace Utp
 			UtpLog.Info("Stopping server");
 
 			serverJobHandle.Complete();
-
 			connectionsEventsQueue.Dispose();
 			connections.Dispose();
 			driver.Dispose();
@@ -331,8 +357,9 @@ namespace Utp
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
 			if (connection.GetHashCode() == connectionId)
 			{
-				UtpLog.Info("Disconnecting connection with ID: " + connectionId);
+				UtpLog.Info($"Disconnecting connection with ID: {connectionId}");
 				connection.Disconnect(driver);
+
 				// When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the client
 				driver.ScheduleUpdate().Complete();
 
@@ -340,7 +367,7 @@ namespace Utp
 			}
 			else
 			{
-				UtpLog.Warning("connection not found: " + connectionId);
+				UtpLog.Warning($"Connection not found: {connectionId}");
 			}
 		}
 
@@ -354,43 +381,40 @@ namespace Utp
 		{
 			serverJobHandle.Complete();
 
-			System.Type stageType = channelId == Channels.Reliable ? typeof(ReliableSequencedPipelineStage) : typeof(UnreliableSequencedPipelineStage);
-			NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
-
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
+
 			if (connection.GetHashCode() == connectionId)
 			{
-				NetworkPipelineStageId stageId = NetworkPipelineStageCollection.GetStageId(stageType);
-				driver.GetPipelineBuffers(pipeline, stageId, connection, out var tmpReceiveBuffer, out var tmpSendBuffer, out var reliableBuffer);
+				//Get pipeline for job
+				NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
 
-				DataStreamWriter writer;
-				int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-				if (writeStatus == 0)
-				{
-					// segment.Array is longer than the number of bytes it holds, grab just what we need
-					byte[] segmentArray = new byte[segment.Count];
-					Array.Copy(segment.Array, 0, segmentArray, 0, segment.Count);
+				//Convert ArraySegment to NativeArray for burst compile
+				NativeArray<byte> segmentArray = new NativeArray<byte>(segment.Count, Allocator.Persistent);
+				NativeArray<byte>.Copy(segment.Array, segment.Offset, segmentArray, 0, segment.Count);
 
-					NativeArray<byte> nativeMessage = new NativeArray<byte>(segmentArray, Allocator.Temp);
-					writer.WriteBytes(nativeMessage);
-					driver.EndSend(writer);
-				}
-				else
+				// Create a new job
+				var job = new ClientSendJob
 				{
-					UtpLog.Warning("Write not successful: " + writeStatus);
-				}
+					driver = driver,
+					pipeline = pipeline,
+					connection = connection,
+					data = segmentArray
+				};
+
+				// Schedule job
+				serverJobHandle = job.Schedule(serverJobHandle);
 			}
 			else
 			{
-				UtpLog.Warning("connection not found: " + connectionId);
+				UtpLog.Warning($"Connection not found: {connectionId}");
 			}
 		}
 
 		/// <summary>
-		/// Look up a client's address via it's ID.
+		/// Look up a client's address via it's ID. If using Relay, this will always return the address of the Relay server.
 		/// </summary>
 		/// <param name="connectionId">The ID of the connection.</param>
-		/// <returns>The client address.</returns>
+		/// <returns>The client address, or Relay server if using Relay.</returns>
 		public string GetClientAddress(int connectionId)
 		{
 			Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionId);
@@ -401,8 +425,8 @@ namespace Utp
 			}
 			else
 			{
-				UtpLog.Warning("connection not found: " + connectionId);
-				return "";
+				UtpLog.Warning($"Connection not found: {connectionId}");
+				return String.Empty;
 			}
 		}
 
@@ -420,35 +444,29 @@ namespace Utp
 		/// </summary>
 		public void ProcessIncomingEvents()
 		{
+			//Check if the server is active
 			if (!IsActive() || !NetworkServer.active)
 				return;
 
+			//Process the events in the event list
 			UtpConnectionEvent connectionEvent;
 			while (connectionsEventsQueue.TryDequeue(out connectionEvent))
 			{
-				Unity.Networking.Transport.NetworkConnection connection = FindConnection(connectionEvent.connectionId);
-				if (connection.GetHashCode() == connectionEvent.connectionId)
+				if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
 				{
-					if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
-					{
-						OnConnected.Invoke(connectionEvent.connectionId);
-					}
-					else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
-					{
-						OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
-					}
-					else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
-					{
-						OnDisconnected.Invoke(connectionEvent.connectionId);
-					}
-					else
-					{
-						UtpLog.Warning("invalid connection event: " + connectionEvent.eventType);
-					}
+					OnConnected.Invoke(connectionEvent.connectionId);
+				}
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
+				{
+					OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+				}
+				else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
+				{
+					OnDisconnected.Invoke(connectionEvent.connectionId);
 				}
 				else
 				{
-					UtpLog.Warning("connection not found: " + connectionEvent.connectionId);
+					UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
 				}
 			}
 		}
