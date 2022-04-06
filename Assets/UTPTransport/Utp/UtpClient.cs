@@ -36,7 +36,10 @@ namespace Utp
         public void Execute()
         {
             //Back out if connection is invalid
-            if (!connection.IsCreated) return;
+            if (!connection.IsCreated)
+            {
+                return;
+            }
 
             NetworkEvent.Type netEvent;
             while ((netEvent = connection.PopEvent(driver, out DataStreamReader stream)) != NetworkEvent.Type.Empty)
@@ -48,6 +51,7 @@ namespace Utp
                 {
                     //Connect event
                     case (NetworkEvent.Type.Connect):
+                    {
 
                         connectionEvent = new UtpConnectionEvent()
                         {
@@ -59,10 +63,11 @@ namespace Utp
                         connectionEventsQueue.Enqueue(connectionEvent);
 
                         break;
+                    }
 
                     //Data recieved event
                     case (NetworkEvent.Type.Data):
-
+                    {
                         //Create managed array of data
                         NativeArray<byte> nativeMessage = new NativeArray<byte>(stream.Length, Allocator.Temp);
 
@@ -80,10 +85,11 @@ namespace Utp
                         connectionEventsQueue.Enqueue(connectionEvent);
 
                         break;
+                    }
 
                     //Disconnect event
                     case (NetworkEvent.Type.Disconnect):
-
+                    {
                         connectionEvent = new UtpConnectionEvent()
                         {
                             eventType = (byte)UtpConnectionEventType.OnDisconnected,
@@ -94,6 +100,8 @@ namespace Utp
                         connectionEventsQueue.Enqueue(connectionEvent);
 
                         break;
+                    }
+
                 }
             }
         }
@@ -141,7 +149,10 @@ namespace Utp
         public void Execute()
         {
             //Back out if connection is invalid
-            if(!connection.IsCreated) return;
+            if (!connection.IsCreated)
+            {
+                return;
+            }
 
             DataStreamWriter writer;
             int writeStatus = driver.BeginSend(pipeline, connection, out writer);
@@ -162,10 +173,10 @@ namespace Utp
     /// </summary>
     public class UtpClient : UtpEntity
 	{
-		/// <summary>
+        /// <summary>
         /// Invokes when connected to a server.
         /// </summary>
-		public Action OnConnected;
+        public Action OnConnected;
 
         /// <summary>
         /// Invokes when data has been received.
@@ -183,9 +194,14 @@ namespace Utp
         private Unity.Networking.Transport.NetworkConnection connection;
 
         /// <summary>
+        /// The number of pipelines tracked in the header size array.
+        /// </summary>
+        private const int NUM_PIPELINES = 2;
+
+        /// <summary>
         /// The driver's max header size for UTP transport.
         /// </summary>
-        private int[] driverMaxHeaderSize = new int[2];
+        private int[] driverMaxHeaderSize = new int[NUM_PIPELINES];
 
         /// <summary>
         /// Whether the client is connected to the server or not.
@@ -214,8 +230,6 @@ namespace Utp
 		/// <param name="port">The port which the listen server is listening on.</param>
 		public void Connect(string host, ushort port)
 		{
-            jobHandle.Complete();
-
             //Check for double connection
 			if (IsConnected())
 			{
@@ -224,7 +238,7 @@ namespace Utp
             }
 
             //Check for blank host
-            if(host == "")
+            if(String.IsNullOrEmpty(host))
             {
                 UtpLog.Error("Client attmepted to connect to empty host");
                 return;
@@ -365,9 +379,9 @@ namespace Utp
             CacheConnectionInfo();
 
             // Need to ensure the driver did not become inactive
-            if (!IsActive())
+            if (!DriverIsActive())
             {
-                driverMaxHeaderSize = new int[2];
+                driverMaxHeaderSize = new int[NUM_PIPELINES];
                 return;
             }
 
@@ -416,13 +430,11 @@ namespace Utp
         /// </summary>
         public void ProcessIncomingEvents()
         {
-            // Exit if the driver is not active
-            if (!DriverIsActive(driver) || !NetworkClient.active)
+            // Exit if the driver is not active or connection isn't ready
+            if (!DriverIsActive() || !connection.IsCreated)
+            {
                 return;
-
-            // Exit if the connection is not ready
-            if (!connection.IsCreated)
-                return;
+            }
 
             //Process event queue
             while (connectionsEventsQueue.IsCreated && connectionsEventsQueue.TryDequeue(out UtpConnectionEvent connectionEvent))
@@ -431,23 +443,32 @@ namespace Utp
                 {
                     //Connect action 
                     case ((byte)UtpConnectionEventType.OnConnected):
+                    {
                         OnConnected.Invoke();
                         break;
+                    }
 
                     //Receive data action
                     case ((byte)UtpConnectionEventType.OnReceivedData):
+                    {
                         OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                         break;
-
+                    }
+                       
                     //Disconnect action
                     case ((byte)UtpConnectionEventType.OnDisconnected):
+                    {
                         OnDisconnected.Invoke();
                         break;
-
+                    }
+                        
                     //Invalid action
                     default:
+                    {
                         UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
                         break;
+                    }
+
                 }
             }
         }
@@ -459,7 +480,12 @@ namespace Utp
         /// <returns>This client's max header size.</returns>
         public int GetMaxHeaderSize(int channelId = Channels.Reliable)
         {
-            return IsConnected() && IsActive() ? driverMaxHeaderSize[channelId] : 0;
+            if (IsConnected() && DriverIsActive()) 
+            {
+                return driverMaxHeaderSize[channelId];
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -479,17 +505,17 @@ namespace Utp
             //Check for an active connection from this client
             if (!ConnectionIsActive(connection))
             {
-                var driverIsActive = DriverIsActive(driver);
+                bool driverActive = DriverIsActive();
 
                 //If driver is active, cache its max header size for UTP transport
-                if (driverIsActive)
+                if (driverActive)
                 {
                     driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
                     driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
                 }
 
                 //Set connection state
-                connected = driverIsActive && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+                connected = driverActive && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
             }
             else
             {

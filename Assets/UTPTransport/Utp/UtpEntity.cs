@@ -40,15 +40,6 @@ namespace Utp
         protected int timeout;
 
         /// <summary>
-        /// Returns whether this Utp entity is active or not.
-        /// </summary>
-        /// <returns>The activity state of the entity.</returns>
-        public bool IsActive()
-        {
-            return DriverIsActive(driver);
-        }
-
-        /// <summary>
         /// Returns whether a connection is a valid one. Checks against default connection object.
         /// </summary>
         /// <param name="connection">The connection to validate.</param>
@@ -62,7 +53,7 @@ namespace Utp
 		/// Determine whether the server is running or not.
 		/// </summary>
 		/// <returns>True if running, false otherwise.</returns>
-		public bool DriverIsActive(NetworkDriver driver)
+		public bool DriverIsActive()
         {
             return !Equals(driver, default(NetworkDriver));
         }

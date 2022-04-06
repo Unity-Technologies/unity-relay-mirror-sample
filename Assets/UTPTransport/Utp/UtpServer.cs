@@ -261,7 +261,7 @@ namespace Utp
 		/// <param name="allocation">The Relay allocation, if using Relay.</param>
 		public void Start(ushort port, bool useRelay = false, Allocation allocation = null)
 		{
-			if (IsActive())
+			if (DriverIsActive())
 			{
 				UtpLog.Error("Server is already active");
 				return;
@@ -331,8 +331,10 @@ namespace Utp
 		public void Tick()
 		{
 			//If the network driver has shut down, back out
-			if (!IsActive())
+			if (!DriverIsActive())
+            {
 				return;
+			}
 
 			// First complete the job that was initialized in the previous frame
 			jobHandle.Complete();
@@ -372,11 +374,24 @@ namespace Utp
 
 			jobHandle.Complete();
 
-			//Dispose of connections & event queue
-			connectionsEventsQueue.Dispose();
-			connections.Dispose();
-			driver.Dispose();
+			//Dispose of event queue
+			if(connectionsEventsQueue.IsCreated)
+            {
+				connectionsEventsQueue.Dispose();
+			}
+			
+			//Dispose of connections
+			if(connections.IsCreated)
+            {
+				connections.Dispose();
+			}
 
+			//Dispose of driver
+			if(driver.IsCreated)
+			{
+				driver.Dispose();
+			}
+			
 			//Reset network driver
 			driver = default(NetworkDriver);
 		}
@@ -390,7 +405,7 @@ namespace Utp
 			jobHandle.Complete();
 
 			//Continue if connection was found
-			if (ConnectionIsValid(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
+			if (TryGetConnection(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
 			{
 				UtpLog.Info($"Disconnecting connection with ID: {connectionId}");
 				connection.Disconnect(driver);
@@ -418,7 +433,7 @@ namespace Utp
 			jobHandle.Complete();
 
 			//Continue if connection was found
-			if (ConnectionIsValid(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
+			if (TryGetConnection(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
 			{
 				//Get pipeline for job
 				NetworkPipeline pipeline = channelId == Channels.Reliable ? reliablePipeline : unreliablePipeline;
@@ -449,7 +464,7 @@ namespace Utp
 		public string GetClientAddress(int connectionId)
 		{
 			//If a connection was found, get its address
-			if (ConnectionIsValid(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
+			if (TryGetConnection(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
 			{
 				NetworkEndPoint endpoint = driver.RemoteEndPoint(connection);
 				return endpoint.Address;
@@ -467,8 +482,10 @@ namespace Utp
 		public void ProcessIncomingEvents()
 		{
 			//Check if the server is active
-			if (!IsActive() || !NetworkServer.active)
+			if (!DriverIsActive())
+            {
 				return;
+			}	
 
 			//Process the events in the event list
 			UtpConnectionEvent connectionEvent;
@@ -478,23 +495,32 @@ namespace Utp
                 {
 					//Connect action 
 					case ((byte)UtpConnectionEventType.OnConnected):
+					{
 						OnConnected.Invoke(connectionEvent.connectionId);
 						break;
+					}
 
 					//Receive data action
 					case ((byte)UtpConnectionEventType.OnReceivedData):
+                    {
 						OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
 						break;
+					}
 
 					//Disconnect action
 					case ((byte)UtpConnectionEventType.OnDisconnected):
+                    {
 						OnDisconnected.Invoke(connectionEvent.connectionId);
 						break;
+					}
 
 					//Invalid action
 					default:
+                    {
 						UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
 						break;
+					}
+						
 				}
 			}
 		}
@@ -506,10 +532,15 @@ namespace Utp
 		/// <returns>The connection if found in the list, a default connection otherwise.</returns>
 		public Unity.Networking.Transport.NetworkConnection FindConnection(int connectionId)
 		{
+			//Complete the current job handle
+			jobHandle.Complete();
+
+			//Iterate through connections and find a match
 			foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
 			{
 				if (connection.GetHashCode() == connectionId)
 				{
+					//Return match
 					return connection;
 				}
 			}
@@ -523,7 +554,7 @@ namespace Utp
 		/// </summary>
 		/// <param name="connectionId">The id of the connection to check.</param>
 		/// <returns>Whether the connection is valid.</returns>
-		private bool ConnectionIsValid(int connectionId, out Unity.Networking.Transport.NetworkConnection connection)
+		private bool TryGetConnection(int connectionId, out Unity.Networking.Transport.NetworkConnection connection)
         {
 			connection = FindConnection(connectionId);
 			return connection.GetHashCode() == connectionId;

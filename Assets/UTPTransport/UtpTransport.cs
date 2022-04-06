@@ -169,7 +169,7 @@ namespace Utp
 		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
 		{
 			//Check for client activity
-			if (client != null && client.IsConnected())
+			if (client != null && client.IsConnected)
 			{
 				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
 			}
@@ -184,7 +184,7 @@ namespace Utp
 
 		#region Client overrides
 
-		public override bool ClientConnected() => client.IsConnected();
+		public override bool ClientConnected() => client.IsConnected;
 		public override void ClientDisconnect() => client.Disconnect();
 		public override void ClientSend(ArraySegment<byte> segment, int channelId) => client.Send(segment, channelId);
 
@@ -197,7 +197,7 @@ namespace Utp
 
         #region Server overrides
 
-        public override bool ServerActive() => server.IsActive();
+        public override bool ServerActive() => server.DriverIsActive();
 		public override void ServerStart()
 		{
 			server.Start(Port, useRelay, relayManager.serverAllocation);
@@ -228,8 +228,8 @@ namespace Utp
 
         public override void Shutdown() 
 		{
-			if (client.IsConnected()) client.Disconnect();
-			if (server.IsActive()) server.Stop();
+			if (client.IsConnected) client.Disconnect();
+			if (server.DriverIsActive()) server.Stop();
 		}
 
 		public override string ToString() => "UTP";
