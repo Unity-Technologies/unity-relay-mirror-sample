@@ -1,13 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Utp;
-using System.Threading.Tasks;
-using System;
 
 public class UtpTransportTests
 {
@@ -15,7 +10,7 @@ public class UtpTransportTests
 
     UtpTransport _Server;
     UtpTransport _Client;
-    RelayManager _RelayManager;
+    IRelayManager _RelayManager;
 
 
     private class WaitForConnectionOrTimeout : IEnumerator
@@ -76,8 +71,8 @@ public class UtpTransportTests
     public void SetUp()
     {
         var ServerObj = new GameObject();
+        _RelayManager = ServerObj.AddComponent<DummyRelayManager>();
         _Server = ServerObj.AddComponent<UtpTransport>();
-        _RelayManager = ServerObj.AddComponent<RelayManager>();
 
         var ClientObj = new GameObject();
         _Client = ClientObj.AddComponent<UtpTransport>();

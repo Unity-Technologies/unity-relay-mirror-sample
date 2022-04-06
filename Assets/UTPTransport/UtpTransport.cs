@@ -34,7 +34,7 @@ namespace Utp
 		public bool useRelay;
 
 		// Relay Manager
-		RelayManager relayManager;
+		IRelayManager relayManager;
 
 		private void Awake()
 		{
@@ -54,7 +54,10 @@ namespace Utp
 				() => OnClientDisconnected.Invoke(),
 				TimeoutMS);
 
-			relayManager = gameObject.AddComponent<RelayManager>();
+			if (!TryGetComponent<IRelayManager>(out relayManager))
+            {
+				relayManager = gameObject.AddComponent<RelayManager>();
+            }
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
@@ -71,7 +74,7 @@ namespace Utp
 			{
 				// We entirely ignore the address that is passed when utilizing Relay
 				// The data we need to connect is embedded in the relayManager's JoinAllocation
-				client.RelayConnect(relayManager.joinAllocation);
+				client.RelayConnect(relayManager.JoinAllocation);
 			}
 			else
 			{
@@ -106,7 +109,7 @@ namespace Utp
 		public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
-			server.Start(Port, useRelay, relayManager.serverAllocation);
+			server.Start(Port, useRelay, relayManager.ServerAllocation);
 		}
 
 		public override void ServerStop() => server.Stop();
