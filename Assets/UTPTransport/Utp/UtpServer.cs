@@ -285,7 +285,7 @@ namespace Utp
 				//Initialize relay network
 				RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
-				//Instiantate network driver
+				//Instantiate network driver
 				driver = NetworkDriver.Create(networkSettings);
 			}
 			else
@@ -293,7 +293,7 @@ namespace Utp
 				//Initialize network settings
 				NetworkSettings networkSettings = new NetworkSettings();
 
-				//Instiantate network driver
+				//Instantiate network driver
 				driver = NetworkDriver.Create(networkSettings);
 				endpoint.Port = port;
 			}

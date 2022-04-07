@@ -254,7 +254,7 @@ namespace Utp
             var settings = new NetworkSettings();
             settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeout);
 
-            //Instiantate network driver
+            //Instantiate network driver
             driver = NetworkDriver.Create(settings);
 
             //Instantiate event queue
@@ -301,7 +301,7 @@ namespace Utp
             //Initialize relay network
             RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
-            //Instiantate network driver
+            //Instantiate network driver
             driver = NetworkDriver.Create(networkSettings);
 
             //Instantiate event queue
