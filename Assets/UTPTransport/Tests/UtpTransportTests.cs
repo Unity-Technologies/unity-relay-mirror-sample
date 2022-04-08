@@ -1,13 +1,10 @@
+using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
+using Unity.Services.Relay.Models;
 using Utp;
-using System.Threading.Tasks;
-using System;
 
 public class UtpTransportTests
 {
@@ -15,7 +12,7 @@ public class UtpTransportTests
 
     UtpTransport _Server;
     UtpTransport _Client;
-    RelayManager _RelayManager;
+    IRelayManager _RelayManager;
 
 
     private class WaitForConnectionOrTimeout : IEnumerator
@@ -76,8 +73,8 @@ public class UtpTransportTests
     public void SetUp()
     {
         var ServerObj = new GameObject();
+        _RelayManager = ServerObj.AddComponent<DummyRelayManager>();
         _Server = ServerObj.AddComponent<UtpTransport>();
-        _RelayManager = ServerObj.AddComponent<RelayManager>();
 
         var ClientObj = new GameObject();
         _Client = ClientObj.AddComponent<UtpTransport>();
@@ -138,12 +135,50 @@ public class UtpTransportTests
         yield return new WaitForConnectionOrTimeout(_Client, _Server, 30f);
         Assert.IsTrue(_Client.ClientConnected(), "Client is not connected, but should be.");
     }
-    [UnityTest]
-    public IEnumerator Server_GetRelayRegions_Success()
+    [Test]
+    public void Server_GetRelayRegions_NonEmptyList()
     {
-        _RelayManager.GetRelayRegions(
-            (regions) => { }
+        _Server.GetRelayRegions(
+            (List<Region> regions) =>
+            {
+                Assert.IsTrue(regions.Count > 0, "Region list was unexpectedly empty.");
+            }
         );
+    }
+    [UnityTest]
+    public IEnumerator Server_AllocateRelayServer_NonEmptyJoinCode()
+    {
+        _Server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
+        {
+            Assert.IsTrue(error == null, "An error was returned unexpectedly.");
+            Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
+        });
         yield return null;
+    }
+    [UnityTest]
+    public IEnumerator Server_AllocateRelayServer_EmptyJoinCode()
+    {
+        _Server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
+        {
+            Assert.IsTrue(error == "Invalid regionId", "The expected error was not returned.");
+            Assert.IsTrue(joinCode == null, "A join code was returned unexpectedly.");
+        });
+        yield return null;
+    }
+    [Test]
+    public void Server_GetAllocationFromJoinCode_NoError()
+    {
+        _RelayManager.GetAllocationFromJoinCode("JNCDE", (error) =>
+        {
+            Assert.IsNull(error, "An error was returned unexpectedly.");
+        });
+    }
+    [Test]
+    public void Server_GetAllocationFromJoinCode_WithError()
+    {
+        _RelayManager.GetAllocationFromJoinCode("BADCD", (error) =>
+        {
+            Assert.IsTrue(error == "Invalid joinCode", "The expected error was not returned.");
+        });
     }
 }

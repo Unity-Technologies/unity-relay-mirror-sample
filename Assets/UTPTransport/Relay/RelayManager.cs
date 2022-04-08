@@ -9,22 +9,22 @@ using Unity.Services.Relay.Models;
 
 namespace Utp
 {
-	public class RelayManager : MonoBehaviour
+	public class RelayManager : MonoBehaviour, IRelayManager
 	{
 		/// <summary>
 		/// The allocation managed by a host who is running as a client and server.
 		/// </summary>
-		public Allocation serverAllocation;
+		public Allocation ServerAllocation { get; set; }
 
 		/// <summary>
 		/// The allocation managed by a client who is connecting to a server.
 		/// </summary>
-		public JoinAllocation joinAllocation;
+		public JoinAllocation JoinAllocation { get; set; }
 
 		/// <summary>
 		/// A callback for when a Relay server is allocated and a join code is fetched.
 		/// </summary>
-		public Action<string, string> OnRelayServerAllocated;
+		public Action<string, string> OnRelayServerAllocated { get; set; }
 
 		private void Awake()
 		{
@@ -57,7 +57,7 @@ namespace Utp
 				yield break;
 			}
 
-			joinAllocation = joinTask.Result;
+			JoinAllocation = joinTask.Result;
 			callback?.Invoke(null);
 		}
 
@@ -118,10 +118,10 @@ namespace Utp
 
 		private void OnAllocateRelayServer(Allocation allocation)
 		{
-			serverAllocation = allocation;
+			ServerAllocation = allocation;
 
-			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
-			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnRelayServerAllocated));
+			UtpLog.Verbose("Got allocation: " + ServerAllocation.AllocationId.ToString());
+			StartCoroutine(GetJoinCodeTask(ServerAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
 		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string, string> callback)
