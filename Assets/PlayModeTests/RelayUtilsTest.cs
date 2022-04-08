@@ -47,54 +47,10 @@ public class RelayUtilsTest
         );
 
         //Recieve relay server data
-        RelayServerData data = RelayUtils.HostRelayData(allocation, "udp");
+        RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
 
         //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
-    }
-
-    /// <summary>
-    /// Tests that an exception is thrown if a bad connection type is passed in.
-    /// </summary>
-    /// <returns>A system exception.</returns>
-    [UnityTest]
-    public IEnumerator HostRelayData_ConnectionTypeMustBeValid_Exception()
-    {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
-        //Create dummy data to inject into temporary relay allocation
-        
-        //GUID
-        System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
-        List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
-        serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
-        byte[] key = new byte[16];
-        byte[] connectionData = new byte[16];
-        byte[] allocationIdBytes = new byte[16];
-
-        //Create allocation
-        Allocation allocation = new Allocation(
-            allocationId,
-            serverEndpoints,
-            relayServer,
-            key,
-            connectionData,
-            allocationIdBytes
-        );
-
-        Assert.Throws<System.Exception>(() =>
-        {
-            //Recieve relay server data with bad connection type
-            RelayServerData data = RelayUtils.HostRelayData(allocation, "!@#$%RANDOMSTRING!@#$%");
-        });
     }
 
     /// <summary>
@@ -111,7 +67,7 @@ public class RelayUtilsTest
         Assert.Throws<System.NullReferenceException>(() =>
         {
             //Recieve relay server data
-            RelayServerData data = RelayUtils.HostRelayData(allocation, "udp");
+            RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
 
@@ -155,7 +111,7 @@ public class RelayUtilsTest
         );
 
         //Recieve relay server data
-        RelayServerData data = RelayUtils.PlayerRelayData(allocation, "udp");
+        RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
 
         //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
@@ -175,7 +131,7 @@ public class RelayUtilsTest
         Assert.Throws<System.NullReferenceException>(() =>
         {
             //Recieve relay server data
-            RelayServerData data = RelayUtils.PlayerRelayData(allocation, "udp");
+            RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
 }
