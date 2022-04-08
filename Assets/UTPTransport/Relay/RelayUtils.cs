@@ -20,6 +20,11 @@ namespace Utp
 			//Get string from connection
 			string connectionTypeString = GetStringFromConnectionType(connectionType);
 
+            if (String.IsNullOrEmpty(connectionTypeString))
+            {
+				throw new ArgumentException($"ConnectionType {connectionType} is invalid");
+			}
+
 			// Select endpoint based on desired connectionType
 			var endpoint = GetEndpointForConnectionType(allocation.ServerEndpoints, connectionTypeString);
 
@@ -55,6 +60,11 @@ namespace Utp
 		{
 			//Get string from connection
 			string connectionTypeString = GetStringFromConnectionType(connectionType);
+
+			if (String.IsNullOrEmpty(connectionTypeString))
+			{
+				throw new ArgumentException($"ConnectionType {connectionType} is invalid");
+			}
 
 			// Select endpoint based on desired connectionType
 			var endpoint = GetEndpointForConnectionType(allocation.ServerEndpoints, connectionTypeString);
