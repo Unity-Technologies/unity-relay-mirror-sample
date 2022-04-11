@@ -19,27 +19,16 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator HostRelayData_MethodReturnsServerDataUDP_True()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
 
-        //Create allocation
         Allocation allocation = new Allocation(
             allocationId,
             serverEndpoints,
@@ -49,10 +38,8 @@ public class RelayUtilsTest
             allocationIdBytes
         );
 
-        //Recieve relay server data
+        //Assert data against null/default data
         RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
-
-        //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
     }
 
@@ -63,27 +50,16 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator HostRelayData_MethodReturnsServerDataTCP_True()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("tcp", RelayServerEndpoint.NetworkOptions.Tcp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
 
-        //Create allocation
         Allocation allocation = new Allocation(
             allocationId,
             serverEndpoints,
@@ -93,10 +69,8 @@ public class RelayUtilsTest
             allocationIdBytes
         );
 
-        //Recieve relay server data
+        //Assert data against null/default data
         RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Tcp);
-
-        //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
     }
 
@@ -107,13 +81,11 @@ public class RelayUtilsTest
     [Test]
     public void HostRelayData_AllocationMustNotBeNullUDP_NullReferenceException()
     {
-        //Create null allocation
+        //Create null allocation & Assert null
         Allocation allocation = null;
 
-        //Check for null exception
         Assert.Throws<System.NullReferenceException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
@@ -125,13 +97,11 @@ public class RelayUtilsTest
     [Test]
     public void HostRelayData_AllocationMustNotBeNullTCP_NullReferenceException()
     {
-        //Create null allocation
+        //Create null allocation & Assert null
         Allocation allocation = null;
 
-        //Check for null exception
         Assert.Throws<System.NullReferenceException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Tcp);
         });
     }
@@ -143,27 +113,16 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator HostRelayData_ConnectionTypeMustBeValid_ArgumentException()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
 
-        //Create allocation
         Allocation allocation = new Allocation(
             allocationId,
             serverEndpoints,
@@ -173,10 +132,9 @@ public class RelayUtilsTest
             allocationIdBytes
         );
 
-        //Check for argument exception
+        //Assert exception thrown
         Assert.Throws<System.ArgumentException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.HostRelayData(allocation, (RelayServerEndpoint.NetworkOptions)5);
         });
     }
@@ -188,26 +146,15 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator HostRelayData_AllocationMustHaveEndpoints_ArgumentException()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints (empty)
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
 
-        //Create allocation
         Allocation allocation = new Allocation(
             allocationId,
             serverEndpoints,
@@ -217,10 +164,9 @@ public class RelayUtilsTest
             allocationIdBytes
         );
 
-        //Check for argument exception
+        //Assert exception thrown
         Assert.Throws<System.ArgumentException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
@@ -236,28 +182,17 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator PlayerRelayData_MethodReturnsServerDataUDP_True()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
         byte[] hostConnectionData = new byte[16];
 
-        //Create join allocation
         JoinAllocation allocation = new JoinAllocation(
             allocationId,
             serverEndpoints,
@@ -268,10 +203,8 @@ public class RelayUtilsTest
             hostConnectionData
         );
 
-        //Recieve relay server data
+        //Assert data against null/default data
         RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
-
-        //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
     }
 
@@ -282,28 +215,17 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator PlayerRelayData_MethodReturnsServerDataTCP_True()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("tcp", RelayServerEndpoint.NetworkOptions.Tcp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
         byte[] hostConnectionData = new byte[16];
 
-        //Create join allocation
         JoinAllocation allocation = new JoinAllocation(
             allocationId,
             serverEndpoints,
@@ -314,10 +236,8 @@ public class RelayUtilsTest
             hostConnectionData
         );
 
-        //Recieve relay server data
+        //Assert data against null/default data
         RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Tcp);
-
-        //Assert check
         Assert.AreNotEqual(data, default(RelayServerData));
     }
 
@@ -328,13 +248,11 @@ public class RelayUtilsTest
     [Test]
     public void PlayerRelayData_AllocationMustNotBeNullUDP_NullReferenceException()
     {
-        //Create null allocation
+        //Create null allocation & Assert null
         JoinAllocation allocation = null;
 
-        //Check for null exception
         Assert.Throws<System.NullReferenceException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
@@ -346,13 +264,11 @@ public class RelayUtilsTest
     [Test]
     public void PlayerRelayData_AllocationMustNotBeNullTCP_NullReferenceException()
     {
-        //Create null allocation
+        //Create null allocation & Assert null
         JoinAllocation allocation = null;
 
-        //Check for null exception
         Assert.Throws<System.NullReferenceException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Tcp);
         });
     }
@@ -364,28 +280,17 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator PlayerRelayData_ConnectionTypeMustBeValid_ArgumentException()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
         serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
         byte[] hostConnectionData = new byte[16];
 
-        //Create join allocation
         JoinAllocation allocation = new JoinAllocation(
             allocationId,
             serverEndpoints,
@@ -396,10 +301,9 @@ public class RelayUtilsTest
             hostConnectionData
         );
 
-        //Check for argument exception
+        //Assert exception thrown
         Assert.Throws<System.ArgumentException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.PlayerRelayData(allocation, (RelayServerEndpoint.NetworkOptions)5);
         });
     }
@@ -411,27 +315,16 @@ public class RelayUtilsTest
     [UnityTest]
     public IEnumerator PlayerRelayData_AllocationMustHaveEndpoints_ArgumentException()
     {
-        //Create new relay server
-        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-
-        //Wait till next frame
-        yield return new WaitForEndOfFrame();
-
         //Create dummy data to inject into temporary relay allocation
-
-        //GUID
+        RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
+        yield return new WaitForEndOfFrame();
         System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
-
-        //Endpoints (empty)
         List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
-
-        //Base64 Keys
         byte[] key = new byte[16];
         byte[] connectionData = new byte[16];
         byte[] allocationIdBytes = new byte[16];
         byte[] hostConnectionData = new byte[16];
 
-        //Create join allocation
         JoinAllocation allocation = new JoinAllocation(
             allocationId,
             serverEndpoints,
@@ -442,10 +335,9 @@ public class RelayUtilsTest
             hostConnectionData
         );
 
-        //Check for argument exception
+        //Assert exception thrown
         Assert.Throws<System.ArgumentException>(() =>
         {
-            //Recieve relay server data
             RelayServerData data = RelayUtils.PlayerRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
         });
     }
