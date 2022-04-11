@@ -15,9 +15,9 @@ public class RelayUtilsTest
     /// <summary>
     /// Tests the HostRelayData call inside RelayUtils (UDP). Returns true if proper data was recieved.
     /// </summary>
-    /// <returns>True, if call was successful.</returns>
+    /// <returns>Whether or not proper relay data has been recieved.</returns>
     [UnityTest]
-    public IEnumerator HostRelayData_MethodReturnsServerDataUDP_True()
+    public IEnumerator HostRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -46,9 +46,9 @@ public class RelayUtilsTest
     /// <summary>
     /// Tests the HostRelayData call inside RelayUtils (TCP). Returns true if proper data was recieved.
     /// </summary>
-    /// <returns>True, if call was successful.</returns>
+    /// <returns>Whether or not proper relay data has been recieved.</returns>
     [UnityTest]
-    public IEnumerator HostRelayData_MethodReturnsServerDataTCP_True()
+    public IEnumerator HostRelayData_AllocationWithTCPEndpoints_ReturnsRelayServerData()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -79,7 +79,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>A null reference exception.</returns>
     [Test]
-    public void HostRelayData_AllocationMustNotBeNullUDP_NullReferenceException()
+    public void HostRelayData_WithNullAllocationUDP_ThrowsNullReferenceException()
     {
         //Create null allocation & Assert null
         Allocation allocation = null;
@@ -95,7 +95,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>A null reference exception.</returns>
     [Test]
-    public void HostRelayData_AllocationMustNotBeNullTCP_NullReferenceException()
+    public void HostRelayData_WithNullAllocationTCP_ThrowsNullReferenceException()
     {
         //Create null allocation & Assert null
         Allocation allocation = null;
@@ -111,7 +111,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>An argument exception.</returns>
     [UnityTest]
-    public IEnumerator HostRelayData_ConnectionTypeMustBeValid_ArgumentException()
+    public IEnumerator HostRelayData_WithInvalidConnectionType_ThrowsArgumentException()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -144,7 +144,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>An argument exception.</returns>
     [UnityTest]
-    public IEnumerator HostRelayData_AllocationMustHaveEndpoints_ArgumentException()
+    public IEnumerator HostRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -180,7 +180,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>True, if call was successful.</returns>
     [UnityTest]
-    public IEnumerator PlayerRelayData_MethodReturnsServerDataUDP_True()
+    public IEnumerator PlayerRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -213,7 +213,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>True, if call was successful.</returns>
     [UnityTest]
-    public IEnumerator PlayerRelayData_MethodReturnsServerDataTCP_True()
+    public IEnumerator PlayerRelayData_AllocationWithTCPEndpoints_ReturnsRelayServerData()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -246,7 +246,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>A null reference exception.</returns>
     [Test]
-    public void PlayerRelayData_AllocationMustNotBeNullUDP_NullReferenceException()
+    public void PlayerRelayData_WithNullAllocationUDP_ThrowsNullReferenceException()
     {
         //Create null allocation & Assert null
         JoinAllocation allocation = null;
@@ -262,7 +262,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>A null reference exception.</returns>
     [Test]
-    public void PlayerRelayData_AllocationMustNotBeNullTCP_NullReferenceException()
+    public void PlayerRelayData_WithNullAllocationTCP_ThrowsNullReferenceException()
     {
         //Create null allocation & Assert null
         JoinAllocation allocation = null;
@@ -278,7 +278,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>An argument exception.</returns>
     [UnityTest]
-    public IEnumerator PlayerRelayData_ConnectionTypeMustBeValid_ArgumentException()
+    public IEnumerator PlayerRelayData_WithInvalidConnectionType_ThrowsArgumentException()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -313,7 +313,7 @@ public class RelayUtilsTest
     /// </summary>
     /// <returns>An argument exception.</returns>
     [UnityTest]
-    public IEnumerator PlayerRelayData_AllocationMustHaveEndpoints_ArgumentException()
+    public IEnumerator PlayerRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
     {
         //Create dummy data to inject into temporary relay allocation
         RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
