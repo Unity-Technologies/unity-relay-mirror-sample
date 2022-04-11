@@ -18,12 +18,11 @@ namespace Utp
         /// Tests the HostRelayData call inside RelayUtils (UDP). Returns true if proper data was recieved.
         /// </summary>
         /// <returns>Whether or not proper relay data has been recieved.</returns>
-        [UnityTest]
-        public IEnumerator HostRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
+        [Test]
+        public void HostRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
