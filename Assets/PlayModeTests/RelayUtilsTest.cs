@@ -110,12 +110,11 @@ namespace Utp
         /// Tests that a bad connection type in HostRelayData will throw an argument exception.
         /// </summary>
         /// <returns>An argument exception.</returns>
-        [UnityTest]
-        public IEnumerator HostRelayData_WithInvalidConnectionType_ThrowsArgumentException()
+        [Test]
+        public void HostRelayData_WithInvalidConnectionType_ThrowsArgumentException()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
