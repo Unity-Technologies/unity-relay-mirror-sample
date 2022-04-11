@@ -26,7 +26,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void HostRelayData_NormalConnectionState_ReturnsRelayServerData([ValueSource("connectionTypes")]RelayServerEndpoint.NetworkOptions connectionType)
+        public void HostRelayData_NormalConnectionState_ReturnsRelayServerData([ValueSource(nameof(connectionTypes))]RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Get connection type as string
             string connectionTypeString = "invalid";
@@ -63,7 +63,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void HostRelayData_WithNullAllocation_ThrowsNullReferenceException([ValueSource("connectionTypes")] RelayServerEndpoint.NetworkOptions connectionType)
+        public void HostRelayData_WithNullAllocation_ThrowsNullReferenceException([ValueSource(nameof(connectionTypes))] RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Create null allocation & Assert null
             Allocation allocation = null;
@@ -110,7 +110,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void HostRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException([ValueSource("connectionTypes")] RelayServerEndpoint.NetworkOptions connectionType)
+        public void HostRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException([ValueSource(nameof(connectionTypes))] RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
@@ -145,7 +145,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void PlayerRelayData_NormalConnectionState_ReturnsRelayServerData([ValueSource("connectionTypes")] RelayServerEndpoint.NetworkOptions connectionType)
+        public void PlayerRelayData_NormalConnectionState_ReturnsRelayServerData([ValueSource(nameof(connectionTypes))] RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Get connection type as string
             string connectionTypeString = "invalid";
@@ -184,7 +184,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void PlayerRelayData_WithNullAllocation_ThrowsNullReferenceException([ValueSource("connectionTypes")] RelayServerEndpoint.NetworkOptions connectionType)
+        public void PlayerRelayData_WithNullAllocation_ThrowsNullReferenceException([ValueSource(nameof(connectionTypes))] RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Create null allocation & Assert null
             JoinAllocation allocation = null;
@@ -233,7 +233,7 @@ namespace Utp
         /// </summary>
         /// <param name="connectionType">Udp/Tcp connection option.</param>
         [Test]
-        public void PlayerRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException([ValueSource("connectionTypes")] RelayServerEndpoint.NetworkOptions connectionType)
+        public void PlayerRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException([ValueSource(nameof(connectionTypes))] RelayServerEndpoint.NetworkOptions connectionType)
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
