@@ -15,9 +15,8 @@ namespace Utp
         #region HostRelayData
 
         /// <summary>
-        /// Tests the HostRelayData call inside RelayUtils (UDP). Returns true if proper data was recieved.
+        /// Tests the HostRelayData call inside RelayUtils (UDP).
         /// </summary>
-        /// <returns>Whether or not proper relay data has been recieved.</returns>
         [Test]
         public void HostRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
         {
@@ -45,9 +44,8 @@ namespace Utp
         }
 
         /// <summary>
-        /// Tests the HostRelayData call inside RelayUtils (TCP). Returns true if proper data was recieved.
+        /// Tests the HostRelayData call inside RelayUtils (TCP).
         /// </summary>
-        /// <returns>Whether or not proper relay data has been recieved.</returns>
         [Test]
         public void HostRelayData_AllocationWithTCPEndpoints_ReturnsRelayServerData()
         {
@@ -77,7 +75,6 @@ namespace Utp
         /// <summary>
         /// Tests that null allocation data throws a null exception inside HostRelayData (UDP).
         /// </summary>
-        /// <returns>A null reference exception.</returns>
         [Test]
         public void HostRelayData_WithNullAllocationUDP_ThrowsNullReferenceException()
         {
@@ -93,7 +90,6 @@ namespace Utp
         /// <summary>
         /// Tests that null allocation data throws a null exception inside HostRelayData (TCP).
         /// </summary>
-        /// <returns>A null reference exception.</returns>
         [Test]
         public void HostRelayData_WithNullAllocationTCP_ThrowsNullReferenceException()
         {
@@ -109,7 +105,6 @@ namespace Utp
         /// <summary>
         /// Tests that a bad connection type in HostRelayData will throw an argument exception.
         /// </summary>
-        /// <returns>An argument exception.</returns>
         [Test]
         public void HostRelayData_WithInvalidConnectionType_ThrowsArgumentException()
         {
@@ -141,13 +136,11 @@ namespace Utp
         /// <summary>
         /// Tests that the endpoints list inside HostRelayData's allocation must have entries.
         /// </summary>
-        /// <returns>An argument exception.</returns>
-        [UnityTest]
-        public IEnumerator HostRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
+        [Test]
+        public void HostRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             byte[] key = new byte[16];
@@ -175,15 +168,13 @@ namespace Utp
         #region PlayerRelayData
 
         /// <summary>
-        /// Tests the PlayerRelayData call inside RelayUtils (UDP). Returns true if proper data was recieved.
+        /// Tests the PlayerRelayData call inside RelayUtils (UDP).
         /// </summary>
-        /// <returns>True, if call was successful.</returns>
         [UnityTest]
-        public IEnumerator PlayerRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
+        public void PlayerRelayData_AllocationWithUDPEndpoints_ReturnsRelayServerData()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
@@ -208,15 +199,13 @@ namespace Utp
         }
 
         /// <summary>
-        /// Tests the PlayerRelayData call inside RelayUtils (TCP). Returns true if proper data was recieved.
+        /// Tests the PlayerRelayData call inside RelayUtils (TCP).
         /// </summary>
-        /// <returns>True, if call was successful.</returns>
         [UnityTest]
-        public IEnumerator PlayerRelayData_AllocationWithTCPEndpoints_ReturnsRelayServerData()
+        public void PlayerRelayData_AllocationWithTCPEndpoints_ReturnsRelayServerData()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             serverEndpoints.Add(new RelayServerEndpoint("tcp", RelayServerEndpoint.NetworkOptions.Tcp, false, false, "0.0.0.0", 00000));
@@ -243,7 +232,6 @@ namespace Utp
         /// <summary>
         /// Tests that null allocation data throws a null exception inside PlayerRelayData (UDP).
         /// </summary>
-        /// <returns>A null reference exception.</returns>
         [Test]
         public void PlayerRelayData_WithNullAllocationUDP_ThrowsNullReferenceException()
         {
@@ -259,7 +247,6 @@ namespace Utp
         /// <summary>
         /// Tests that null allocation data throws a null exception inside PlayerRelayData (TCP).
         /// </summary>
-        /// <returns>A null reference exception.</returns>
         [Test]
         public void PlayerRelayData_WithNullAllocationTCP_ThrowsNullReferenceException()
         {
@@ -275,13 +262,11 @@ namespace Utp
         /// <summary>
         /// Tests that a bad connection type in HostRelayData will throw an argument exception.
         /// </summary>
-        /// <returns>An argument exception.</returns>
-        [UnityTest]
-        public IEnumerator PlayerRelayData_WithInvalidConnectionType_ThrowsArgumentException()
+        [Test]
+        public void PlayerRelayData_WithInvalidConnectionType_ThrowsArgumentException()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             serverEndpoints.Add(new RelayServerEndpoint("udp", RelayServerEndpoint.NetworkOptions.Udp, false, false, "0.0.0.0", 00000));
@@ -310,13 +295,11 @@ namespace Utp
         /// <summary>
         /// Tests that the endpoints list inside PlayerRelayData's allocation must have entries.
         /// </summary>
-        /// <returns>An argument exception.</returns>
-        [UnityTest]
-        public IEnumerator PlayerRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
+        [Test]
+        public void PlayerRelayData_WithEmptyEndpointsInAllocation_ThrowsArgumentException()
         {
             //Create dummy data to inject into temporary relay allocation
             RelayServer relayServer = new RelayServer("0.0.0.0", 0000);
-            yield return new WaitForEndOfFrame();
             System.Guid allocationId = new System.Guid("00000000-0000-0000-0000-000000000000");
             List<RelayServerEndpoint> serverEndpoints = new List<RelayServerEndpoint>();
             byte[] key = new byte[16];
