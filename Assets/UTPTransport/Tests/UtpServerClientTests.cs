@@ -15,7 +15,6 @@ public class UtpServerClientTests
     private bool ClientOnConnectedCalled;
     private bool ClientOnDisconnectedCalled;
     private bool ClientOnReceivedDataCalled;
-    private ArraySegment<byte> EmptyPacket = new ArraySegment<byte>(new byte[4]);
 
     private class WaitForConnectionOrTimeout : IEnumerator
     {
@@ -317,8 +316,9 @@ public class UtpServerClientTests
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         int idOfFirstClient = 1;
         int idOfChannel = 1;
-        _client.Send(EmptyPacket, idOfChannel);
-        _server.Send(idOfFirstClient, EmptyPacket, idOfChannel);
+        ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
+        _client.Send(emptyPacket, idOfChannel);
+        _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
         yield return TickFrames(_client, _server, 5);
         Assert.IsTrue(ServerOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
     }
@@ -329,8 +329,11 @@ public class UtpServerClientTests
         _server.Start(7777);
         _client.Connect("localhost", 7777);
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
-        _client.Send(EmptyPacket, 1);
-        _server.Send(1, EmptyPacket, 1);
+        int idOfFirstClient = 1;
+        int idOfChannel = 1;
+        ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
+        _client.Send(emptyPacket, idOfChannel);
+        _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
         yield return TickFrames(_client, _server, 5);
         Assert.IsTrue(ClientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
     }
