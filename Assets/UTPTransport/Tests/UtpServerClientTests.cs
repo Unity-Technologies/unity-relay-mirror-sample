@@ -248,7 +248,7 @@ public class UtpServerClientTests
         Assert.IsTrue(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "A connection was found when no client was connected.");
     }
     [UnityTest]
-    public IEnumerator UtpServer_FindConnection_NoClient_NonDefaultConnection()
+    public IEnumerator UtpServer_FindConnection_ClientConnected_ValidConnection()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
