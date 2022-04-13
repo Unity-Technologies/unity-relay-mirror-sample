@@ -233,11 +233,11 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         Assert.IsTrue(_client.IsConnected(), "Client did not connect to server.");
         int idOfFirstClient = 1;
         _server.Disconnect(idOfFirstClient);
-        yield return new WaitForDisconnectOrTimeout(_client, _server, 10f);
+        yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 10f);
         Assert.IsFalse(_client.IsConnected(), "Client was not successfully disconnected from server");
     }
     [Test]
@@ -253,7 +253,7 @@ public class UtpServerClientTests
         _server.Start(7777);
         _client.Connect("localhost", 7777);
         int idOfFirstClient = 1;
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfFirstClient);
         Assert.IsFalse(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "No connection found.");
     }
@@ -263,7 +263,7 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         Assert.IsTrue(ServerOnConnectedCalled, "The Server.OnConnected callback was not invoked as expected.");
     }
 
@@ -272,7 +272,7 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         Assert.IsTrue(ClientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
     }
 
@@ -281,11 +281,11 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         yield return TickFrames(_client, _server, 5);
         int idOfFirstClient = 1;
         _server.Disconnect(idOfFirstClient);
-        yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
+        yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         _server.Stop();
         Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
     }
@@ -295,11 +295,11 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         yield return TickFrames(_client, _server, 5);
         int idOfFirstClient = 1;
         _server.Disconnect(idOfFirstClient);
-        yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
+        yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         _server.Stop();
         Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
     }
@@ -309,7 +309,7 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         int idOfFirstClient = 1;
         int idOfChannel = 1;
         ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
@@ -324,7 +324,7 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
-        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
         int idOfFirstClient = 1;
         int idOfChannel = 1;
         ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
