@@ -136,7 +136,7 @@ public class UtpTransportTests
         Assert.IsTrue(_Client.ClientConnected(), "Client is not connected, but should be.");
     }
     [Test]
-    public void Server_GetRelayRegions_NonEmptyList()
+    public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
     {
         _Server.GetRelayRegions(
             (List<Region> regions) =>
