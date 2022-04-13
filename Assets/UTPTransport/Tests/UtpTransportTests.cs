@@ -12,9 +12,9 @@ namespace Utp
     {
 
 
-        private UtpTransport _Server;
-        private UtpTransport _Client;
-        private IRelayManager _RelayManager;
+        private UtpTransport _server;
+        private UtpTransport _client;
+        private IRelayManager _relayManager;
 
 
         private class WaitForConnectionOrTimeout : IEnumerator
@@ -75,72 +75,72 @@ namespace Utp
         public void SetUp()
         {
             var ServerObj = new GameObject();
-            _RelayManager = ServerObj.AddComponent<DummyRelayManager>();
-            _Server = ServerObj.AddComponent<UtpTransport>();
+            _relayManager = ServerObj.AddComponent<DummyRelayManager>();
+            _server = ServerObj.AddComponent<UtpTransport>();
 
             var ClientObj = new GameObject();
-            _Client = ClientObj.AddComponent<UtpTransport>();
+            _client = ClientObj.AddComponent<UtpTransport>();
         }
         [TearDown]
         public void TearDown()
         {
-            _Client.ClientDisconnect();
-            GameObject.Destroy(_Client.gameObject);
+            _client.ClientDisconnect();
+            GameObject.Destroy(_client.gameObject);
 
-            _Server.ServerStop();
-            GameObject.Destroy(_Server.gameObject);
+            _server.ServerStop();
+            GameObject.Destroy(_server.gameObject);
         }
         [Test]
         public void ServerActive_IsNotActive_False()
         {
-            Assert.IsFalse(_Server.ServerActive(), "Server is running, but should not be.");
+            Assert.IsFalse(_server.ServerActive(), "Server is running, but should not be.");
         }
         [Test]
         public void ServerActive_IsActive_True()
         {
-            _Server.ServerStart();
-            Assert.IsTrue(_Server.ServerActive(), "Server is not running, but should be.");
+            _server.ServerStart();
+            Assert.IsTrue(_server.ServerActive(), "Server is not running, but should be.");
         }
         [Test]
         public void ServerStop_IsActive_False()
         {
-            _Server.ServerStart();
-            _Server.ServerStop();
-            Assert.IsFalse(_Server.ServerActive(), "Server is running, but should not be.");
+            _server.ServerStart();
+            _server.ServerStop();
+            Assert.IsFalse(_server.ServerActive(), "Server is running, but should not be.");
         }
         [Test]
         public void ServerGetClientAddress_InvalidAddress_EmptyString()
         {
-            string clientAddress = _Server.ServerGetClientAddress(0);
+            string clientAddress = _server.ServerGetClientAddress(0);
             Assert.IsEmpty(clientAddress, "A client address was returned instead of an empty string.");
         }
         [UnityTest]
-        public IEnumerator ServerGetClientAddress_ClientConnected_NonEmptyString()
+        public IEnumerator ServerGetClientAddress_clientConnected_NonEmptyString()
         {
-            _Server.ServerStart();
-            _Client.ClientConnect(_Server.ServerUri());
-            yield return new WaitForConnectionOrTimeout(_Client, _Server, 30f);
+            _server.ServerStart();
+            _client.ClientConnect(_server.ServerUri());
+            yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
             int idOfFirstClient = 1;
-            string clientAddress = _Server.ServerGetClientAddress(idOfFirstClient);
+            string clientAddress = _server.ServerGetClientAddress(idOfFirstClient);
             Assert.IsNotEmpty(clientAddress, "A client address was not returned, connection possibly timed out..");
         }
         [Test]
         public void ClientConnected_NotConnected_False()
         {
-            Assert.IsFalse(_Client.ClientConnected(), "Client is connected, but should not be.");
+            Assert.IsFalse(_client.ClientConnected(), "Client is connected, but should not be.");
         }
         [UnityTest]
         public IEnumerator ClientConnected_IsConnected_True()
         {
-            _Server.ServerStart();
-            _Client.ClientConnect(_Server.ServerUri());
-            yield return new WaitForConnectionOrTimeout(_Client, _Server, 30f);
-            Assert.IsTrue(_Client.ClientConnected(), "Client is not connected, but should be.");
+            _server.ServerStart();
+            _client.ClientConnect(_server.ServerUri());
+            yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+            Assert.IsTrue(_client.ClientConnected(), "Client is not connected, but should be.");
         }
         [Test]
         public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
         {
-            _Server.GetRelayRegions(
+            _server.GetRelayRegions(
                 (List<Region> regions) =>
                 {
                     Assert.IsTrue(regions.Count > 0, "Region list was unexpectedly empty.");
@@ -150,7 +150,7 @@ namespace Utp
         [Test]
         public void Server_AllocateRelayServer_ValidRegion_ReturnsNullErrorAndValidJoinCode()
         {
-            _Server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
+            _server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
             {
                 Assert.IsTrue(error == null, "An error was returned unexpectedly.");
                 Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
@@ -159,7 +159,7 @@ namespace Utp
         [Test]
         public void Server_AllocateRelayServer_InvalidRegion_ReturnsErrorAndNullJoinCode()
         {
-            _Server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
+            _server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
             {
                 Assert.IsTrue(error == "Invalid regionId", "The expected error was not returned.");
                 Assert.IsTrue(joinCode == null, "A join code was returned unexpectedly.");
@@ -168,7 +168,7 @@ namespace Utp
         [Test]
         public void Server_GetAllocationFromJoinCode_NoError()
         {
-            _RelayManager.GetAllocationFromJoinCode("JNCDE", (error) =>
+            _relayManager.GetAllocationFromJoinCode("JNCDE", (error) =>
             {
                 Assert.IsNull(error, "An error was returned unexpectedly.");
             });
@@ -176,7 +176,7 @@ namespace Utp
         [Test]
         public void Server_GetAllocationFromJoinCode_WithError()
         {
-            _RelayManager.GetAllocationFromJoinCode("BADCD", (error) =>
+            _relayManager.GetAllocationFromJoinCode("BADCD", (error) =>
             {
                 Assert.IsTrue(error == "Invalid joinCode", "The expected error was not returned.");
             });
