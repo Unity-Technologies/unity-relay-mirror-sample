@@ -164,27 +164,27 @@ public class UtpServerClientTests
     }
 
     [Test]
-    public void Server_IsActive_NotStarted_False()
+    public void UtpServer_IsActive_NotStarted_False()
     {
         Assert.IsFalse(_server.IsActive(), "Server is active without being started.");
     }
 
     [Test]
-    public void Server_IsActive_Started_True()
+    public void UtpServer_IsActive_Started_True()
     {
         _server.Start(7777);
         Assert.IsTrue(_server.IsActive(), "Server did not start and is not active.");
     }
 
     [UnityTest]
-    public IEnumerator Client_IsConnected_NotConnected_False()
+    public IEnumerator UtpClient_IsConnected_NotConnected_False()
     {
         Assert.IsFalse(_client.IsConnected(), "Client is connected without calling Connect().");
         yield return null;
     }
 
     [UnityTest]
-    public IEnumerator Client_IsConnected_NoServer_False()
+    public IEnumerator UtpClient_IsConnected_NoServer_False()
     {
         _client.Connect("localhost", 7777);
         Assert.IsFalse(_client.IsConnected(), "Client is connected without server starting.");
@@ -192,7 +192,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Client_IsConnected_WithServer_True()
+    public IEnumerator UtpClient_IsConnected_WithServer_True()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -203,14 +203,14 @@ public class UtpServerClientTests
     }
 
     [Test]
-    public void Server_GetClientAddress_NotConnected_EmptyString()
+    public void UtpServer_GetClientAddress_NotConnected_EmptyString()
     {
         string clientAddress = _server.GetClientAddress(0);
         Assert.IsEmpty(clientAddress, "Client address was not empty.");
     }
 
     [UnityTest]
-    public IEnumerator Server_GetClientAddress_Connected_NonEmptyString()
+    public IEnumerator UtpServer_GetClientAddress_Connected_NonEmptyString()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -221,15 +221,16 @@ public class UtpServerClientTests
         string clientAddress = _server.GetClientAddress(idOfFirstClient);
         Assert.IsNotEmpty(clientAddress, "Client address was empty, indicating the client is probably not connected.");
     }
+
     [UnityTest]
-    public IEnumerator Server_Disconnect_NoClient_Warning()
+    public IEnumerator UtpServer_Disconnect_NoClient_Warning()
     {
         _server.Disconnect(1);
         LogAssert.Expect(LogType.Warning, "Connection not found: 1");
         yield return null;
     }
     [UnityTest]
-    public IEnumerator Server_Disconnect_ClientConnected_Success()
+    public IEnumerator UtpServer_Disconnect_ClientConnected_Success()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -241,14 +242,14 @@ public class UtpServerClientTests
         Assert.IsFalse(_client.IsConnected(), "Client was not successfully disconnected from server");
     }
     [UnityTest]
-    public IEnumerator Server_FindConnection_NoClient_DefaultConnection()
+    public IEnumerator UtpServer_FindConnection_NoClient_DefaultConnection()
     {
         Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(1);
         Assert.IsTrue(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "A connection was found when no client was connected.");
         yield return null;
     }
     [UnityTest]
-    public IEnumerator Server_FindConnection_NoClient_NonDefaultConnection()
+    public IEnumerator UtpServer_FindConnection_NoClient_NonDefaultConnection()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -259,7 +260,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Server_OnConnectedCallback_Called()
+    public IEnumerator UtpServer_OnConnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -268,7 +269,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Client_OnConnectedCallback_Called()
+    public IEnumerator UtpClient_OnConnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -277,7 +278,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Server_OnDisconnectedCallback_Called()
+    public IEnumerator UtpServer_OnDisconnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -290,7 +291,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Client_OnDisconnectedCallback_Called()
+    public IEnumerator UtpClient_OnDisconnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -303,7 +304,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Server_OnReceivedDataCallback_Called()
+    public IEnumerator UtpServer_OnReceivedDataCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -315,7 +316,7 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Client_OnReceivedDataCallbacks_Called()
+    public IEnumerator UtpClient_OnReceivedDataCallbacks_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
