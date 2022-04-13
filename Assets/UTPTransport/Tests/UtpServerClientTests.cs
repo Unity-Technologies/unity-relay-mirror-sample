@@ -294,7 +294,6 @@ namespace Utp
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            _server.Stop();
             Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
         }
 
@@ -308,7 +307,6 @@ namespace Utp
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            _server.Stop();
             Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
