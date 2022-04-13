@@ -170,6 +170,56 @@ namespace Utp
             ClientOnReceivedDataCalled = false;
         }
 
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
+        {
+            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.TimedOut);
+        }
+
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
+        {
+            _server.Start(port: 7777);
+            _client.Connect(host: "localhost", port: 7777);
+            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.ClientConnected);
+        }
+
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_NoConnections_ClientDisconnected()
+        {
+            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.ClientDisconnected);
+        }
+
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_ClientConnected_NoDisconnect_TimeoutReached()
+        {
+            _server.Start(port: 7777);
+            _client.Connect(host: "localhost", port: 7777);
+            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.TimedOut);
+        }
+
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_ClientConnected_ServerDisconnect_ClientDisconnected()
+        {
+            _server.Start(port: 7777);
+            _client.Connect(host: "localhost", port: 7777);
+            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            int idOfFirstClient = 1;
+            _server.Disconnect(connectionId: idOfFirstClient);
+            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.ClientDisconnected);
+        }
+
         [Test]
         public void UtpServer_IsActive_NotStarted_False()
         {
