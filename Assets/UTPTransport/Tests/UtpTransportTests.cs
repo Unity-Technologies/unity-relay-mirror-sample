@@ -146,7 +146,7 @@ public class UtpTransportTests
         );
     }
     [Test]
-    public void Server_AllocateRelayServer_NonEmptyJoinCode()
+    public void Server_AllocateRelayServer_ValidRegion_ReturnsNullErrorAndValidJoinCode()
     {
         _Server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
         {
@@ -155,7 +155,7 @@ public class UtpTransportTests
         });
     }
     [Test]
-    public void Server_AllocateRelayServer_EmptyJoinCode()
+    public void Server_AllocateRelayServer_InvalidRegion_ReturnsErrorAndNullJoinCode()
     {
         _Server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
         {
