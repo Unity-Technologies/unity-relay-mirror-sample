@@ -162,6 +162,12 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
+            ServerOnConnectedCalled = false;
+            ServerOnDisconnectedCalled = false;
+            ServerOnReceivedDataCalled = false;
+            ClientOnConnectedCalled = false;
+            ClientOnDisconnectedCalled = false;
+            ClientOnReceivedDataCalled = false;
         }
 
         [Test]
