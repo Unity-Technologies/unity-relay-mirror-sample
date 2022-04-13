@@ -145,7 +145,7 @@ public class UtpTransportTests
             }
         );
     }
-    [UnityTest]
+    [Test]
     public IEnumerator Server_AllocateRelayServer_NonEmptyJoinCode()
     {
         _Server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
@@ -153,9 +153,8 @@ public class UtpTransportTests
             Assert.IsTrue(error == null, "An error was returned unexpectedly.");
             Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
         });
-        yield return null;
     }
-    [UnityTest]
+    [Test]
     public IEnumerator Server_AllocateRelayServer_EmptyJoinCode()
     {
         _Server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
@@ -163,7 +162,6 @@ public class UtpTransportTests
             Assert.IsTrue(error == "Invalid regionId", "The expected error was not returned.");
             Assert.IsTrue(joinCode == null, "A join code was returned unexpectedly.");
         });
-        yield return null;
     }
     [Test]
     public void Server_GetAllocationFromJoinCode_NoError()
