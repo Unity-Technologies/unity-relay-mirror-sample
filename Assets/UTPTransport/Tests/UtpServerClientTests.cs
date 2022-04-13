@@ -175,19 +175,17 @@ public class UtpServerClientTests
         Assert.IsTrue(_server.IsActive(), "Server did not start and is not active.");
     }
 
-    [UnityTest]
-    public IEnumerator UtpClient_IsConnected_NotConnected_False()
+    [Test]
+    public void UtpClient_IsConnected_NotConnected_False()
     {
         Assert.IsFalse(_client.IsConnected(), "Client is connected without calling Connect().");
-        yield return null;
     }
 
-    [UnityTest]
-    public IEnumerator UtpClient_IsConnected_NoServer_False()
+    [Test]
+    public void UtpClient_IsConnected_NoServer_False()
     {
         _client.Connect("localhost", 7777);
         Assert.IsFalse(_client.IsConnected(), "Client is connected without server starting.");
-        yield return null;
     }
 
     [UnityTest]
@@ -222,13 +220,13 @@ public class UtpServerClientTests
         Assert.IsNotEmpty(clientAddress, "Client address was empty, indicating the client is probably not connected.");
     }
 
-    [UnityTest]
-    public IEnumerator UtpServer_Disconnect_NoClient_Warning()
+    [Test]
+    public void UtpServer_Disconnect_NoClient_Warning()
     {
         int idOfNonExistentClient = 1;
         _server.Disconnect(idOfNonExistentClient);
         LogAssert.Expect(LogType.Warning, "Connection not found: 1");
-        yield return null;
+
     }
     [UnityTest]
     public IEnumerator UtpServer_Disconnect_ClientConnected_Success()
@@ -242,13 +240,12 @@ public class UtpServerClientTests
         yield return new WaitForDisconnectOrTimeout(_client, _server, 10f);
         Assert.IsFalse(_client.IsConnected(), "Client was not successfully disconnected from server");
     }
-    [UnityTest]
-    public IEnumerator UtpServer_FindConnection_NoClient_DefaultConnection()
+    [Test]
+    public void UtpServer_FindConnection_NoClient_DefaultConnection()
     {
         int idOfNonExistentClient = 1;
         Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfNonExistentClient);
         Assert.IsTrue(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "A connection was found when no client was connected.");
-        yield return null;
     }
     [UnityTest]
     public IEnumerator UtpServer_FindConnection_NoClient_NonDefaultConnection()
@@ -259,7 +256,6 @@ public class UtpServerClientTests
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfFirstClient);
         Assert.IsFalse(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "No connection found.");
-        yield return null;
     }
 
     [UnityTest]
