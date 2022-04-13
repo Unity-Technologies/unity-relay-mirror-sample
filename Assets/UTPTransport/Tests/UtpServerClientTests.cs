@@ -205,7 +205,8 @@ public class UtpServerClientTests
     [Test]
     public void UtpServer_GetClientAddress_NotConnected_EmptyString()
     {
-        string clientAddress = _server.GetClientAddress(0);
+        int idOfNonExistentClient = 1;
+        string clientAddress = _server.GetClientAddress(idOfNonExistentClient);
         Assert.IsEmpty(clientAddress, "Client address was not empty.");
     }
 
@@ -225,7 +226,8 @@ public class UtpServerClientTests
     [UnityTest]
     public IEnumerator UtpServer_Disconnect_NoClient_Warning()
     {
-        _server.Disconnect(1);
+        int idOfNonExistentClient = 1;
+        _server.Disconnect(idOfNonExistentClient);
         LogAssert.Expect(LogType.Warning, "Connection not found: 1");
         yield return null;
     }
@@ -244,7 +246,8 @@ public class UtpServerClientTests
     [UnityTest]
     public IEnumerator UtpServer_FindConnection_NoClient_DefaultConnection()
     {
-        Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(1);
+        int idOfNonExistentClient = 1;
+        Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfNonExistentClient);
         Assert.IsTrue(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "A connection was found when no client was connected.");
         yield return null;
     }
@@ -253,8 +256,9 @@ public class UtpServerClientTests
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
+        int idOfFirstClient = 1;
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
-        Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(1);
+        Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfFirstClient);
         Assert.IsFalse(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "No connection found.");
         yield return null;
     }
@@ -284,10 +288,11 @@ public class UtpServerClientTests
         _client.Connect("localhost", 7777);
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         yield return TickFrames(_client, _server, 5);
-        _server.Disconnect(1);
+        int idOfFirstClient = 1;
+        _server.Disconnect(idOfFirstClient);
         yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
         _server.Stop();
-        Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
+        Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
     }
 
     [UnityTest]
@@ -297,7 +302,8 @@ public class UtpServerClientTests
         _client.Connect("localhost", 7777);
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         yield return TickFrames(_client, _server, 5);
-        _server.Disconnect(1);
+        int idOfFirstClient = 1;
+        _server.Disconnect(idOfFirstClient);
         yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
         _server.Stop();
         Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
@@ -309,8 +315,10 @@ public class UtpServerClientTests
         _server.Start(7777);
         _client.Connect("localhost", 7777);
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
-        _client.Send(EmptyPacket, 1);
-        _server.Send(1, EmptyPacket, 1);
+        int idOfFirstClient = 1;
+        int idOfChannel = 1;
+        _client.Send(EmptyPacket, idOfChannel);
+        _server.Send(idOfFirstClient, EmptyPacket, idOfChannel);
         yield return TickFrames(_client, _server, 5);
         Assert.IsTrue(ServerOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
     }
