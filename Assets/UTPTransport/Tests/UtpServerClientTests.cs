@@ -259,17 +259,25 @@ public class UtpServerClientTests
     }
 
     [UnityTest]
-    public IEnumerator Server_Client_OnConnectedCallbacks_Called()
+    public IEnumerator Server_OnConnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
         yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         Assert.IsTrue(ServerOnConnectedCalled, "The Server.OnConnected callback was not invoked as expected.");
+    }
+
+    [UnityTest]
+    public IEnumerator Client_OnConnectedCallback_Called()
+    {
+        _server.Start(7777);
+        _client.Connect("localhost", 7777);
+        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
         Assert.IsTrue(ClientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
     }
 
     [UnityTest]
-    public IEnumerator Server_Client_OnDisconnectedCallbacks_Called()
+    public IEnumerator Server_OnDisconnectedCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -279,11 +287,23 @@ public class UtpServerClientTests
         yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
         _server.Stop();
         Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
-        Assert.IsTrue(ClientOnDisconnectedCalled, "The Client.OnDisconnected callback was not invoked as expected.");
     }
 
     [UnityTest]
-    public IEnumerator Server_Client_OnReceivedDataCallbacks_Called()
+    public IEnumerator Client_OnDisconnectedCallback_Called()
+    {
+        _server.Start(7777);
+        _client.Connect("localhost", 7777);
+        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        yield return TickFrames(_client, _server, 5);
+        _server.Disconnect(1);
+        yield return new WaitForDisconnectOrTimeout(_client, _server, 30f);
+        _server.Stop();
+        Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
+    }
+
+    [UnityTest]
+    public IEnumerator Server_OnReceivedDataCallback_Called()
     {
         _server.Start(7777);
         _client.Connect("localhost", 7777);
@@ -292,6 +312,17 @@ public class UtpServerClientTests
         _server.Send(1, EmptyPacket, 1);
         yield return TickFrames(_client, _server, 5);
         Assert.IsTrue(ServerOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
+    }
+
+    [UnityTest]
+    public IEnumerator Client_OnReceivedDataCallbacks_Called()
+    {
+        _server.Start(7777);
+        _client.Connect("localhost", 7777);
+        yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+        _client.Send(EmptyPacket, 1);
+        _server.Send(1, EmptyPacket, 1);
+        yield return TickFrames(_client, _server, 5);
         Assert.IsTrue(ClientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
     }
 }
