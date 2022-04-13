@@ -10,9 +10,9 @@ public class UtpTransportTests
 {
 
 
-    UtpTransport _Server;
-    UtpTransport _Client;
-    IRelayManager _RelayManager;
+    private UtpTransport _Server;
+    private UtpTransport _Client;
+    private IRelayManager _RelayManager;
 
 
     private class WaitForConnectionOrTimeout : IEnumerator
