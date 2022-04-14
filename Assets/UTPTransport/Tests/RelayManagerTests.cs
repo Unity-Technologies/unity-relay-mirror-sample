@@ -15,11 +15,13 @@ namespace Utp
         private UtpTransport _server;
         private UtpTransport _client;
         private IRelayManager _relayManager;
+        private RelayNetworkManager _relayNetworkManager;
         [SetUp]
         public void SetUp()
         {
             var ServerObj = new GameObject();
             _relayManager = ServerObj.AddComponent<DummyRelayManager>();
+            _relayNetworkManager = ServerObj.AddComponent<RelayNetworkManager>();
             _server = ServerObj.AddComponent<UtpTransport>();
 
             var ClientObj = new GameObject();
@@ -37,10 +39,21 @@ namespace Utp
         [Test]
         public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
         {
+            _server.useRelay = true;
             _server.GetRelayRegions(
                 (List<Region> regions) =>
                 {
-                    Assert.IsTrue(regions.Count > 0, "Region list was unexpectedly empty.");
+                    Assert.IsNotEmpty(regions, "Region list was unexpectedly empty.");
+                }
+            );
+        }
+        [Test]
+        public void Server_GetRelayRegions_RelayDisabled_EmptyList()
+        {
+            _server.GetRelayRegions(
+                (List<Region> regions) =>
+                {
+                    Assert.IsEmpty(regions, "Region list was unexpectedly non-empty.");
                 }
             );
         }

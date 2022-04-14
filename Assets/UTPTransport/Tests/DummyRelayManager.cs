@@ -10,6 +10,7 @@ namespace Utp
         public Allocation ServerAllocation { get; set; }
         public JoinAllocation JoinAllocation { get; set; }
         public Action<string, string> OnRelayServerAllocated { get; set; }
+        public UtpTransport utpTransport;
 
         public void AllocateRelayServer(int maxPlayers, string regionId)
         {
@@ -38,8 +39,12 @@ namespace Utp
         public void GetRelayRegions(Action<List<Region>> callback)
         {
             List<Region> RegionList = new List<Region>();
+            utpTransport = GetComponent<UtpTransport>();
             Region dummyRegion = new Region("sample-region", "Sample Region");
-            RegionList.Add(dummyRegion);
+            if (utpTransport.useRelay)
+            {
+                RegionList.Add(dummyRegion);
+            }
             callback(RegionList);
         }
     }
