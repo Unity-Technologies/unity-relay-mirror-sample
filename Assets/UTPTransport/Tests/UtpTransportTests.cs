@@ -14,7 +14,6 @@ namespace Utp
 
         private UtpTransport _server;
         private UtpTransport _client;
-        private IRelayManager _relayManager;
 
 
         private class WaitForConnectionOrTimeout : IEnumerator
@@ -75,7 +74,6 @@ namespace Utp
         public void SetUp()
         {
             var ServerObj = new GameObject();
-            _relayManager = ServerObj.AddComponent<DummyRelayManager>();
             _server = ServerObj.AddComponent<UtpTransport>();
 
             var ClientObj = new GameObject();
@@ -153,50 +151,6 @@ namespace Utp
             _client.ClientConnect(_server.ServerUri());
             yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
             Assert.IsTrue(_client.ClientConnected(), "Client is not connected, but should be.");
-        }
-        [Test]
-        public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
-        {
-            _server.GetRelayRegions(
-                (List<Region> regions) =>
-                {
-                    Assert.IsTrue(regions.Count > 0, "Region list was unexpectedly empty.");
-                }
-            );
-        }
-        [Test]
-        public void Server_AllocateRelayServer_ValidRegion_ReturnsNullErrorAndValidJoinCode()
-        {
-            _server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
-            {
-                Assert.IsTrue(error == null, "An error was returned unexpectedly.");
-                Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
-            });
-        }
-        [Test]
-        public void Server_AllocateRelayServer_InvalidRegion_ReturnsErrorAndNullJoinCode()
-        {
-            _server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
-            {
-                Assert.IsTrue(error == "Invalid regionId", "The expected error was not returned.");
-                Assert.IsTrue(joinCode == null, "A join code was returned unexpectedly.");
-            });
-        }
-        [Test]
-        public void Server_GetAllocationFromJoinCode_NoError()
-        {
-            _relayManager.GetAllocationFromJoinCode("JNCDE", (error) =>
-            {
-                Assert.IsNull(error, "An error was returned unexpectedly.");
-            });
-        }
-        [Test]
-        public void Server_GetAllocationFromJoinCode_WithError()
-        {
-            _relayManager.GetAllocationFromJoinCode("BADCD", (error) =>
-            {
-                Assert.IsTrue(error == "Invalid joinCode", "The expected error was not returned.");
-            });
         }
     }
 }
