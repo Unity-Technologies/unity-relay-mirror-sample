@@ -90,6 +90,23 @@ namespace Utp
             _server.ServerStop();
             GameObject.Destroy(_server.gameObject);
         }
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
+        {
+            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.TimedOut);
+        }
+
+        [UnityTest]
+        public IEnumerator TestHarness_WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
+        {
+            _server.ServerStart();
+            _client.ClientConnect(_server.ServerUri());
+            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return connectionTestResult;
+            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.ClientConnected);
+        }
         [Test]
         public void ServerActive_IsNotActive_False()
         {
