@@ -10,12 +10,11 @@ namespace Utp
 {
     public class RelayManagerTests
     {
-
-
         private UtpTransport _server;
         private UtpTransport _client;
         private IRelayManager _relayManager;
         private RelayNetworkManager _relayNetworkManager;
+
         [SetUp]
         public void SetUp()
         {
@@ -27,6 +26,7 @@ namespace Utp
             var ClientObj = new GameObject();
             _client = ClientObj.AddComponent<UtpTransport>();
         }
+
         [TearDown]
         public void TearDown()
         {
@@ -36,6 +36,7 @@ namespace Utp
             _server.ServerStop();
             GameObject.Destroy(_server.gameObject);
         }
+
         [Test]
         public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
         {
@@ -47,6 +48,7 @@ namespace Utp
                 }
             );
         }
+
         [Test]
         public void Server_GetRelayRegions_RelayDisabled_EmptyList()
         {
@@ -57,6 +59,7 @@ namespace Utp
                 }
             );
         }
+
         [Test]
         public void Server_AllocateRelayServer_ValidRegion_ReturnsNullErrorAndValidJoinCode()
         {
@@ -66,6 +69,7 @@ namespace Utp
                 Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
             });
         }
+
         [Test]
         public void Server_AllocateRelayServer_InvalidRegion_ReturnsErrorAndNullJoinCode()
         {
@@ -75,6 +79,7 @@ namespace Utp
                 Assert.IsNull(joinCode, "A join code was returned unexpectedly.");
             });
         }
+
         [Test]
         public void Server_GetAllocationFromJoinCode_NoError()
         {
@@ -83,6 +88,7 @@ namespace Utp
                 Assert.IsNull(error, "An error was returned unexpectedly.");
             });
         }
+
         [Test]
         public void Server_GetAllocationFromJoinCode_WithError()
         {
