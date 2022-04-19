@@ -1,95 +1,213 @@
 using NUnit.Framework;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Unity.Services.Relay.Models;
-using Utp;
 
 namespace Utp
 {
     public class RelayManagerTests
     {
+        private RelayManager _relayManager;
 
-
-        private UtpTransport _server;
-        private UtpTransport _client;
-        private IRelayManager _relayManager;
-        private RelayNetworkManager _relayNetworkManager;
         [SetUp]
         public void SetUp()
         {
-            var ServerObj = new GameObject();
-            _relayManager = ServerObj.AddComponent<DummyRelayManager>();
-            _relayNetworkManager = ServerObj.AddComponent<RelayNetworkManager>();
-            _server = ServerObj.AddComponent<UtpTransport>();
-
-            var ClientObj = new GameObject();
-            _client = ClientObj.AddComponent<UtpTransport>();
+            var obj = new GameObject();
+            _relayManager = obj.AddComponent<RelayManager>();
         }
+
         [TearDown]
         public void TearDown()
         {
-            _client.ClientDisconnect();
-            GameObject.Destroy(_client.gameObject);
+            _relayManager.OnRelayServerAllocated = null;
 
-            _server.ServerStop();
-            GameObject.Destroy(_server.gameObject);
+            GameObject.Destroy(_relayManager.gameObject);
         }
+
         [Test]
-        public void Server_GetRelayRegions_RelayEnabled_NonEmptyList()
+        public void GetAllocationFromJoinCode_FaultedTask_LogsAnErrorAndReturnsAnErrorMessage()
         {
-            _server.useRelay = true;
-            _server.GetRelayRegions(
-                (List<Region> regions) =>
-                {
-                    Assert.IsNotEmpty(regions, "Region list was unexpectedly empty.");
-                }
-            );
+            _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
+
+            string errorMessage = null;
+            string validJoinCode = "test";
+            Action<string> onError = (err) => { errorMessage = err; };
+            _relayManager.GetAllocationFromJoinCode(joinCode: validJoinCode, callback: onError);
+
+            LogAssert.Expect(LogType.Error, "Join allocation request failed");
+            Assert.That(_relayManager.JoinAllocation, Is.Null);
+            Assert.That(errorMessage, Is.Not.Null);
+            Assert.That(errorMessage, Is.Not.Empty);
         }
+
         [Test]
-        public void Server_GetRelayRegions_RelayDisabled_EmptyList()
+        public void GetAllocationFromJoinCode_CompletedTask_NullErrorAndNotNullAllocationId()
         {
-            _server.GetRelayRegions(
-                (List<Region> regions) =>
-                {
-                    Assert.IsEmpty(regions, "Region list was unexpectedly non-empty.");
-                }
-            );
+            _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
+
+            string errorMessage = null;
+            Action<string> onError = (err) => { errorMessage = err; };
+            _relayManager.GetAllocationFromJoinCode("test", onError);
+            Assert.That(errorMessage, Is.Null);
+            Assert.That(_relayManager.JoinAllocation.AllocationId, Is.Not.Null);
         }
+
         [Test]
-        public void Server_AllocateRelayServer_ValidRegion_ReturnsNullErrorAndValidJoinCode()
+        public void GetRelayRegions_FaultedTask_LogsAnErrorAndReturnsAnEmptyList()
         {
-            _server.AllocateRelayServer(5, "sample-region", (string joinCode, string error) =>
+            _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
+
+            List<Region> listOfRegions = null;
+            Action<List<Region>> onRegionsRetrieved = (regions) => { listOfRegions = regions; };
+            _relayManager.GetRelayRegions(callback: onRegionsRetrieved);
+
+            LogAssert.Expect(LogType.Error, "List regions request failed");
+            Assert.That(listOfRegions, Is.Not.Null);
+            Assert.That(listOfRegions, Is.Empty);
+        }
+
+        [Test]
+        public void GetRelayRegions_CompletedTask_ReturnsNotEmptyList()
+        {
+            _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
+
+            List<Region> listOfRegions = null;
+            Action<List<Region>> onRegionsRetrieved = (regions) => { listOfRegions = regions; };
+            _relayManager.GetRelayRegions(callback: onRegionsRetrieved);
+
+            Assert.That(listOfRegions, Is.Not.Null);
+            Assert.That(listOfRegions, Is.Not.Empty);
+        }
+
+        [Test]
+        public void AllocateRelayServer_FaultedTask_LogsAnErrorAndInvokesOnRelayServerAllocated()
+        {
+            _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
+
+            string joinCode = null;
+            string errorMessage = null;
+            Action<string, string> onRelayServerAllocated = (code, error) => { joinCode = code; errorMessage = error; };
+            _relayManager.OnRelayServerAllocated += onRelayServerAllocated;
+
+            int validMaxPlayers = 8;
+            string validRegionId = "test";
+            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId);
+
+            LogAssert.Expect(LogType.Error, "Create allocation request failed");
+            Assert.That(_relayManager.ServerAllocation, Is.Null);
+            Assert.That(joinCode, Is.Null);
+            Assert.That(errorMessage, Is.Not.Null);
+        }
+
+        [Test]
+        public void AllocateRelayServer_CompletedTask_ServerAllocationNoErrorAndInvokesOnRelayServerAllocated()
+        {
+            _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
+
+            string joinCode = null;
+            string errorMessage = null;
+            Action<string, string> onRelayServerAllocated = (code, error) => { joinCode = code; errorMessage = error; };
+            _relayManager.OnRelayServerAllocated += onRelayServerAllocated;
+
+            int validMaxPlayers = 8;
+            string validRegionId = "test";
+            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId);
+
+            Assert.That(_relayManager.ServerAllocation, Is.Not.Null);
+            Assert.That(joinCode, Is.Not.Null);
+            Assert.That(errorMessage, Is.Null);
+        }
+
+        private class TaskAlwaysCompletes : IRelayServiceSDK
+        {
+            public Task<Allocation> CreateAllocationAsync(int maxConnections, string region = null)
             {
-                Assert.IsTrue(error == null, "An error was returned unexpectedly.");
-                Assert.IsTrue(joinCode == "JNCDE", "The expected join code was not returned.");
-            });
-        }
-        [Test]
-        public void Server_AllocateRelayServer_InvalidRegion_ReturnsErrorAndNullJoinCode()
-        {
-            _server.AllocateRelayServer(5, "no-region", (string joinCode, string error) =>
+                byte[] resultKey = new byte[4];
+                byte[] resultConnectionData = new byte[4];
+                byte[] resultAllocationIdBytes = new byte[4];
+                Guid resultAllocationId = new Guid();
+                List<RelayServerEndpoint> resultEndpointList = new List<RelayServerEndpoint>();
+                string localHostIp = "127.0.0.1";
+                ushort samplePort = 12345;
+                RelayServer resultRelayServer = new RelayServer(ipV4: localHostIp, port: samplePort);
+                return Task.FromResult<Allocation>(
+                    result: new Allocation(
+                        allocationId: resultAllocationId,
+                        serverEndpoints: resultEndpointList,
+                        relayServer: resultRelayServer,
+                        key: resultKey,
+                        connectionData: resultConnectionData,
+                        allocationIdBytes: resultAllocationIdBytes
+                    )
+                );
+            }
+
+            public Task<string> GetJoinCodeAsync(Guid allocationId)
             {
-                Assert.IsTrue(error == "Invalid regionId", "The expected error was not returned.");
-                Assert.IsNull(joinCode, "A join code was returned unexpectedly.");
-            });
-        }
-        [Test]
-        public void Server_GetAllocationFromJoinCode_NoError()
-        {
-            _relayManager.GetAllocationFromJoinCode("JNCDE", (error) =>
+                string validJoinCode = "test";
+                return Task.FromResult<string>(validJoinCode);
+            }
+
+            public Task<JoinAllocation> JoinAllocationAsync(string joinCode)
             {
-                Assert.IsNull(error, "An error was returned unexpectedly.");
-            });
-        }
-        [Test]
-        public void Server_GetAllocationFromJoinCode_WithError()
-        {
-            _relayManager.GetAllocationFromJoinCode("BADCD", (error) =>
+                Guid joinAllocationAllocationId = new Guid();
+                List<RelayServerEndpoint> joinAllocationEndpointList = new List<RelayServerEndpoint>();
+                string localHostIp = "127.0.0.1";
+                ushort samplePort = 12345;
+                byte[] joinAllocationKey = new byte[4];
+                byte[] joinAllocationHostConnectionData = new byte[4];
+                byte[] joinAllocationConnectionData = new byte[4];
+                byte[] joinAllocationAllocationIdBytes = new byte[4];
+                RelayServer joinAllocationRelayServer = new RelayServer(ipV4: localHostIp, port: samplePort);
+                return Task.FromResult<JoinAllocation>(
+                    result: new JoinAllocation(
+                        allocationId: joinAllocationAllocationId,
+                        serverEndpoints: joinAllocationEndpointList,
+                        relayServer: joinAllocationRelayServer,
+                        key: joinAllocationKey,
+                        hostConnectionData: joinAllocationHostConnectionData,
+                        connectionData: joinAllocationConnectionData,
+                        allocationIdBytes: joinAllocationAllocationIdBytes
+                    )
+                );
+            }
+
+            public Task<List<Region>> ListRegionsAsync()
             {
-                Assert.IsTrue(error == "Invalid joinCode", "The expected error was not returned.");
-            });
+                List<Region> regionList = new List<Region>();
+                Region validRegion = new Region(id: "valid-region", description: "test");
+                regionList.Add(validRegion);
+                return Task.FromResult<List<Region>>(
+                    result: regionList
+                );
+            }
+        }
+
+        private class TaskAlwaysFaults : IRelayServiceSDK
+        {
+            public Task<Allocation> CreateAllocationAsync(int maxConnections, string region = null)
+            {
+                return Task.FromException<Allocation>(new Exception("Task faulted!"));
+            }
+
+            public Task<string> GetJoinCodeAsync(Guid allocationId)
+            {
+                return Task.FromException<string>(new Exception("Task faulted!"));
+            }
+
+            public Task<JoinAllocation> JoinAllocationAsync(string joinCode)
+            {
+                return Task.FromException<JoinAllocation>(new Exception("Task faulted!"));
+            }
+
+            public Task<List<Region>> ListRegionsAsync()
+            {
+                return Task.FromException<List<Region>>(new Exception("Task faulted!"));
+            }
         }
     }
 }
