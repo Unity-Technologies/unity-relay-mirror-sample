@@ -58,7 +58,7 @@ namespace Utp
 		/// <summary>
 		/// The Relay manager.
 		/// </summary>
-		private RelayManager relayManager;
+		private IRelayManager relayManager;
 
 		/// <summary>
 		/// Calls when script is being loaded.
@@ -85,8 +85,11 @@ namespace Utp
 				() => OnClientDisconnected.Invoke(),
 				TimeoutMS);
 
-			//Add relay manager component
-			relayManager = gameObject.AddComponent<RelayManager>();
+			if (!TryGetComponent<IRelayManager>(out relayManager))
+            {
+				//Add relay manager component
+				relayManager = gameObject.AddComponent<RelayManager>();
+            }
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
@@ -110,7 +113,7 @@ namespace Utp
 			if (useRelay)
 			{
 				// The data we need to connect is embedded in the relayManager's JoinAllocation
-				client.RelayConnect(relayManager.joinAllocation);
+				client.RelayConnect(relayManager.JoinAllocation);
 			}
 			else
 			{
@@ -197,10 +200,10 @@ namespace Utp
 
         #region Server overrides
 
-        public override bool ServerActive() => server.DriverIsActive();
+        public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
-			server.Start(Port, useRelay, relayManager.serverAllocation);
+			server.Start(Port, useRelay, relayManager.ServerAllocation);
 		}
 
 		public override void ServerStop() => server.Stop();
@@ -229,7 +232,7 @@ namespace Utp
         public override void Shutdown() 
 		{
 			if (client.IsConnected()) client.Disconnect();
-			if (server.DriverIsActive()) server.Stop();
+			if (server.IsNetworkDriverInitialized()) server.Stop();
 		}
 
 		public override string ToString() => "UTP";
