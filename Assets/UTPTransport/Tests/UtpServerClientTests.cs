@@ -1,9 +1,8 @@
 using NUnit.Framework;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Utp;
-using System;
 
 namespace Utp
 {
