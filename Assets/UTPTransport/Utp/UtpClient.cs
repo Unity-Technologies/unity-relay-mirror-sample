@@ -294,7 +294,7 @@ namespace Utp
                 // When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the server
                 driver.ScheduleUpdate().Complete();
 
-                OnDisconnected.Invoke();
+                OnDisconnected?.Invoke();
             }
 
             if (connectionEventsQueue.IsCreated)
