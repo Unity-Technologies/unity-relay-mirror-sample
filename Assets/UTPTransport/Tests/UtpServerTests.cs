@@ -10,33 +10,11 @@ namespace Utp
     {
         private UtpServer _server;
         private UtpClient _client;
-        private bool _serverOnConnectedCalled;
-        private bool _serverOnDisconnectedCalled;
-        private bool _serverOnReceivedDataCalled;
-
-        private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
-        {
-            float elapsedTime = 0f;
-            while (elapsedTime < numSeconds)
-            {
-                client.Tick();
-                server.Tick();
-                yield return null;
-                elapsedTime += Time.deltaTime;
-            }
-        }
 
         [SetUp]
         public void SetUp()
         {
-            _server = new UtpServer
-            (
-                (connectionId) => { _serverOnConnectedCalled = true; },
-                (connectionId, message) => { _serverOnReceivedDataCalled = true; },
-                (connectionId) => { _serverOnDisconnectedCalled = true; },
-                timeoutInMilliseconds: 1000
-            );
-
+            _server = new UtpServer(timeoutInMilliseconds: 1000);
             _client = new UtpClient(timeoutInMilliseconds: 1000);
         }
 
@@ -45,10 +23,6 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
-
-            _serverOnConnectedCalled = false;
-            _serverOnDisconnectedCalled = false;
-            _serverOnReceivedDataCalled = false;
         }
 
         [Test]
@@ -138,30 +112,37 @@ namespace Utp
         [UnityTest]
         public IEnumerator OnConnected_ClientConnectsToServer_CallbackIsInvoked()
         {
+            bool callbackWasInvoked = false;
+            _server.OnConnected += (int connectionId) => { callbackWasInvoked = true; };
             _server.Start(7777);
+
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
-            Assert.That(_serverOnConnectedCalled, Is.True);
+            Assert.That(callbackWasInvoked, Is.True);
         }
 
         [UnityTest]
         public IEnumerator OnDisconnect_ServerDisconnectsClient_CallbackIsInvoked()
         {
-            int idOfConnectedClient = 1;
+            bool callbackWasInvoked = false;
+            _server.OnDisconnected += (int connectionId) => { callbackWasInvoked = true; };
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
+            int idOfConnectedClient = 1;
             _server.Disconnect(idOfConnectedClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
-            Assert.That(_serverOnDisconnectedCalled, Is.True);
+            Assert.That(callbackWasInvoked, Is.True);
         }
 
         [UnityTest]
         public IEnumerator OnReceivedData_ClientSendsDataToServer_CallbackIsInvoked()
         {
+            bool callbackWasInvoked = false;
+            _server.OnReceivedData += (connectionId, segment) => { callbackWasInvoked = true; };
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
@@ -171,7 +152,19 @@ namespace Utp
             _client.Send(segment: dummyDataToSend, channelId: validChannelId);
             yield return tickClientAndServerForSeconds(client: _client, server: _server, numSeconds: 5f);
 
-            Assert.That(_serverOnReceivedDataCalled, Is.True);
+            Assert.That(callbackWasInvoked, Is.True);
+        }
+
+        private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
+        {
+            float elapsedTime = 0f;
+            while (elapsedTime < numSeconds)
+            {
+                client.Tick();
+                server.Tick();
+                yield return null;
+                elapsedTime += Time.deltaTime;
+            }
         }
     }
 }
