@@ -211,7 +211,7 @@ namespace Utp
         /// <summary>
         /// Constructor for UTP client.
         /// </summary>
-        /// <param name="timeout">The response timeout in miliseconds.</param>
+        /// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
         public UtpClient(int timeoutInMilliseconds)
         {
             this.timeout = timeoutInMilliseconds;
@@ -223,7 +223,7 @@ namespace Utp
         /// <param name="OnConnected">Action that is invoked when connected.</param>
         /// <param name="OnReceivedData">Action that is invoked when receiving data.</param>
         /// <param name="OnDisconnected">Action that is invoked when disconnected.</param>
-        /// <param name="timeout">The response timeout in miliseconds.</param>
+        /// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
 		public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeoutInMilliseconds)
 			: this(timeoutInMilliseconds)
 		{

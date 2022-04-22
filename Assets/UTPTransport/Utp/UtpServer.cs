@@ -242,15 +242,23 @@ namespace Utp
 		/// </summary>
 		private NativeList<Unity.Networking.Transport.NetworkConnection> connections;
 
-        public UtpServer(int timeoutInMilliseconds)
+		/// <summary>
+		/// Constructor for UTP server.
+		/// </summary>
+		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+		public UtpServer(int timeoutInMilliseconds)
         {
             this.timeout = timeoutInMilliseconds;
         }
 
-        public UtpServer(Action<int> OnConnected,
-            Action<int, ArraySegment<byte>> OnReceivedData,
-            Action<int> OnDisconnected,
-            int timeoutInMilliseconds)
+		/// <summary>
+		/// Constructor for UTP server.
+		/// </summary>
+		/// <param name="OnConnected">Action that is invoked when connected.</param>
+		/// <param name="OnReceivedData">Action that is invoked when receiving data.</param>
+		/// <param name="OnDisconnected">Action that is invoked when disconnected.</param>
+		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+		public UtpServer(Action<int> OnConnected, Action<int, ArraySegment<byte>> OnReceivedData, Action<int> OnDisconnected, int timeoutInMilliseconds)
             : this(timeoutInMilliseconds)
         {
             this.OnConnected = OnConnected;
