@@ -13,11 +13,11 @@ namespace Utp
         [SetUp]
         public void SetUp()
         {
-            var ServerObj = new GameObject();
-            _server = ServerObj.AddComponent<UtpTransport>();
+            var serverObj = new GameObject();
+            _server = serverObj.AddComponent<UtpTransport>();
 
-            var ClientObj = new GameObject();
-            _client = ClientObj.AddComponent<UtpTransport>();
+            var clientObj = new GameObject();
+            _client = clientObj.AddComponent<UtpTransport>();
         }
 
         [TearDown]
