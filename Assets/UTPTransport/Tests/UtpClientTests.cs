@@ -34,7 +34,7 @@ namespace Utp
                 () => { ClientOnConnectedCalled = true; },
                 (message) => { ClientOnReceivedDataCalled = true; },
                 () => { ClientOnDisconnectedCalled = true; },
-                timeout: 1000
+                timeoutInMilliseconds: 1000
             );
         }
 

@@ -190,8 +190,8 @@ namespace Utp
             driverMaxHeaderSize = new int[2];
         }
 
-        public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
-            : this(timeout)
+        public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeoutInMilliseconds)
+            : this(timeoutInMilliseconds)
         {
             this.OnConnected = OnConnected;
             this.OnReceivedData = OnReceivedData;
