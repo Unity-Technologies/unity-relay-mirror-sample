@@ -232,12 +232,12 @@ namespace Utp
         public UtpServer(Action<int> OnConnected,
             Action<int, ArraySegment<byte>> OnReceivedData,
             Action<int> OnDisconnected,
-            int timeout)
+            int timeoutInMilliseconds)
         {
             this.OnConnected = OnConnected;
             this.OnReceivedData = OnReceivedData;
             this.OnDisconnected = OnDisconnected;
-            this.timeout = timeout;
+            this.timeout = timeoutInMilliseconds;
         }
 
         /// <summary>

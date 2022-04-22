@@ -34,7 +34,7 @@ namespace Utp
                 (connectionId) => { _serverOnConnectedCalled = true; },
                 (connectionId, message) => { _serverOnReceivedDataCalled = true; },
                 (connectionId) => { _serverOnDisconnectedCalled = true; },
-                timeout: 1000
+                timeoutInMilliseconds: 1000
             );
 
             _client = new UtpClient(

@@ -17,7 +17,7 @@ namespace Utp
                 (connectionId) => { },
                 (connectionId, message) => { },
                 (connectionId) => { },
-                timeout: 1000
+                timeoutInMilliseconds: 1000
             );
 
             _client = new UtpClient(
