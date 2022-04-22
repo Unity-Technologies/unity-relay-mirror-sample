@@ -463,15 +463,15 @@ namespace Utp
             {
                 if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
                 {
-                    OnConnected.Invoke(connectionEvent.connectionId);
+                    OnConnected?.Invoke(connectionEvent.connectionId);
                 }
                 else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
                 {
-                    OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+                    OnReceivedData?.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                 }
                 else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
                 {
-                    OnDisconnected.Invoke(connectionEvent.connectionId);
+                    OnDisconnected?.Invoke(connectionEvent.connectionId);
                 }
                 else
                 {
