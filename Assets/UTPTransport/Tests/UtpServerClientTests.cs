@@ -17,114 +17,6 @@ namespace Utp
         private bool ClientOnDisconnectedCalled;
         private bool ClientOnReceivedDataCalled;
 
-        private class WaitForConnectionOrTimeout : IEnumerator
-        {
-            public enum Status
-            {
-                Undetermined,
-                ClientConnected,
-                TimedOut,
-            }
-
-            public Status Result { get; private set; } = Status.Undetermined;
-
-            public object Current => null;
-
-            private float _elapsedTime = 0f;
-            private float _timeout = 0f;
-
-            private UtpClient _client = null;
-            private UtpServer _server = null;
-
-            public WaitForConnectionOrTimeout(UtpClient client, UtpServer server, float timeoutInSeconds)
-            {
-                _client = client;
-                _server = server;
-                _timeout = timeoutInSeconds;
-            }
-
-            public bool MoveNext()
-            {
-                _client.Tick();
-                _server.Tick();
-
-                _elapsedTime += Time.deltaTime;
-
-                if (_elapsedTime >= _timeout)
-                {
-                    Result = Status.TimedOut;
-                    return false;
-                }
-                else if (_client.IsConnected())
-                {
-                    Result = Status.ClientConnected;
-                    return false;
-                }
-
-                return true;
-            }
-
-            public void Reset()
-            {
-                _elapsedTime = 0f;
-                _timeout = 0f;
-                Result = Status.Undetermined;
-            }
-        }
-        private class WaitForDisconnectOrTimeout : IEnumerator
-        {
-            public enum Status
-            {
-                Undetermined,
-                ClientDisconnected,
-                TimedOut,
-            }
-
-            public Status Result { get; private set; } = Status.Undetermined;
-
-            public object Current => null;
-
-            private float _elapsedTime = 0f;
-            private float _timeout = 0f;
-
-            private UtpClient _client = null;
-            private UtpServer _server = null;
-
-            public WaitForDisconnectOrTimeout(UtpClient client, UtpServer server, float timeoutInSeconds)
-            {
-                _client = client;
-                _server = server;
-                _timeout = timeoutInSeconds;
-            }
-
-            public bool MoveNext()
-            {
-                _client.Tick();
-                _server.Tick();
-
-                _elapsedTime += Time.deltaTime;
-
-                if (_elapsedTime >= _timeout)
-                {
-                    Result = Status.TimedOut;
-                    return false;
-                }
-                else if (!_client.IsConnected())
-                {
-                    Result = Status.ClientDisconnected;
-                    return false;
-                }
-
-                return true;
-            }
-
-            public void Reset()
-            {
-                _elapsedTime = 0f;
-                _timeout = 0f;
-                Result = Status.Undetermined;
-            }
-        }
         public IEnumerator TickFrames(UtpClient _Client, UtpServer _Server, int FramesToSkip = 15)
         {
             int FramesPassed = 0;
@@ -169,56 +61,6 @@ namespace Utp
             ClientOnReceivedDataCalled = false;
         }
 
-        [UnityTest]
-        public IEnumerator WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
-        {
-            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.TimedOut);
-        }
-
-        [UnityTest]
-        public IEnumerator WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
-        {
-            _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
-            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.ClientConnected);
-        }
-
-        [UnityTest]
-        public IEnumerator WaitForDisconnectOrTimeout_NoConnections_ClientDisconnected()
-        {
-            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.ClientDisconnected);
-        }
-
-        [UnityTest]
-        public IEnumerator WaitForDisconnectOrTimeout_ClientConnected_NoDisconnect_TimeoutReached()
-        {
-            _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.TimedOut);
-        }
-
-        [UnityTest]
-        public IEnumerator WaitForDisconnectOrTimeout_ClientConnected_ServerDisconnect_ClientDisconnected()
-        {
-            _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            int idOfFirstClient = 1;
-            _server.Disconnect(connectionId: idOfFirstClient);
-            WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForDisconnectOrTimeout.Status.ClientDisconnected);
-        }
-
         [Test]
         public void UtpServer_IsActive_NotStarted_False()
         {
@@ -251,7 +93,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
 
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             Assert.IsTrue(_client.IsConnected(), "Client was not able to connect with server.");
         }
@@ -270,7 +112,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
 
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             int idOfFirstClient = 1;
             string clientAddress = _server.GetClientAddress(idOfFirstClient);
@@ -290,11 +132,11 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(_client.IsConnected(), "Client did not connect to server.");
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
-            yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 10f);
+            yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 10f);
             Assert.IsFalse(_client.IsConnected(), "Client was not successfully disconnected from server");
         }
         [Test]
@@ -310,7 +152,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             int idOfFirstClient = 1;
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfFirstClient);
             Assert.IsFalse(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "No connection found.");
         }
@@ -320,7 +162,7 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(ServerOnConnectedCalled, "The Server.OnConnected callback was not invoked as expected.");
         }
 
@@ -329,7 +171,7 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(ClientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
         }
 
@@ -338,11 +180,11 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             yield return TickFrames(_client, _server, 5);
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
-            yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
         }
 
@@ -351,11 +193,11 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             yield return TickFrames(_client, _server, 5);
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
-            yield return new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
@@ -364,7 +206,7 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             int idOfFirstClient = 1;
             int idOfChannel = 1;
             ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
@@ -379,7 +221,7 @@ namespace Utp
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-            yield return new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             int idOfFirstClient = 1;
             int idOfChannel = 1;
             ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
