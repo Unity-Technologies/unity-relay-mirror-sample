@@ -36,35 +36,54 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator NoConnections_ClientDisconnected()
+        public IEnumerator IEnumerator_ClientIsNotConnectedToServer_ResultIsClientDisconnected()
         {
-            WaitForClientAndServerToDisconnect connectionTestResult = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForClientAndServerToDisconnect.Status.ClientDisconnected);
+            var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 5f);
+
+            yield return waitForDisconnect;
+
+            Assert.That(waitForDisconnect.Result, Is.EqualTo(WaitForClientAndServerToDisconnect.Status.ClientDisconnected));
         }
 
         [UnityTest]
-        public IEnumerator ClientConnected_NoDisconnect_TimeoutReached()
+        public IEnumerator IEnumerator_ClientRemainsConnectedToTheServer_ResultIsTimedOut()
         {
+            var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 5f);
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            WaitForClientAndServerToDisconnect connectionTestResult = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForClientAndServerToDisconnect.Status.TimedOut);
+
+            yield return waitForDisconnect;
+
+            Assert.That(waitForDisconnect.Result, Is.EqualTo(WaitForClientAndServerToDisconnect.Status.TimedOut));
         }
 
         [UnityTest]
-        public IEnumerator ClientConnected_ServerDisconnect_ClientDisconnected()
+        public IEnumerator IEnumerator_ServerDisconnectsClient_ResultIsClientDisconnected()
         {
+            var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            int idOfFirstClient = 1;
-            _server.Disconnect(connectionId: idOfFirstClient);
-            WaitForClientAndServerToDisconnect connectionTestResult = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForClientAndServerToDisconnect.Status.ClientDisconnected);
+
+            _server.Disconnect(connectionId: 1);
+            yield return waitForDisconnect;
+
+            Assert.That(waitForDisconnect.Result, Is.EqualTo(WaitForClientAndServerToDisconnect.Status.ClientDisconnected));
+        }
+
+        [UnityTest]
+        public IEnumerator IEnumerator_ClientDisconnectsFromServer_ResultIsClientDisconnected()
+        {
+            var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
+            _server.Start(port: 7777);
+            _client.Connect(host: "localhost", port: 7777);
+            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
+
+            _client.Disconnect();
+            yield return waitForDisconnect;
+
+            Assert.That(waitForDisconnect.Result, Is.EqualTo(WaitForClientAndServerToDisconnect.Status.ClientDisconnected));
         }
     }
 }
