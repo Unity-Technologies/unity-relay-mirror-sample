@@ -6,7 +6,7 @@ using UnityEngine.TestTools;
 
 namespace Utp
 {
-    public class UtpServerClientTests
+    public class UtpServerTests
     {
         private UtpServer _server;
         private UtpClient _client;
@@ -75,30 +75,6 @@ namespace Utp
         }
 
         [Test]
-        public void UtpClient_IsConnected_NotConnected_False()
-        {
-            Assert.IsFalse(_client.IsConnected(), "Client is connected without calling Connect().");
-        }
-
-        [Test]
-        public void UtpClient_IsConnected_NoServer_False()
-        {
-            _client.Connect("localhost", 7777);
-            Assert.IsFalse(_client.IsConnected(), "Client is connected without server starting.");
-        }
-
-        [UnityTest]
-        public IEnumerator UtpClient_IsConnected_WithServer_True()
-        {
-            _server.Start(7777);
-            _client.Connect("localhost", 7777);
-
-            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-
-            Assert.IsTrue(_client.IsConnected(), "Client was not able to connect with server.");
-        }
-
-        [Test]
         public void UtpServer_GetClientAddress_NotConnected_EmptyString()
         {
             int idOfNonExistentClient = 1;
@@ -127,6 +103,7 @@ namespace Utp
             LogAssert.Expect(LogType.Warning, "Connection not found: 1");
 
         }
+
         [UnityTest]
         public IEnumerator UtpServer_Disconnect_ClientConnected_Success()
         {
@@ -139,6 +116,7 @@ namespace Utp
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 10f);
             Assert.IsFalse(_client.IsConnected(), "Client was not successfully disconnected from server");
         }
+
         [Test]
         public void UtpServer_FindConnection_NoClient_DefaultConnection()
         {
@@ -146,6 +124,7 @@ namespace Utp
             Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfNonExistentClient);
             Assert.IsTrue(FoundConnection == default(Unity.Networking.Transport.NetworkConnection), "A connection was found when no client was connected.");
         }
+
         [UnityTest]
         public IEnumerator UtpServer_FindConnection_ClientConnected_ValidConnection()
         {
@@ -167,15 +146,6 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpClient_OnConnectedCallback_Called()
-        {
-            _server.Start(7777);
-            _client.Connect("localhost", 7777);
-            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ClientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
-        }
-
-        [UnityTest]
         public IEnumerator UtpServer_OnDisconnectedCallback_Called()
         {
             _server.Start(7777);
@@ -186,19 +156,6 @@ namespace Utp
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
-        }
-
-        [UnityTest]
-        public IEnumerator UtpClient_OnDisconnectedCallback_Called()
-        {
-            _server.Start(7777);
-            _client.Connect("localhost", 7777);
-            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return TickFrames(_client, _server, 5);
-            int idOfFirstClient = 1;
-            _server.Disconnect(idOfFirstClient);
-            yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
         [UnityTest]
@@ -214,21 +171,6 @@ namespace Utp
             _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
             yield return TickFrames(_client, _server, 5);
             Assert.IsTrue(ServerOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
-        }
-
-        [UnityTest]
-        public IEnumerator UtpClient_OnReceivedDataCallbacks_Called()
-        {
-            _server.Start(7777);
-            _client.Connect("localhost", 7777);
-            yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            int idOfFirstClient = 1;
-            int idOfChannel = 1;
-            ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
-            _client.Send(emptyPacket, idOfChannel);
-            _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
-            yield return TickFrames(_client, _server, 5);
-            Assert.IsTrue(ClientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
         }
     }
 }
