@@ -10,12 +10,12 @@ namespace Utp
     {
         private UtpServer _server;
         private UtpClient _client;
-        private bool ServerOnConnectedCalled;
-        private bool ServerOnDisconnectedCalled;
-        private bool ServerOnReceivedDataCalled;
-        private bool ClientOnConnectedCalled;
-        private bool ClientOnDisconnectedCalled;
-        private bool ClientOnReceivedDataCalled;
+        private bool _serverOnConnectedCalled;
+        private bool _serverOnDisconnectedCalled;
+        private bool _serverOnReceivedDataCalled;
+        private bool _clientOnConnectedCalled;
+        private bool _clientOnDisconnectedCalled;
+        private bool _clientOnReceivedDataCalled;
 
         public IEnumerator TickFrames(UtpClient _Client, UtpServer _Server, int FramesToSkip = 15)
         {
@@ -34,16 +34,16 @@ namespace Utp
         {
             _server = new UtpServer
             (
-                (connectionId) => { ServerOnConnectedCalled = true; },
-                (connectionId, message) => { ServerOnReceivedDataCalled = true; },
-                (connectionId) => { ServerOnDisconnectedCalled = true; },
+                (connectionId) => { _serverOnConnectedCalled = true; },
+                (connectionId, message) => { _serverOnReceivedDataCalled = true; },
+                (connectionId) => { _serverOnDisconnectedCalled = true; },
                 timeout: 1000
             );
 
             _client = new UtpClient(
-                () => { ClientOnConnectedCalled = true; },
-                (message) => { ClientOnReceivedDataCalled = true; },
-                () => { ClientOnDisconnectedCalled = true; },
+                () => { _clientOnConnectedCalled = true; },
+                (message) => { _clientOnReceivedDataCalled = true; },
+                () => { _clientOnDisconnectedCalled = true; },
                 timeout: 1000
             );
         }
@@ -53,12 +53,12 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
-            ServerOnConnectedCalled = false;
-            ServerOnDisconnectedCalled = false;
-            ServerOnReceivedDataCalled = false;
-            ClientOnConnectedCalled = false;
-            ClientOnDisconnectedCalled = false;
-            ClientOnReceivedDataCalled = false;
+            _serverOnConnectedCalled = false;
+            _serverOnDisconnectedCalled = false;
+            _serverOnReceivedDataCalled = false;
+            _clientOnConnectedCalled = false;
+            _clientOnDisconnectedCalled = false;
+            _clientOnReceivedDataCalled = false;
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ServerOnConnectedCalled, "The Server.OnConnected callback was not invoked as expected.");
+            Assert.IsTrue(_serverOnConnectedCalled, "The Server.OnConnected callback was not invoked as expected.");
         }
 
         [UnityTest]
@@ -155,7 +155,7 @@ namespace Utp
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ClientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
+            Assert.IsTrue(_clientOnDisconnectedCalled, "The UtpClient.OnDisconnected callback was not invoked as expected.");
         }
 
         [UnityTest]
@@ -170,7 +170,7 @@ namespace Utp
             _client.Send(emptyPacket, idOfChannel);
             _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
             yield return TickFrames(_client, _server, 5);
-            Assert.IsTrue(ServerOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
+            Assert.IsTrue(_serverOnReceivedDataCalled, "The Server.OnReceivedData callback was not invoked as expected.");
         }
     }
 }
