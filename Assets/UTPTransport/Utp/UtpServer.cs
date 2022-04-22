@@ -248,7 +248,7 @@ namespace Utp
 		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
 		public UtpServer(int timeoutInMilliseconds)
         {
-            this.timeout = timeoutInMilliseconds;
+            this.timeoutInMilliseconds = timeoutInMilliseconds;
         }
 
 		/// <summary>
@@ -282,7 +282,7 @@ namespace Utp
 
 			//Instantiate network settings
 			var settings = new NetworkSettings();
-			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeout);
+			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
 			//Create IPV4 endpoint
 			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;

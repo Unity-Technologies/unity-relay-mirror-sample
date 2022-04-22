@@ -37,7 +37,7 @@ namespace Utp
         /// <summary>
         /// Timeout(ms) to be set on drivers.
         /// </summary>
-        protected int timeout;
+        protected int timeoutInMilliseconds;
 
         /// <summary>
         /// Returns whether a connection is a valid one. Checks against default connection object.
