@@ -171,7 +171,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
+        public IEnumerator WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
         {
             WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
             yield return connectionTestResult;
@@ -179,7 +179,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
+        public IEnumerator WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
         {
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
@@ -189,7 +189,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_NoConnections_ClientDisconnected()
+        public IEnumerator WaitForDisconnectOrTimeout_NoConnections_ClientDisconnected()
         {
             WaitForDisconnectOrTimeout connectionTestResult = new WaitForDisconnectOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
             yield return connectionTestResult;
@@ -197,7 +197,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_ClientConnected_NoDisconnect_TimeoutReached()
+        public IEnumerator WaitForDisconnectOrTimeout_ClientConnected_NoDisconnect_TimeoutReached()
         {
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
@@ -208,7 +208,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForDisconnectOrTimeout_ClientConnected_ServerDisconnect_ClientDisconnected()
+        public IEnumerator WaitForDisconnectOrTimeout_ClientConnected_ServerDisconnect_ClientDisconnected()
         {
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
