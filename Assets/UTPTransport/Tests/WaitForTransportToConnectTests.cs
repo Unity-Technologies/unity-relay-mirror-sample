@@ -31,21 +31,25 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator NoConnections_StatusTimedOut()
+        public IEnumerator IEnumerator_ClientIsNotConnected_ResultIsTimedOut()
         {
-            WaitForTransportToConnect connectionTestResult = new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForTransportToConnect.Status.TimedOut);
+            var waitForConnection = new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 5f);
+
+            yield return waitForConnection;
+
+            Assert.That(waitForConnection.Result, Is.EqualTo(WaitForTransportToConnect.Status.TimedOut));
         }
 
         [UnityTest]
-        public IEnumerator ClientConnected_StatusClientConnected()
+        public IEnumerator IEnumerator_ClientConnectsToServer_ResultIsClientConnected()
         {
+            var waitForConnection = new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             _server.ServerStart();
             _client.ClientConnect(_server.ServerUri());
-            WaitForTransportToConnect connectionTestResult = new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForTransportToConnect.Status.ClientConnected);
+
+            yield return waitForConnection;
+
+            Assert.That(waitForConnection.Result, Is.EqualTo(WaitForTransportToConnect.Status.ClientConnected));
         }
     }
 }
