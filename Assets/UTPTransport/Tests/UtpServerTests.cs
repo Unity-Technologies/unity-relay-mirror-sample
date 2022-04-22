@@ -62,20 +62,20 @@ namespace Utp
         }
 
         [Test]
-        public void UtpServer_IsActive_NotStarted_False()
+        public void IsActive_NotStarted_False()
         {
             Assert.IsFalse(_server.IsActive(), "Server is active without being started.");
         }
 
         [Test]
-        public void UtpServer_IsActive_Started_True()
+        public void IsActive_Started_True()
         {
             _server.Start(7777);
             Assert.IsTrue(_server.IsActive(), "Server did not start and is not active.");
         }
 
         [Test]
-        public void UtpServer_GetClientAddress_NotConnected_EmptyString()
+        public void GetClientAddress_NotConnected_EmptyString()
         {
             int idOfNonExistentClient = 1;
             string clientAddress = _server.GetClientAddress(idOfNonExistentClient);
@@ -83,7 +83,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_GetClientAddress_Connected_NonEmptyString()
+        public IEnumerator GetClientAddress_Connected_NonEmptyString()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -96,7 +96,7 @@ namespace Utp
         }
 
         [Test]
-        public void UtpServer_Disconnect_NoClient_Warning()
+        public void Disconnect_NoClient_Warning()
         {
             int idOfNonExistentClient = 1;
             _server.Disconnect(idOfNonExistentClient);
@@ -105,7 +105,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_Disconnect_ClientConnected_Success()
+        public IEnumerator Disconnect_ClientConnected_Success()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -118,7 +118,7 @@ namespace Utp
         }
 
         [Test]
-        public void UtpServer_FindConnection_NoClient_DefaultConnection()
+        public void FindConnection_NoClient_DefaultConnection()
         {
             int idOfNonExistentClient = 1;
             Unity.Networking.Transport.NetworkConnection FoundConnection = _server.FindConnection(idOfNonExistentClient);
@@ -126,7 +126,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_FindConnection_ClientConnected_ValidConnection()
+        public IEnumerator FindConnection_ClientConnected_ValidConnection()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -137,7 +137,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_OnConnectedCallback_Called()
+        public IEnumerator OnConnectedCallback_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -146,7 +146,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_OnDisconnectedCallback_Called()
+        public IEnumerator OnDisconnectedCallback_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -159,7 +159,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpServer_OnReceivedDataCallback_Called()
+        public IEnumerator OnReceivedDataCallback_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
