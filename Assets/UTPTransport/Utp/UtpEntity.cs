@@ -50,9 +50,9 @@ namespace Utp
         }
 
         /// <summary>
-		/// Determine whether the server is running or not.
+		/// Determine whether the NetworkDriver has been initialized.
 		/// </summary>
-		/// <returns>True if running, false otherwise.</returns>
+		/// <returns>True if initialized, false otherwise.</returns>
 		public bool IsNetworkDriverInitialized()
         {
             return !Equals(driver, default(NetworkDriver));
