@@ -9,9 +9,9 @@ namespace Utp
     {
         private UtpServer _server;
         private UtpClient _client;
-        private bool ClientOnConnectedCalled;
-        private bool ClientOnDisconnectedCalled;
-        private bool ClientOnReceivedDataCalled;
+        private bool _clientOnConnectedCalled;
+        private bool _clientOnDisconnectedCalled;
+        private bool _clientOnReceivedDataCalled;
 
         public IEnumerator TickFrames(UtpClient _Client, UtpServer _Server, int FramesToSkip = 15)
         {
@@ -31,9 +31,9 @@ namespace Utp
             _server = new UtpServer(timeoutInMilliseconds: 1000);
 
             _client = new UtpClient(
-                () => { ClientOnConnectedCalled = true; },
-                (message) => { ClientOnReceivedDataCalled = true; },
-                () => { ClientOnDisconnectedCalled = true; },
+                () => { _clientOnConnectedCalled = true; },
+                (message) => { _clientOnReceivedDataCalled = true; },
+                () => { _clientOnDisconnectedCalled = true; },
                 timeoutInMilliseconds: 1000
             );
         }
@@ -43,9 +43,10 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
-            ClientOnConnectedCalled = false;
-            ClientOnDisconnectedCalled = false;
-            ClientOnReceivedDataCalled = false;
+
+            _clientOnConnectedCalled = false;
+            _clientOnDisconnectedCalled = false;
+            _clientOnReceivedDataCalled = false;
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ClientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
+            Assert.IsTrue(_clientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
         }
 
         [UnityTest]
@@ -91,7 +92,7 @@ namespace Utp
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ClientOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
+            Assert.IsTrue(_clientOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
         [UnityTest]
@@ -106,7 +107,7 @@ namespace Utp
             _client.Send(emptyPacket, idOfChannel);
             _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
             yield return TickFrames(_client, _server, 5);
-            Assert.IsTrue(ClientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
+            Assert.IsTrue(_clientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
         }
     }
 }
