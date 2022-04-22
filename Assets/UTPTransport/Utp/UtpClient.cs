@@ -182,15 +182,20 @@ namespace Utp
         /// </summary>
         private bool connected;
 
+        public UtpClient(int timeoutInMilliseconds)
+        {
+            this.timeout = timeoutInMilliseconds;
+
+            //Allocate max header size array 
+            driverMaxHeaderSize = new int[2];
+        }
+
         public UtpClient(Action OnConnected, Action<ArraySegment<byte>> OnReceivedData, Action OnDisconnected, int timeout)
+            : this(timeout)
         {
             this.OnConnected = OnConnected;
             this.OnReceivedData = OnReceivedData;
             this.OnDisconnected = OnDisconnected;
-            this.timeout = timeout;
-
-            //Allocate max header size array 
-            driverMaxHeaderSize = new int[2];
         }
 
         /// <summary>
