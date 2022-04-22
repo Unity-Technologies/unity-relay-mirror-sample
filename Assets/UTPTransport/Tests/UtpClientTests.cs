@@ -61,20 +61,20 @@ namespace Utp
         }
 
         [Test]
-        public void UtpClient_IsConnected_NotConnected_False()
+        public void IsConnected_NotConnected_False()
         {
             Assert.IsFalse(_client.IsConnected(), "Client is connected without calling Connect().");
         }
 
         [Test]
-        public void UtpClient_IsConnected_NoServer_False()
+        public void IsConnected_NoServer_False()
         {
             _client.Connect("localhost", 7777);
             Assert.IsFalse(_client.IsConnected(), "Client is connected without server starting.");
         }
 
         [UnityTest]
-        public IEnumerator UtpClient_IsConnected_WithServer_True()
+        public IEnumerator IsConnected_WithServer_True()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -85,7 +85,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpClient_OnConnectedCallback_Called()
+        public IEnumerator OnConnectedCallback_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -94,7 +94,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpClient_OnDisconnectedCallback_Called()
+        public IEnumerator OnDisconnectedCallback_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
@@ -107,7 +107,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator UtpClient_OnReceivedDataCallbacks_Called()
+        public IEnumerator OnReceivedDataCallbacks_Called()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
