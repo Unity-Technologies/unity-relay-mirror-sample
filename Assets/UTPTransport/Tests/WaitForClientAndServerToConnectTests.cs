@@ -36,7 +36,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator WaitForClientAndServerToConnect_NoConnections_StatusTimedOut()
+        public IEnumerator NoConnections_StatusTimedOut()
         {
             WaitForClientAndServerToConnect connectionTestResult = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 5f);
             yield return connectionTestResult;
@@ -44,7 +44,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator WaitForClientAndServerToConnect_ClientConnected_StatusClientConnected()
+        public IEnumerator ClientConnected_StatusClientConnected()
         {
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
