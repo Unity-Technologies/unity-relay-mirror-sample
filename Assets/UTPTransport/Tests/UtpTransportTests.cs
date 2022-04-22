@@ -89,7 +89,7 @@ namespace Utp
             GameObject.Destroy(_server.gameObject);
         }
         [UnityTest]
-        public IEnumerator TestHarness_WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
+        public IEnumerator WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
         {
             WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
             yield return connectionTestResult;
@@ -97,7 +97,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator TestHarness_WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
+        public IEnumerator WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
         {
             _server.ServerStart();
             _client.ClientConnect(_server.ServerUri());
