@@ -291,7 +291,7 @@ namespace Utp
 			if (useRelay)
 			{
 				//Instantiate relay network data
-				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, "udp");
+				RelayServerData relayServerData = RelayUtils.HostRelayData(allocation, RelayServerEndpoint.NetworkOptions.Udp);
 				RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 				NetworkSettings networkSettings = new NetworkSettings();
 

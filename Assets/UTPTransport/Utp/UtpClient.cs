@@ -303,7 +303,7 @@ namespace Utp
 			}
 
             //Instantiate relay network data
-			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, "udp");
+			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
 			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 			NetworkSettings networkSettings = new NetworkSettings();
 

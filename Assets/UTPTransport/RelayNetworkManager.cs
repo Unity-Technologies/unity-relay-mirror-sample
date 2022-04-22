@@ -11,7 +11,7 @@ namespace Utp
     public class RelayNetworkManager : NetworkManager
     {
 		private UtpTransport utpTransport;
-
+		
 		/// <summary>
 		/// Server's join code if using Relay.
 		/// </summary>
