@@ -44,7 +44,7 @@ namespace Utp
         /// </summary>
         /// <param name="connection">The connection to validate.</param>
         /// <returns>True or false, whether the connection is valid.</returns>
-        public bool ConnectionIsActive(Unity.Networking.Transport.NetworkConnection connection)
+        public bool IsValidConnection(Unity.Networking.Transport.NetworkConnection connection)
         {
             return !Equals(connection, default(Unity.Networking.Transport.NetworkConnection));
         }

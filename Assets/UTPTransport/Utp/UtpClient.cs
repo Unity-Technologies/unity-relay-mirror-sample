@@ -279,7 +279,7 @@ namespace Utp
             var address = endpoint.Address;
 
             //No response on endpoint connection
-            if (!ConnectionIsActive(connection))
+            if (!IsValidConnection(connection))
             {
                 UtpLog.Error($"Client failed to connect to server at {address}");
                 return;
@@ -325,7 +325,7 @@ namespace Utp
             var address = relayNetworkParameter.ServerData.Endpoint.Address;
 
             //No response on endpoint connection
-            if (!ConnectionIsActive(connection))
+            if (!IsValidConnection(connection))
             {
                 UtpLog.Error($"Client failed to connect to Relay server at {address}");
                 return;
@@ -512,7 +512,7 @@ namespace Utp
         private void cacheConnectionInfo()
         {
             //Check for an active connection from this client
-            if (ConnectionIsActive(connection))
+            if (IsValidConnection(connection))
             {
                 bool isInitialized = IsNetworkDriverInitialized();
 
