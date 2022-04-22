@@ -411,15 +411,15 @@ namespace Utp
             {
                 if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnConnected)
                 {
-                    OnConnected.Invoke();
+                    OnConnected?.Invoke();
                 }
                 else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnReceivedData)
                 {
-                    OnReceivedData.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+                    OnReceivedData?.Invoke(new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
                 }
                 else if (connectionEvent.eventType == (byte)UtpConnectionEventType.OnDisconnected)
                 {
-                    OnDisconnected.Invoke();
+                    OnDisconnected?.Invoke();
                 }
                 else
                 {
