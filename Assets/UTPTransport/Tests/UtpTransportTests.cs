@@ -12,61 +12,6 @@ namespace Utp
         private UtpTransport _server;
         private UtpTransport _client;
 
-
-        private class WaitForConnectionOrTimeout : IEnumerator
-        {
-            public enum Status
-            {
-                Undetermined,
-                ClientConnected,
-                TimedOut,
-            }
-
-            public Status Result { get; private set; } = Status.Undetermined;
-
-            public object Current => null;
-
-            private float _elapsedTime = 0f;
-            private float _timeout = 0f;
-
-            private UtpTransport _client = null;
-            private UtpTransport _server = null;
-
-            public WaitForConnectionOrTimeout(UtpTransport client, UtpTransport server, float timeoutInSeconds)
-            {
-                _client = client;
-                _server = server;
-                _timeout = timeoutInSeconds;
-            }
-
-            public bool MoveNext()
-            {
-                _client.ClientEarlyUpdate();
-                _server.ServerEarlyUpdate();
-
-                _elapsedTime += Time.deltaTime;
-
-                if (_elapsedTime >= _timeout)
-                {
-                    Result = Status.TimedOut;
-                    return false;
-                }
-                else if (_client.ClientConnected())
-                {
-                    Result = Status.ClientConnected;
-                    return false;
-                }
-
-                return true;
-            }
-
-            public void Reset()
-            {
-                _elapsedTime = 0f;
-                _timeout = 0f;
-                Result = Status.Undetermined;
-            }
-        }
         [SetUp]
         public void SetUp()
         {
@@ -84,23 +29,6 @@ namespace Utp
 
             _server.ServerStop();
             GameObject.Destroy(_server.gameObject);
-        }
-        [UnityTest]
-        public IEnumerator WaitForConnectionOrTimeout_NoConnections_StatusTimedOut()
-        {
-            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.TimedOut);
-        }
-
-        [UnityTest]
-        public IEnumerator WaitForConnectionOrTimeout_ClientConnected_StatusClientConnected()
-        {
-            _server.ServerStart();
-            _client.ClientConnect(_server.ServerUri());
-            WaitForConnectionOrTimeout connectionTestResult = new WaitForConnectionOrTimeout(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForConnectionOrTimeout.Status.ClientConnected);
         }
         [Test]
         public void ServerActive_IsNotActive_False()
@@ -131,7 +59,7 @@ namespace Utp
         {
             _server.ServerStart();
             _client.ClientConnect(_server.ServerUri());
-            yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+            yield return new WaitForTransportToConnect(_client, _server, 30f);
             int idOfFirstClient = 1;
             string clientAddress = _server.ServerGetClientAddress(idOfFirstClient);
             Assert.IsNotEmpty(clientAddress, "A client address was not returned, connection possibly timed out..");
@@ -146,7 +74,7 @@ namespace Utp
         {
             _server.ServerStart();
             _client.ClientConnect(_server.ServerUri());
-            yield return new WaitForConnectionOrTimeout(_client, _server, 30f);
+            yield return new WaitForTransportToConnect(_client, _server, 30f);
             Assert.IsTrue(_client.ClientConnected(), "Client is not connected, but should be.");
         }
     }
