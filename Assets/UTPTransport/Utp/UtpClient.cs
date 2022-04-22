@@ -385,7 +385,7 @@ namespace Utp
             ProcessIncomingEvents();
 
             //Cache driver & connection info
-            CacheConnectionInfo();
+            cacheConnectionInfo();
 
             // Need to ensure the driver did not become inactive
             if (!DriverIsActive())
@@ -509,7 +509,7 @@ namespace Utp
         /// <summary>
         /// Caches important properties to allow for getter methods to be called without interfering with the job system.
         /// </summary>
-        private void CacheConnectionInfo()
+        private void cacheConnectionInfo()
         {
             //Check for an active connection from this client
             if (ConnectionIsActive(connection))
