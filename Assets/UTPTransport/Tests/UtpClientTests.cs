@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Utp
@@ -13,15 +14,15 @@ namespace Utp
         private bool _clientOnDisconnectedCalled;
         private bool _clientOnReceivedDataCalled;
 
-        public IEnumerator TickFrames(UtpClient _Client, UtpServer _Server, int FramesToSkip = 15)
+        private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
         {
-            int FramesPassed = 0;
-            while (FramesPassed < FramesToSkip)
+            float elapsedTime = 0f;
+            while (elapsedTime < numSeconds)
             {
-                _Client.Tick();
-                _Server.Tick();
+                client.Tick();
+                server.Tick();
                 yield return null;
-                FramesPassed++;
+                elapsedTime += Time.deltaTime;
             }
         }
 
@@ -88,7 +89,7 @@ namespace Utp
             _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return TickFrames(_client, _server, 5);
+            yield return tickClientAndServerForSeconds(_client, _server, 5f);
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
@@ -106,7 +107,7 @@ namespace Utp
             ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
             _client.Send(emptyPacket, idOfChannel);
             _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
-            yield return TickFrames(_client, _server, 5);
+            yield return tickClientAndServerForSeconds(_client, _server, 5f);
             Assert.IsTrue(_clientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
         }
     }
