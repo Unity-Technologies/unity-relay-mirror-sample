@@ -229,15 +229,20 @@ namespace Utp
         /// </summary>
         private int timeout;
 
+        public UtpServer(int timeoutInMilliseconds)
+        {
+            this.timeout = timeoutInMilliseconds;
+        }
+
         public UtpServer(Action<int> OnConnected,
             Action<int, ArraySegment<byte>> OnReceivedData,
             Action<int> OnDisconnected,
             int timeoutInMilliseconds)
+            : this(timeoutInMilliseconds)
         {
             this.OnConnected = OnConnected;
             this.OnReceivedData = OnReceivedData;
             this.OnDisconnected = OnDisconnected;
-            this.timeout = timeoutInMilliseconds;
         }
 
         /// <summary>
