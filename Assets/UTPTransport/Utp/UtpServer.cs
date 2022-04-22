@@ -274,7 +274,7 @@ namespace Utp
 		/// <param name="allocation">The Relay allocation, if using Relay.</param>
 		public void Start(ushort port, bool useRelay = false, Allocation allocation = null)
 		{
-			if (DriverIsActive())
+			if (IsNetworkDriverInitialized())
 			{
 				UtpLog.Error("Server is already active");
 				return;
@@ -344,7 +344,7 @@ namespace Utp
 		public void Tick()
 		{
 			//If the network driver has shut down, back out
-			if (!DriverIsActive())
+			if (!IsNetworkDriverInitialized())
             {
 				return;
 			}
@@ -493,7 +493,7 @@ namespace Utp
 		public void ProcessIncomingEvents()
 		{
 			//Check if the server is active
-			if (!DriverIsActive())
+			if (!IsNetworkDriverInitialized())
             {
 				return;
 			}	
@@ -576,7 +576,7 @@ namespace Utp
 		/// <returns>True if running, false otherwise.</returns>
 		public bool IsActive()
         {
-			return DriverIsActive();
+			return IsNetworkDriverInitialized();
         }
 	}
 }

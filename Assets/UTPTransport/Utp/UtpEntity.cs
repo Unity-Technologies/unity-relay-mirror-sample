@@ -53,7 +53,7 @@ namespace Utp
 		/// Determine whether the server is running or not.
 		/// </summary>
 		/// <returns>True if running, false otherwise.</returns>
-		public bool DriverIsActive()
+		public bool IsNetworkDriverInitialized()
         {
             return !Equals(driver, default(NetworkDriver));
         }

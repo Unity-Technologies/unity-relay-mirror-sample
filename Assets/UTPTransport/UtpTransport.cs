@@ -200,7 +200,7 @@ namespace Utp
 
         #region Server overrides
 
-        public override bool ServerActive() => server.DriverIsActive();
+        public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
 			server.Start(Port, useRelay, relayManager.ServerAllocation);
@@ -232,7 +232,7 @@ namespace Utp
         public override void Shutdown() 
 		{
 			if (client.IsConnected()) client.Disconnect();
-			if (server.DriverIsActive()) server.Stop();
+			if (server.IsNetworkDriverInitialized()) server.Stop();
 		}
 
 		public override string ToString() => "UTP";

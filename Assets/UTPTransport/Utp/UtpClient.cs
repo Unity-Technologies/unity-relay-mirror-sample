@@ -388,7 +388,7 @@ namespace Utp
             cacheConnectionInfo();
 
             // Need to ensure the driver did not become inactive
-            if (!DriverIsActive())
+            if (!IsNetworkDriverInitialized())
             {
                 driverMaxHeaderSize = new int[NUM_PIPELINES];
                 return;
@@ -440,7 +440,7 @@ namespace Utp
         public void ProcessIncomingEvents()
         {
             // Exit if the driver is not active or connection isn't ready
-            if (!DriverIsActive() || !connection.IsCreated)
+            if (!IsNetworkDriverInitialized() || !connection.IsCreated)
             {
                 return;
             }
@@ -489,7 +489,7 @@ namespace Utp
         /// <returns>This client's max header size.</returns>
         public int GetMaxHeaderSize(int channelId = Channels.Reliable)
         {
-            if (IsConnected() && DriverIsActive()) 
+            if (IsConnected() && IsNetworkDriverInitialized()) 
             {
                 return driverMaxHeaderSize[channelId];
             }
@@ -514,17 +514,17 @@ namespace Utp
             //Check for an active connection from this client
             if (ConnectionIsActive(connection))
             {
-                bool driverActive = DriverIsActive();
+                bool isInitialized = IsNetworkDriverInitialized();
 
                 //If driver is active, cache its max header size for UTP transport
-                if (driverActive)
+                if (isInitialized)
                 {
                     driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
                     driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
                 }
 
                 //Set connection state
-                isConnected = driverActive && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+                isConnected = isInitialized && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
             }
             else
             {
