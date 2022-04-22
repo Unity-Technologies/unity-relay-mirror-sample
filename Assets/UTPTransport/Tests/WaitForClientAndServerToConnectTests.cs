@@ -36,21 +36,25 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator NoConnections_StatusTimedOut()
+        public IEnumerator IEnumerator_ClientDoesNotConnectToServer_ResultIsTimedOut()
         {
-            WaitForClientAndServerToConnect connectionTestResult = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 5f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForClientAndServerToConnect.Status.TimedOut);
+            var waitForConnection = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 5f);
+
+            yield return waitForConnection;
+
+            Assert.That(waitForConnection.Result, Is.EqualTo(WaitForClientAndServerToConnect.Status.TimedOut));
         }
 
         [UnityTest]
-        public IEnumerator ClientConnected_StatusClientConnected()
+        public IEnumerator IEnumerator_ClientConnectsToServer_ResultIsClientConnected()
         {
+            var waitForConnection = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
+
             _server.Start(port: 7777);
             _client.Connect(host: "localhost", port: 7777);
-            WaitForClientAndServerToConnect connectionTestResult = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return connectionTestResult;
-            Assert.IsTrue(connectionTestResult.Result == WaitForClientAndServerToConnect.Status.ClientConnected);
+            yield return waitForConnection;
+
+            Assert.That(waitForConnection.Result, Is.EqualTo(WaitForClientAndServerToConnect.Status.ClientConnected));
         }
     }
 }
