@@ -37,23 +37,23 @@ namespace Utp
         /// <summary>
         /// Timeout(ms) to be set on drivers.
         /// </summary>
-        protected int timeout;
+        protected int timeoutInMilliseconds;
 
         /// <summary>
         /// Returns whether a connection is a valid one. Checks against default connection object.
         /// </summary>
         /// <param name="connection">The connection to validate.</param>
         /// <returns>True or false, whether the connection is valid.</returns>
-        public bool ConnectionIsActive(Unity.Networking.Transport.NetworkConnection connection)
+        public bool IsValidConnection(Unity.Networking.Transport.NetworkConnection connection)
         {
             return !Equals(connection, default(Unity.Networking.Transport.NetworkConnection));
         }
 
         /// <summary>
-		/// Determine whether the server is running or not.
+		/// Determine whether the NetworkDriver has been initialized.
 		/// </summary>
-		/// <returns>True if running, false otherwise.</returns>
-		public bool DriverIsActive()
+		/// <returns>True if initialized, false otherwise.</returns>
+		public bool IsNetworkDriverInitialized()
         {
             return !Equals(driver, default(NetworkDriver));
         }

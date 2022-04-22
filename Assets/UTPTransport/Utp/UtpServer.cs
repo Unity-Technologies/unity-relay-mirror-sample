@@ -242,16 +242,29 @@ namespace Utp
 		/// </summary>
 		private NativeList<Unity.Networking.Transport.NetworkConnection> connections;
 
-		public UtpServer(Action<int> OnConnected,
-			Action<int, ArraySegment<byte>> OnReceivedData,
-			Action<int> OnDisconnected,
-			int timeout)
-		{
-			this.OnConnected = OnConnected;
-			this.OnReceivedData = OnReceivedData;
-			this.OnDisconnected = OnDisconnected;
-			this.timeout = timeout;
-		}
+		/// <summary>
+		/// Constructor for UTP server.
+		/// </summary>
+		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+		public UtpServer(int timeoutInMilliseconds)
+        {
+            this.timeoutInMilliseconds = timeoutInMilliseconds;
+        }
+
+		/// <summary>
+		/// Constructor for UTP server.
+		/// </summary>
+		/// <param name="OnConnected">Action that is invoked when connected.</param>
+		/// <param name="OnReceivedData">Action that is invoked when receiving data.</param>
+		/// <param name="OnDisconnected">Action that is invoked when disconnected.</param>
+		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+		public UtpServer(Action<int> OnConnected, Action<int, ArraySegment<byte>> OnReceivedData, Action<int> OnDisconnected, int timeoutInMilliseconds)
+            : this(timeoutInMilliseconds)
+        {
+            this.OnConnected = OnConnected;
+            this.OnReceivedData = OnReceivedData;
+            this.OnDisconnected = OnDisconnected;
+        }
 
 		/// <summary>
 		/// Initialize the server. Currently only supports IPV4.
@@ -261,7 +274,7 @@ namespace Utp
 		/// <param name="allocation">The Relay allocation, if using Relay.</param>
 		public void Start(ushort port, bool useRelay = false, Allocation allocation = null)
 		{
-			if (DriverIsActive())
+			if (IsNetworkDriverInitialized())
 			{
 				UtpLog.Error("Server is already active");
 				return;
@@ -269,7 +282,7 @@ namespace Utp
 
 			//Instantiate network settings
 			var settings = new NetworkSettings();
-			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeout);
+			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
 			//Create IPV4 endpoint
 			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;
@@ -331,7 +344,7 @@ namespace Utp
 		public void Tick()
 		{
 			//If the network driver has shut down, back out
-			if (!DriverIsActive())
+			if (!IsNetworkDriverInitialized())
             {
 				return;
 			}
@@ -389,12 +402,10 @@ namespace Utp
 			//Dispose of driver
 			if(driver.IsCreated)
 			{
-				driver.Dispose();
-			}
-			
-			//Reset network driver
-			driver = default(NetworkDriver);
-		}
+                driver.Dispose();
+                driver = default(NetworkDriver);
+            }
+        }
 
 		/// <summary>
 		/// Disconnect and remove a connection via it's ID.
@@ -414,11 +425,11 @@ namespace Utp
 				driver.ScheduleUpdate().Complete();
 
 				//Invoke disconnect action
-				OnDisconnected.Invoke(connectionId);
+                OnDisconnected?.Invoke(connectionId);
 			}
 			else
 			{
-				UtpLog.Error($"Connection not found: {connectionId}");
+                UtpLog.Warning($"Connection not found: {connectionId}");
 			}
 		}
 
@@ -482,7 +493,7 @@ namespace Utp
 		public void ProcessIncomingEvents()
 		{
 			//Check if the server is active
-			if (!DriverIsActive())
+			if (!IsNetworkDriverInitialized())
             {
 				return;
 			}	
@@ -496,21 +507,21 @@ namespace Utp
 					//Connect action 
 					case ((byte)UtpConnectionEventType.OnConnected):
 					{
-						OnConnected.Invoke(connectionEvent.connectionId);
+						OnConnected?.Invoke(connectionEvent.connectionId);
 						break;
 					}
 
 					//Receive data action
 					case ((byte)UtpConnectionEventType.OnReceivedData):
                     {
-						OnReceivedData.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+						OnReceivedData?.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
 						break;
 					}
 
 					//Disconnect action
 					case ((byte)UtpConnectionEventType.OnDisconnected):
                     {
-						OnDisconnected.Invoke(connectionEvent.connectionId);
+						OnDisconnected?.Invoke(connectionEvent.connectionId);
 						break;
 					}
 
@@ -532,20 +543,19 @@ namespace Utp
 		/// <returns>The connection if found in the list, a default connection otherwise.</returns>
 		public Unity.Networking.Transport.NetworkConnection FindConnection(int connectionId)
 		{
-			//Complete the current job handle
 			jobHandle.Complete();
 
-			//Iterate through connections and find a match
-			foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
-			{
-				if (connection.GetHashCode() == connectionId)
+			if (connections.IsCreated)
+            {
+				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
 				{
-					//Return match
-					return connection;
+					if (connection.GetHashCode() == connectionId)
+					{
+						return connection;
+					}
 				}
-			}
+            }
 
-			//If no connection was found, return default connection
 			return default(Unity.Networking.Transport.NetworkConnection);
 		}
 
@@ -559,5 +569,14 @@ namespace Utp
 			connection = FindConnection(connectionId);
 			return connection.GetHashCode() == connectionId;
 		}
+
+		/// <summary>
+		/// Determine whether the server is running or not.
+		/// </summary>
+		/// <returns>True if running, false otherwise.</returns>
+		public bool IsActive()
+        {
+			return IsNetworkDriverInitialized();
+        }
 	}
 }

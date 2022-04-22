@@ -9,22 +9,27 @@ using Unity.Services.Relay.Models;
 
 namespace Utp
 {
-	public class RelayManager : MonoBehaviour
+	public class RelayManager : MonoBehaviour, IRelayManager
 	{
 		/// <summary>
 		/// The allocation managed by a host who is running as a client and server.
 		/// </summary>
-		public Allocation serverAllocation;
+		public Allocation ServerAllocation { get; set; }
 
 		/// <summary>
 		/// The allocation managed by a client who is connecting to a server.
 		/// </summary>
-		public JoinAllocation joinAllocation;
+		public JoinAllocation JoinAllocation { get; set; }
 
 		/// <summary>
 		/// A callback for when a Relay server is allocated and a join code is fetched.
 		/// </summary>
-		public Action<string, string> OnRelayServerAllocated;
+		public Action<string, string> OnRelayServerAllocated { get; set; }
+
+		/// <summary>
+		/// The interface to the Relay services API.
+		/// </summary>
+		public IRelayServiceSDK RelayServiceSDK { get; set; } = new WrappedRelayServiceSDK();
 
 		private void Awake()
 		{
@@ -43,7 +48,7 @@ namespace Utp
 
 		private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action<string> callback)
 		{
-			Task<JoinAllocation> joinTask = Relay.Instance.JoinAllocationAsync(joinCode);
+			Task<JoinAllocation> joinTask = RelayServiceSDK.JoinAllocationAsync(joinCode);
 			while (!joinTask.IsCompleted)
 			{
 				yield return null;
@@ -57,7 +62,7 @@ namespace Utp
 				yield break;
 			}
 
-			joinAllocation = joinTask.Result;
+			JoinAllocation = joinTask.Result;
 			callback?.Invoke(null);
 		}
 
@@ -72,7 +77,7 @@ namespace Utp
 
 		private IEnumerator GetRelayRegionsTask(Action<List<Region>> callback)
 		{
-			Task<List<Region>> regionsTask = Relay.Instance.ListRegionsAsync();
+			Task<List<Region>> regionsTask = RelayServiceSDK.ListRegionsAsync();
 			while (!regionsTask.IsCompleted)
 			{
 				yield return null;
@@ -81,6 +86,7 @@ namespace Utp
 			if (regionsTask.IsFaulted)
 			{
 				UtpLog.Error("List regions request failed");
+				callback?.Invoke(new List<Region>());
 				yield break;
 			}
 
@@ -99,7 +105,7 @@ namespace Utp
 
 		private IEnumerator AllocateRelayServerTask(int maxPlayers, string regionId, Action<Allocation> callback)
 		{
-			Task<Allocation> allocationTask = Relay.Instance.CreateAllocationAsync(maxPlayers, regionId);
+			Task<Allocation> allocationTask = RelayServiceSDK.CreateAllocationAsync(maxPlayers, regionId);
 			while (!allocationTask.IsCompleted)
 			{
 				yield return null;
@@ -118,15 +124,15 @@ namespace Utp
 
 		private void OnAllocateRelayServer(Allocation allocation)
 		{
-			serverAllocation = allocation;
+			ServerAllocation = allocation;
 
-			UtpLog.Verbose("Got allocation: " + serverAllocation.AllocationId.ToString());
-			StartCoroutine(GetJoinCodeTask(serverAllocation.AllocationId, OnRelayServerAllocated));
+			UtpLog.Verbose("Got allocation: " + ServerAllocation.AllocationId.ToString());
+			StartCoroutine(GetJoinCodeTask(ServerAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
 		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string, string> callback)
 		{
-			Task<string> joinCodeTask = Relay.Instance.GetJoinCodeAsync(allocationId);
+			Task<string> joinCodeTask = RelayServiceSDK.GetJoinCodeAsync(allocationId);
 			while (!joinCodeTask.IsCompleted)
 			{
 				yield return null;
