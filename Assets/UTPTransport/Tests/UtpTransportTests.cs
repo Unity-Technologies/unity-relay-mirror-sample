@@ -65,7 +65,7 @@ namespace Utp
         }
 
         [UnityTest]
-        public IEnumerator ServerGetClientAddress_ConnectionIdOfConnectedClient_ReturnsIpAddress()
+        public IEnumerator ServerGetClientAddress_ConnectionIdOfConnectedClient_ReturnsClientAddress()
         {
             int connectionIdForConnectedClient = 1;
             _server.ServerStart();
@@ -73,6 +73,20 @@ namespace Utp
             yield return new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             string clientAddress = _server.ServerGetClientAddress(connectionId: connectionIdForConnectedClient);
+
+            Assert.IsNotEmpty(clientAddress, "A client address was not returned, connection possibly timed out..");
+        }
+
+        [UnityTest]
+        public IEnumerator ServerGetClientAddress_ConnectionIdOfDisconnectedClient_ReturnsEmptyString()
+        {
+            int connectionIdOfDisconnectedClient = 1;
+            _server.ServerStart();
+            _client.ClientConnect(_server.ServerUri());
+            yield return new WaitForTransportToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
+            _client.ClientDisconnect();
+
+            string clientAddress = _server.ServerGetClientAddress(connectionId: connectionIdOfDisconnectedClient);
 
             Assert.IsNotEmpty(clientAddress, "A client address was not returned, connection possibly timed out..");
         }
