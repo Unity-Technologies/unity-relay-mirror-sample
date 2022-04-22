@@ -10,33 +10,12 @@ namespace Utp
     {
         private UtpServer _server;
         private UtpClient _client;
-        private bool _clientOnConnectedCalled;
-        private bool _clientOnDisconnectedCalled;
-        private bool _clientOnReceivedDataCalled;
-
-        private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
-        {
-            float elapsedTime = 0f;
-            while (elapsedTime < numSeconds)
-            {
-                client.Tick();
-                server.Tick();
-                yield return null;
-                elapsedTime += Time.deltaTime;
-            }
-        }
 
         [SetUp]
         public void SetUp()
         {
             _server = new UtpServer(timeoutInMilliseconds: 1000);
-
-            _client = new UtpClient(
-                () => { _clientOnConnectedCalled = true; },
-                (message) => { _clientOnReceivedDataCalled = true; },
-                () => { _clientOnDisconnectedCalled = true; },
-                timeoutInMilliseconds: 1000
-            );
+            _client = new UtpClient(timeoutInMilliseconds: 1000);
         }
 
         [TearDown]
@@ -44,10 +23,6 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
-
-            _clientOnConnectedCalled = false;
-            _clientOnDisconnectedCalled = false;
-            _clientOnReceivedDataCalled = false;
         }
 
         [Test]
@@ -78,28 +53,34 @@ namespace Utp
         public IEnumerator OnConnectedCallback_Called()
         {
             _server.Start(7777);
+            bool callbackWasInvoked = false;
+            _client.OnConnected += () => { callbackWasInvoked = true; };
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(_clientOnConnectedCalled, "The Client.OnConnected callback was not invoked as expected.");
+            Assert.IsTrue(callbackWasInvoked, "The Client.OnConnected callback was not invoked as expected.");
         }
 
         [UnityTest]
         public IEnumerator OnDisconnectedCallback_Called()
         {
             _server.Start(7777);
+            bool callbackWasInvoked = false;
+            _client.OnDisconnected += () => { callbackWasInvoked = true; };
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             yield return tickClientAndServerForSeconds(_client, _server, 5f);
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(_clientOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
+            Assert.IsTrue(callbackWasInvoked, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
         [UnityTest]
         public IEnumerator OnReceivedDataCallbacks_Called()
         {
             _server.Start(7777);
+            bool callbackWasInvoked = false;
+            _client.OnReceivedData += (segment) => { callbackWasInvoked = true; };
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
             int idOfFirstClient = 1;
@@ -108,7 +89,19 @@ namespace Utp
             _client.Send(emptyPacket, idOfChannel);
             _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
             yield return tickClientAndServerForSeconds(_client, _server, 5f);
-            Assert.IsTrue(_clientOnReceivedDataCalled, "The Client.OnReceivedData callback was not invoked as expected.");
+            Assert.IsTrue(callbackWasInvoked, "The Client.OnReceivedData callback was not invoked as expected.");
+        }
+
+        private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
+        {
+            float elapsedTime = 0f;
+            while (elapsedTime < numSeconds)
+            {
+                client.Tick();
+                server.Tick();
+                yield return null;
+                elapsedTime += Time.deltaTime;
+            }
         }
     }
 }
