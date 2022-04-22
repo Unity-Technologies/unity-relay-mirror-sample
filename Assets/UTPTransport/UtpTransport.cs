@@ -1,8 +1,6 @@
-using Mirror;
-
 using System;
 using System.Collections.Generic;
-
+using Mirror;
 using UnityEngine;
 using Unity.Networking.Transport;
 using Unity.Services.Relay.Models;
@@ -15,39 +13,72 @@ namespace Utp
     [DisallowMultipleComponent]
 	public class UtpTransport : Transport
 	{
-		// Scheme used by this transport
+		/// <summary>
+		/// The scheme used by this transport.
+		/// </summary>
 		public const string Scheme = "udp";
 
-		// Common
 		[Header("Transport Configuration")]
+
+		/// <summary>
+		/// The port at which to connect.
+		/// </summary>
 		public ushort Port = 7777;
+
 		[Header("Debugging")]
+
+		/// <summary>
+		/// The level of logging sensitivity.
+		/// </summary>
 		public LogLevel LoggerLevel = LogLevel.Info;
+
 		[Header("Timeout in MS")]
+
+		/// <summary>
+		/// The timeout for the Utp server, in milliseconds.
+		/// </summary>
 		public int TimeoutMS = 1000;
 
-		// Server & Client
-		UtpServer server;
-		UtpClient client;
-
+		/// <summary>
+		/// Whether to use Relay or not.
+		/// </summary>
 		// Relay toggle
 		public bool useRelay;
 
-		// Relay Manager
-		IRelayManager relayManager;
+		/// <summary>
+		/// The UTP server object.
+		/// </summary>
+		private UtpServer server;
 
+		/// <summary>
+		/// The UTP client object.
+		/// </summary>
+		private UtpClient client;
+
+		/// <summary>
+		/// The Relay manager.
+		/// </summary>
+		private IRelayManager relayManager;
+
+		/// <summary>
+		/// Calls when script is being loaded.
+		/// </summary>
 		private void Awake()
 		{
+			//Logging delegates
 			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
 			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => {};
 			if (LoggerLevel < LogLevel.Warning) UtpLog.Warning = _ => {};
 			if (LoggerLevel < LogLevel.Error) UtpLog.Error = _ => {};
 
+			//Instantiate new UTP server
 			server = new UtpServer(
 				(connectionId) => OnServerConnected.Invoke(connectionId),
 				(connectionId, message) => OnServerDataReceived.Invoke(connectionId, message, Channels.Reliable),
 				(connectionId) => OnServerDisconnected.Invoke(connectionId),
 				TimeoutMS);
+
+			//Instantiate new UTP client
 			client = new UtpClient(
 				() => OnClientConnected.Invoke(),
 				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
@@ -56,28 +87,37 @@ namespace Utp
 
 			if (!TryGetComponent<IRelayManager>(out relayManager))
             {
+				//Add relay manager component
 				relayManager = gameObject.AddComponent<RelayManager>();
             }
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
 
+		/// <summary>
+		/// Checks to see if UTP is available on this platform. 
+		/// </summary>
+		/// <returns>If UTP is available on the current platform.</returns>
 		public override bool Available()
 		{
 			return Application.platform != RuntimePlatform.WebGLPlayer;
 		}
 
-		// Client
+		/// <summary>
+		/// Connects client to a server address.
+		/// </summary>
+		/// <param name="address">The address to connect to.</param>
 		public override void ClientConnect(string address)
 		{
+			// We entirely ignore the address that is passed when utilizing Relay
 			if (useRelay)
 			{
-				// We entirely ignore the address that is passed when utilizing Relay
 				// The data we need to connect is embedded in the relayManager's JoinAllocation
 				client.RelayConnect(relayManager.JoinAllocation);
 			}
 			else
 			{
+				//Join normal IP with port
 				if (address.Contains(":"))
 				{
 					string[] hostAndPort = address.Split(':');
@@ -85,10 +125,67 @@ namespace Utp
 				}
 				else
 				{
-					client.Connect(address, Port); // fallback to default port
+					// fallback to default port
+					client.Connect(address, Port); 
 				}
 			}
 		}
+
+        #region Relay methods
+
+		/// <summary>
+		/// Configures a new Relay client with a join code.
+		/// </summary>
+		/// <param name="joinCode">The Relay join code.</param>
+		/// <param name="callback">Callback action.</param>
+        public void ConfigureClientWithJoinCode(string joinCode, Action<string> callback)
+		{
+			relayManager.GetAllocationFromJoinCode(joinCode, callback);
+		}
+
+		/// <summary>
+		/// Gets region ID's from all the Relay regions (Only use if Relay is enabled).
+		/// </summary>
+		/// <param name="callback">Callback action.</param>
+		public void GetRelayRegions(Action<List<Region>> callback)
+		{
+			relayManager.GetRelayRegions(callback);
+		}
+
+		/// <summary>
+		/// Allocates a new Relay server. 
+		/// </summary>
+		/// <param name="maxPlayers">The maximum player count.</param>
+		/// <param name="regionId">The region ID.</param>
+		/// <param name="callback">Allocation callback action.</param>
+		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string, string> callback)
+		{
+			relayManager.OnRelayServerAllocated = callback;
+			relayManager.AllocateRelayServer(maxPlayers, regionId);
+		}
+
+		/// <summary>
+		/// Returns the max packet size for any packet going over the network
+		/// </summary>
+		/// <param name="channelId"></param>
+		/// <returns></returns>
+		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
+		{
+			//Check for client activity
+			if (client != null && client.IsConnected())
+			{
+				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
+			}
+			else
+			{
+				//Fall back on default MTU
+				return NetworkParameterConstants.MTU;
+			}
+		}
+
+		#endregion
+
+		#region Client overrides
 
 		public override bool ClientConnected() => client.IsConnected();
 		public override void ClientDisconnect() => client.Disconnect();
@@ -99,14 +196,11 @@ namespace Utp
 			if (enabled) client.Tick();
 		}
 
-		// Relay Client (Only used if Relay is enabled)
-		public void ConfigureClientWithJoinCode(string joinCode, Action<string> callback)
-		{
-			relayManager.GetAllocationFromJoinCode(joinCode, callback);
-		}
+        #endregion
 
-		// Server
-		public override bool ServerActive() => server.IsActive();
+        #region Server overrides
+
+        public override bool ServerActive() => server.DriverIsActive();
 		public override void ServerStart()
 		{
 			server.Start(Port, useRelay, relayManager.ServerAllocation);
@@ -131,36 +225,18 @@ namespace Utp
 			return builder.Uri;
 		}
 
-		// Relay Server (Only used if Relay is enabled)
-		public void GetRelayRegions(Action<List<Region>> callback)
-		{
-			relayManager.GetRelayRegions(callback);
-		}
+        #endregion
 
-		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string, string> callback)
-		{
-			relayManager.OnRelayServerAllocated = callback;
-			relayManager.AllocateRelayServer(maxPlayers, regionId);
-		}
+        #region Transport overrides
 
-		public override int GetMaxPacketSize(int channelId = Channels.Reliable)
-		{
-			if(client != null && client.IsConnected())
-            {
-				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
-			} 
-			else
-            {
-				return NetworkParameterConstants.MTU;
-            }
-		}
-
-		public override void Shutdown() 
+        public override void Shutdown() 
 		{
 			if (client.IsConnected()) client.Disconnect();
-			if (server.IsActive()) server.Stop();
+			if (server.DriverIsActive()) server.Stop();
 		}
 
 		public override string ToString() => "UTP";
+
+		#endregion
 	}
 }
