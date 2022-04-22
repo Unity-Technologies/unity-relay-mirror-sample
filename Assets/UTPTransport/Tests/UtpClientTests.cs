@@ -9,9 +9,6 @@ namespace Utp
     {
         private UtpServer _server;
         private UtpClient _client;
-        private bool ServerOnConnectedCalled;
-        private bool ServerOnDisconnectedCalled;
-        private bool ServerOnReceivedDataCalled;
         private bool ClientOnConnectedCalled;
         private bool ClientOnDisconnectedCalled;
         private bool ClientOnReceivedDataCalled;
@@ -31,13 +28,7 @@ namespace Utp
         [SetUp]
         public void SetUp()
         {
-            _server = new UtpServer
-            (
-                (connectionId) => { ServerOnConnectedCalled = true; },
-                (connectionId, message) => { ServerOnReceivedDataCalled = true; },
-                (connectionId) => { ServerOnDisconnectedCalled = true; },
-                timeoutInMilliseconds: 1000
-            );
+            _server = new UtpServer(timeoutInMilliseconds: 1000);
 
             _client = new UtpClient(
                 () => { ClientOnConnectedCalled = true; },
@@ -52,9 +43,6 @@ namespace Utp
         {
             _client.Disconnect();
             _server.Stop();
-            ServerOnConnectedCalled = false;
-            ServerOnDisconnectedCalled = false;
-            ServerOnReceivedDataCalled = false;
             ClientOnConnectedCalled = false;
             ClientOnDisconnectedCalled = false;
             ClientOnReceivedDataCalled = false;
@@ -103,7 +91,7 @@ namespace Utp
             int idOfFirstClient = 1;
             _server.Disconnect(idOfFirstClient);
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(ServerOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
+            Assert.IsTrue(ClientOnDisconnectedCalled, "The Server.OnDisconnected callback was not invoked as expected.");
         }
 
         [UnityTest]
