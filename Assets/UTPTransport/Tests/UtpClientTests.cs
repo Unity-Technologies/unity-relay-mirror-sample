@@ -26,70 +26,72 @@ namespace Utp
         }
 
         [Test]
-        public void IsConnected_NotConnected_False()
+        public void IsConnected_ClientIsNotConnectedToServer_ReturnsFalse()
         {
-            Assert.IsFalse(_client.IsConnected(), "Client is connected without calling Connect().");
+            Assert.That(_client.IsConnected(), Is.False);
         }
 
         [Test]
-        public void IsConnected_NoServer_False()
+        public void IsConnected_ClientTriesToConnectToNonExistentServer_ReturnsFalse()
         {
             _client.Connect("localhost", 7777);
-            Assert.IsFalse(_client.IsConnected(), "Client is connected without server starting.");
+            Assert.That(_client.IsConnected(), Is.False);
         }
 
         [UnityTest]
-        public IEnumerator IsConnected_WithServer_True()
+        public IEnumerator IsConnected_ClientIsConnectedToServer_ReturnsTrue()
         {
             _server.Start(7777);
             _client.Connect("localhost", 7777);
-
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
-            Assert.IsTrue(_client.IsConnected(), "Client was not able to connect with server.");
+            Assert.That(_client.IsConnected(), Is.True);
         }
 
         [UnityTest]
-        public IEnumerator OnConnectedCallback_Called()
+        public IEnumerator OnConnected_ClientConnectsToServer_CallbackIsInvoked()
         {
-            _server.Start(7777);
             bool callbackWasInvoked = false;
             _client.OnConnected += () => { callbackWasInvoked = true; };
+
+            _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(callbackWasInvoked, "The Client.OnConnected callback was not invoked as expected.");
+
+            Assert.That(callbackWasInvoked, Is.True);
         }
 
         [UnityTest]
-        public IEnumerator OnDisconnectedCallback_Called()
+        public IEnumerator OnDisconnected_ClientDisconnectsFromServer_CallbackIsInvoked()
         {
-            _server.Start(7777);
             bool callbackWasInvoked = false;
             _client.OnDisconnected += () => { callbackWasInvoked = true; };
+            _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            yield return tickClientAndServerForSeconds(_client, _server, 5f);
-            int idOfFirstClient = 1;
-            _server.Disconnect(idOfFirstClient);
+
+            _client.Disconnect();
             yield return new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            Assert.IsTrue(callbackWasInvoked, "The Server.OnDisconnected callback was not invoked as expected.");
+
+            Assert.That(callbackWasInvoked, Is.True);
         }
 
         [UnityTest]
-        public IEnumerator OnReceivedDataCallbacks_Called()
+        public IEnumerator OnReceivedData_ServerSendsDataToClient_CallbackIsInvoked()
         {
-            _server.Start(7777);
             bool callbackWasInvoked = false;
             _client.OnReceivedData += (segment) => { callbackWasInvoked = true; };
+            _server.Start(7777);
             _client.Connect("localhost", 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
-            int idOfFirstClient = 1;
-            int idOfChannel = 1;
-            ArraySegment<byte> emptyPacket = new ArraySegment<byte>(new byte[4]);
-            _client.Send(emptyPacket, idOfChannel);
-            _server.Send(idOfFirstClient, emptyPacket, idOfChannel);
+
+            int clientConnectionId = 1;
+            var dummyDataToSend = new ArraySegment<byte>(new byte[4]);
+            int validChannelId = 1;
+            _server.Send(connectionId: clientConnectionId, segment: dummyDataToSend, channelId: validChannelId);
             yield return tickClientAndServerForSeconds(_client, _server, 5f);
-            Assert.IsTrue(callbackWasInvoked, "The Client.OnReceivedData callback was not invoked as expected.");
+
+            Assert.That(callbackWasInvoked, Is.True);
         }
 
         private IEnumerator tickClientAndServerForSeconds(UtpClient client, UtpServer server, float numSeconds)
