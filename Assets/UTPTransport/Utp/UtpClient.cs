@@ -206,7 +206,7 @@ namespace Utp
         /// <summary>
         /// Whether the client is connected to the server or not.
         /// </summary>
-        private bool connected;
+        private bool isConnected;
 
         /// <summary>
         /// Constructor for UTP client.
@@ -503,7 +503,7 @@ namespace Utp
 		/// <returns>True if connected to a server, false otherwise.</returns>
 		public bool IsConnected()
         {
-            return connected;
+            return isConnected;
         }
 
         /// <summary>
@@ -524,14 +524,14 @@ namespace Utp
                 }
 
                 //Set connection state
-                connected = driverActive && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
+                isConnected = driverActive && connection.GetState(driver) == Unity.Networking.Transport.NetworkConnection.State.Connected;
             }
             else
             {
                 //If there is no valid connection, set values accordingly
                 driverMaxHeaderSize[Channels.Reliable] = 0;
                 driverMaxHeaderSize[Channels.Unreliable] = 0;
-                connected = false;
+                isConnected = false;
             }
         }
     }
