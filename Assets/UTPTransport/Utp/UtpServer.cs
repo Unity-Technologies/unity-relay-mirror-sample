@@ -378,7 +378,7 @@ namespace Utp
                 // When disconnecting, we need to ensure the driver has the opportunity to send a disconnect event to the client
                 driver.ScheduleUpdate().Complete();
 
-                OnDisconnected.Invoke(connectionId);
+                OnDisconnected?.Invoke(connectionId);
             }
             else
             {
