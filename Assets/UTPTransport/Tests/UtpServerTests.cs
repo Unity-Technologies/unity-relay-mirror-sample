@@ -37,12 +37,7 @@ namespace Utp
                 timeoutInMilliseconds: 1000
             );
 
-            _client = new UtpClient(
-                () => { },
-                (message) => { },
-                () => { },
-                timeout: 1000
-            );
+            _client = new UtpClient(timeoutInMilliseconds: 1000);
         }
 
         [TearDown]

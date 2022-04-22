@@ -12,20 +12,8 @@ namespace Utp
         [SetUp]
         public void SetUp()
         {
-            _server = new UtpServer
-            (
-                (connectionId) => { },
-                (connectionId, message) => { },
-                (connectionId) => { },
-                timeoutInMilliseconds: 1000
-            );
-
-            _client = new UtpClient(
-                () => { },
-                (message) => { },
-                () => { },
-                timeout: 1000
-            );
+            _server = new UtpServer(timeoutInMilliseconds: 1000);
+            _client = new UtpClient(timeoutInMilliseconds: 1000);
         }
 
         [TearDown]
