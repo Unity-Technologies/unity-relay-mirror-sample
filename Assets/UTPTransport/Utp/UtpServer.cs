@@ -242,11 +242,21 @@ namespace Utp
 		/// </summary>
 		private NativeList<Unity.Networking.Transport.NetworkConnection> connections;
 
-		/// <summary>
-		/// Constructor for UTP server.
-		/// </summary>
-		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
-		public UtpServer(int timeoutInMilliseconds)
+        /// <summary>
+        /// The number of pipelines tracked in the header size array.
+        /// </summary>
+        private const int NUM_PIPELINES = 2;
+
+        /// <summary>
+        /// The driver's max header size for UTP transport.
+        /// </summary>
+        private int[] driverMaxHeaderSize = new int[NUM_PIPELINES];
+
+        /// <summary>
+        /// Constructor for UTP server.
+        /// </summary>
+        /// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+        public UtpServer(int timeoutInMilliseconds)
         {
             this.timeoutInMilliseconds = timeoutInMilliseconds;
         }
@@ -355,8 +365,11 @@ namespace Utp
 			// Trigger Mirror callbacks for events that resulted in the last jobs work
 			ProcessIncomingEvents();
 
-			// Create a new jobs
-			var serverUpdateJob = new ServerUpdateJob
+            //Cache driver & connection info
+            cacheConnectionInfo();
+
+            // Create a new jobs
+            var serverUpdateJob = new ServerUpdateJob
 			{
 				driver = driver.ToConcurrent(),
 				connections = connections.AsDeferredJobArray(),
@@ -487,10 +500,20 @@ namespace Utp
 			}
 		}
 
-		/// <summary>
-		/// Processes connection events from the queue.
-		/// </summary>
-		public void ProcessIncomingEvents()
+        public int GetMaxHeaderSize(int channelId = Channels.Reliable)
+        {
+            if (IsNetworkDriverInitialized())
+            {
+                return driverMaxHeaderSize[channelId];
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Processes connection events from the queue.
+        /// </summary>
+        public void ProcessIncomingEvents()
 		{
 			//Check if the server is active
 			if (!IsNetworkDriverInitialized())
@@ -578,5 +601,19 @@ namespace Utp
         {
 			return IsNetworkDriverInitialized();
         }
-	}
+
+        private void cacheConnectionInfo()
+        {
+            bool isInitialized = IsNetworkDriverInitialized();
+
+            //If driver is active, cache its max header size for UTP transport
+            if (isInitialized)
+            {
+                driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
+                driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
+            }
+
+        }
+    }
 }
+

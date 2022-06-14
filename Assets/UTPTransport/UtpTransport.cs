@@ -176,7 +176,11 @@ namespace Utp
 			{
 				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
 			}
-			else
+            else if (server != null && server.IsActive())
+            {
+				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
+            }
+            else
 			{
 				//Fall back on default MTU
 				return NetworkParameterConstants.MTU;
