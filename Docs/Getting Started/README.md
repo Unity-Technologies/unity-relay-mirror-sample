@@ -78,6 +78,7 @@ To launch two instances of the sample project for testing purposes, complete the
 1. Open the sample project in the Unity Editor. The project supports Unity 2019.4.11f1 or later.
 1. Select **ParallelSync > Clones Manager** from the editor dropdown. ParallelSync allows you to launch multiple editor instances of the same project.
 1. Select **Add new clone**.
+	* **NOTE**: This operation can fail on Windows if the maximum path length (260 characters) is exceeded.
 1. After you have created the clone, select **Open in New Editor**.
 1. Select **Play** in both editor instances.
 1. Select **Auth Login** on both editor instances. This authenticates with the Unity Authentication Service (UAS) for Relay.
