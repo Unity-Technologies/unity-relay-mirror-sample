@@ -46,7 +46,7 @@ namespace Utp
         /// <returns>True or false, whether the connection is valid.</returns>
         public bool IsValidConnection(NetworkConnection connection)
         {
-            return !Equals(connection, default(NetworkConnection));
+            return connection.IsCreated;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Utp
 		/// <returns>True if initialized, false otherwise.</returns>
 		public bool IsNetworkDriverInitialized()
         {
-            return !Equals(driver, default(NetworkDriver));
+            return driver.IsCreated;
         }
     }
 }
