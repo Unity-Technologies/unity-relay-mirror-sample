@@ -77,7 +77,7 @@ namespace Network
             m_SessionId = System.Guid.NewGuid().ToString();
         }
 
-        public override void OnServerAddPlayer(NetworkConnection conn)
+        public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             base.OnServerAddPlayer(conn);
 
@@ -100,7 +100,7 @@ namespace Network
             m_SessionId = "";
         }
 
-        public override void OnServerDisconnect(NetworkConnection conn)
+        public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
             base.OnServerDisconnect(conn);
 

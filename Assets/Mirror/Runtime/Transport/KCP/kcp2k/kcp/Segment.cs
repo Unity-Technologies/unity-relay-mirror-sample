@@ -7,7 +7,7 @@ namespace kcp2k
     {
         internal uint conv;     // conversation
         internal uint cmd;      // command, e.g. Kcp.CMD_ACK etc.
-        internal uint frg;      // fragment
+        internal uint frg;      // fragment (sent as 1 byte)
         internal uint wnd;      // window size that the receive can currently receive
         internal uint ts;       // timestamp
         internal uint sn;       // serial number
@@ -15,7 +15,7 @@ namespace kcp2k
         internal uint resendts; // resend timestamp
         internal int rto;
         internal uint fastack;
-        internal uint xmit;
+        internal uint xmit;     // retransmit count
 
         // we need an auto scaling byte[] with a WriteBytes function.
         // MemoryStream does that perfectly, no need to reinvent the wheel.
@@ -30,6 +30,9 @@ namespace kcp2k
             int offset_ = offset;
             offset += Utils.Encode32U(ptr, offset, conv);
             offset += Utils.Encode8u(ptr, offset, (byte)cmd);
+            // IMPORTANT kcp encodes 'frg' as 1 byte.
+            // so we can only support up to 255 fragments.
+            // (which limits max message size to around 288 KB)
             offset += Utils.Encode8u(ptr, offset, (byte)frg);
             offset += Utils.Encode16U(ptr, offset, (ushort)wnd);
             offset += Utils.Encode32U(ptr, offset, ts);

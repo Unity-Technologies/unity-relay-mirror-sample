@@ -65,6 +65,8 @@ namespace Utp
 		/// </summary>
 		private void Awake()
 		{
+			SetupDefaultCallbacks();
+
 			//Logging delegates
 			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
 			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => {};
@@ -93,6 +95,34 @@ namespace Utp
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
+
+		private void SetupDefaultCallbacks()
+        {
+			if (OnServerConnected == null)
+            {
+				OnServerConnected = (connId) => Debug.LogWarning("OnServerConnected called with no handler");
+			}
+			if (OnServerDisconnected == null)
+            {
+				OnServerDisconnected = (connId) => Debug.LogWarning("OnServerDisconnected called with no handler");
+			}
+			if (OnServerDataReceived == null)
+            {
+				OnServerDataReceived = (connId, data, channel) => Debug.LogWarning("OnServerDataReceived called with no handler");
+			}
+			if (OnClientConnected == null)
+            {
+				OnClientConnected = () => Debug.LogWarning("OnClientConnected called with no handler");
+			}
+			if (OnClientDisconnected == null)
+            {
+				OnClientDisconnected = () => Debug.LogWarning("OnClientDisconnected called with no handler");
+			}
+			if (OnClientDataReceived == null)
+            {
+				OnClientDataReceived = (data, channel) => Debug.LogWarning("OnClientDataReceived called with no handler");
+			}
+        }
 
 		/// <summary>
 		/// Checks to see if UTP is available on this platform. 
@@ -176,7 +206,11 @@ namespace Utp
 			{
 				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
 			}
-			else
+            else if (server != null && server.IsActive())
+            {
+				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
+            }
+            else
 			{
 				//Fall back on default MTU
 				return NetworkParameterConstants.MTU;
