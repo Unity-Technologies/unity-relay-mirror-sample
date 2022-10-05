@@ -16,42 +16,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.transport",
-            "expression": "[1.0.0]",
-            "define": "COM_UNITY_TRANSPORT_1_0_0"
-        },
-        {
-            "name": "com.unity.transport",
-            "expression": "[1.1.0]",
-            "define": "COM_UNITY_TRANSPORT_1_1_0"
-        },
-        {
-            "name": "com.unity.transport",
-            "expression": "[1.2.0]",
-            "define": "COM_UNITY_TRANSPORT_1_2_0"
-        },
-        {
-            "name": "com.unity.transport",
-            "expression": "[1.3.0]",
-            "define": "COM_UNITY_TRANSPORT_1_3_0"
-        },
-        {
-            "name": "com.unity.services.relay",
-            "expression": "[1.0.2]",
-            "define": "COM_UNITY_RELAY_1_0_2"
-        },
-        {
-            "name": "com.unity.services.relay",
-            "expression": "[1.0.3]",
-            "define": "COM_UNITY_RELAY_1_0_3"
-        },
-        {
-            "name": "com.unity.services.relay",
-            "expression": "[1.0.4]",
-            "define": "COM_UNITY_RELAY_1_0_4"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
