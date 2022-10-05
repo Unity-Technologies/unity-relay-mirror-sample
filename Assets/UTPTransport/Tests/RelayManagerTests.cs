@@ -141,7 +141,8 @@ namespace Utp
                         relayServer: resultRelayServer,
                         key: resultKey,
                         connectionData: resultConnectionData,
-                        allocationIdBytes: resultAllocationIdBytes
+                        allocationIdBytes: resultAllocationIdBytes,
+                        region: region
                     )
                 );
             }
@@ -161,6 +162,7 @@ namespace Utp
                 byte[] joinAllocationKey = new byte[4];
                 byte[] joinAllocationHostConnectionData = new byte[4];
                 byte[] joinAllocationConnectionData = new byte[4];
+                string joinAllocationRegion = string.Empty;
                 byte[] joinAllocationAllocationIdBytes = new byte[4];
                 RelayServer joinAllocationRelayServer = new RelayServer(ipV4: localHostIp, port: samplePort);
                 return Task.FromResult<JoinAllocation>(
@@ -171,6 +173,7 @@ namespace Utp
                         key: joinAllocationKey,
                         hostConnectionData: joinAllocationHostConnectionData,
                         connectionData: joinAllocationConnectionData,
+                        region: joinAllocationRegion,
                         allocationIdBytes: joinAllocationAllocationIdBytes
                     )
                 );

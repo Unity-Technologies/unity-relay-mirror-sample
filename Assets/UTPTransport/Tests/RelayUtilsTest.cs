@@ -43,6 +43,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
 
             Allocation allocation = new Allocation(
                 allocationId,
@@ -50,7 +51,8 @@ namespace Utp
                 relayServer,
                 key,
                 connectionData,
-                allocationIdBytes
+                allocationIdBytes,
+                region
             );
 
             //Assert data against null/default data
@@ -88,6 +90,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
 
             Allocation allocation = new Allocation(
                 allocationId,
@@ -95,7 +98,8 @@ namespace Utp
                 relayServer,
                 key,
                 connectionData,
-                allocationIdBytes
+                allocationIdBytes,
+                region
             );
 
             //Assert exception thrown
@@ -119,6 +123,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
 
             Allocation allocation = new Allocation(
                 allocationId,
@@ -126,7 +131,8 @@ namespace Utp
                 relayServer,
                 key,
                 connectionData,
-                allocationIdBytes
+                allocationIdBytes,
+                region
             );
 
             //Assert exception thrown
@@ -162,6 +168,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
             byte[] hostConnectionData = new byte[16];
 
             JoinAllocation allocation = new JoinAllocation(
@@ -171,6 +178,7 @@ namespace Utp
                 key,
                 connectionData,
                 allocationIdBytes,
+                region,
                 hostConnectionData
             );
 
@@ -209,6 +217,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
             byte[] hostConnectionData = new byte[16];
 
             JoinAllocation allocation = new JoinAllocation(
@@ -218,6 +227,7 @@ namespace Utp
                 key,
                 connectionData,
                 allocationIdBytes,
+                region,
                 hostConnectionData
             );
 
@@ -242,6 +252,7 @@ namespace Utp
             byte[] key = new byte[16];
             byte[] connectionData = new byte[16];
             byte[] allocationIdBytes = new byte[16];
+            string region = string.Empty;
             byte[] hostConnectionData = new byte[16];
 
             JoinAllocation allocation = new JoinAllocation(
@@ -251,6 +262,7 @@ namespace Utp
                 key,
                 connectionData,
                 allocationIdBytes,
+                region,
                 hostConnectionData
             );
 
