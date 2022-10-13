@@ -297,23 +297,17 @@ namespace Utp
                 return;
             }
 
-            //Instantiate relay network data
-            //Initialize relay network
 			NetworkSettings networkSettings = new NetworkSettings();
 			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
             RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
-            //Instantiate network driver
             driver = NetworkDriver.Create(networkSettings);
 
-            //Instantiate event queue
             connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-            //Create network pipelines
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
-            //Attempt relay connection
             NetworkEndPoint endpoint = relayServerData.Endpoint;
 			connection = driver.Connect(endpoint);
 
