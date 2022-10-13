@@ -316,16 +316,16 @@ namespace Utp
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
             //Attempt relay connection
-			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
-            var address = relayNetworkParameter.ServerData.Endpoint.Address;
+            NetworkEndPoint endpoint = relayNetworkParameter.ServerData.Endpoint;
+			connection = driver.Connect(endpoint);
 
             if (IsValidConnection(connection))
             {
-                UtpLog.Info($"Client connecting to Relay server at {address}");
+                UtpLog.Info($"Client connected to the Relay server at {endpoint.Address}:{endpoint.Port}.");
             }
             else
             {
-                UtpLog.Error($"Client failed to connect to Relay server at {address}");
+                UtpLog.Error($"Client failed to connect to the Relay server at {endpoint.Address}:{endpoint.Port}.");
             }
         }
 
