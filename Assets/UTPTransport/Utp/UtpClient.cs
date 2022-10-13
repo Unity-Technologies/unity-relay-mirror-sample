@@ -239,21 +239,18 @@ namespace Utp
 		/// <param name="port">The port which the listen server is listening on.</param>
 		public void Connect(string host, ushort port)
 		{
-            //Check for double connection
 			if (IsConnected())
 			{
 				UtpLog.Warning($"Attempted to connect to {host}:{port} when this client is already connected to a server.");
 				return;
             }
 
-            //Check for blank host
             if(string.IsNullOrEmpty(host))
             {
                 UtpLog.Error("Client attempted to connect to empty host");
                 return;
             }
 
-            //Set localhost to local IP
             if (host == "localhost")
             {
                 host = "127.0.0.1";
@@ -267,24 +264,18 @@ namespace Utp
                 return;
             }
 
-            //Initialize network settings
             var settings = new NetworkSettings();
             settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
-            //Instantiate network driver
             driver = NetworkDriver.Create(settings);
 
-            //Instantiate event queue
             connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
-            //Create network pipelines
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
-            //Attempt endpoint connection
 			connection = driver.Connect(endpoint);
 
-            //No response on endpoint connection
             if (IsValidConnection(connection))
             {
                 UtpLog.Info($"Client connected to the server at {host}:{port}.");
