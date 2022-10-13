@@ -259,6 +259,14 @@ namespace Utp
                 host = "127.0.0.1";
             }
 
+            // TODO: Support for IPv6.
+            NetworkEndPoint endpoint;
+            if (!NetworkEndPoint.TryParse(host, port, out endpoint))
+            {
+                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {host}:{port} into a valid NetworkEndpoint.");
+                return;
+            }
+
             //Initialize network settings
             var settings = new NetworkSettings();
             settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
@@ -272,14 +280,6 @@ namespace Utp
             //Create network pipelines
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
-
-            // TODO: Support for IPv6.
-            NetworkEndPoint endpoint; 
-            if (!NetworkEndPoint.TryParse(host, port, out endpoint))
-            {
-                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {host}:{port} into a valid NetworkEndpoint.");
-                return;
-            }
 
             //Attempt endpoint connection
 			connection = driver.Connect(endpoint);
