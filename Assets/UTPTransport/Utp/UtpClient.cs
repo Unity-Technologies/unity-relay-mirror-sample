@@ -298,11 +298,9 @@ namespace Utp
             }
 
             //Instantiate relay network data
-			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
-			RelayNetworkParameter relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-			NetworkSettings networkSettings = new NetworkSettings();
-
             //Initialize relay network
+			NetworkSettings networkSettings = new NetworkSettings();
+			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
             RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
 
             //Instantiate network driver
@@ -316,7 +314,7 @@ namespace Utp
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
             //Attempt relay connection
-            NetworkEndPoint endpoint = relayNetworkParameter.ServerData.Endpoint;
+            NetworkEndPoint endpoint = relayServerData.Endpoint;
 			connection = driver.Connect(endpoint);
 
             if (IsValidConnection(connection))
