@@ -276,17 +276,16 @@ namespace Utp
             //Attempt endpoint connection
 			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
 			connection = driver.Connect(endpoint);
-            var address = endpoint.Address;
 
             //No response on endpoint connection
             if (!IsValidConnection(connection))
             {
-                UtpLog.Error($"Client failed to connect to server at {address}");
+                UtpLog.Error($"Client failed to connect to server at {endpoint.Address}");
                 return;
             }
 
             //Successfull connection
-            UtpLog.Info($"Client connecting to server at {address}");
+            UtpLog.Info($"Client connecting to server at {endpoint.Address}");
         }
 
         /// <summary>
