@@ -319,15 +319,14 @@ namespace Utp
 			connection = driver.Connect(relayNetworkParameter.ServerData.Endpoint);
             var address = relayNetworkParameter.ServerData.Endpoint.Address;
 
-            //No response on endpoint connection
-            if (!IsValidConnection(connection))
+            if (IsValidConnection(connection))
+            {
+                UtpLog.Info($"Client connecting to Relay server at {address}");
+            }
+            else
             {
                 UtpLog.Error($"Client failed to connect to Relay server at {address}");
-                return;
             }
-
-            //Successfull connection
-            UtpLog.Info($"Client connecting to Relay server at {address}");
         }
 
 		/// <summary>
