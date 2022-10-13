@@ -285,7 +285,7 @@ namespace Utp
 		{
 			if (IsNetworkDriverInitialized())
 			{
-				UtpLog.Error("Server is already active");
+				UtpLog.Warning("Attempting to start a server that is already active.");
 				return;
 			}
 
