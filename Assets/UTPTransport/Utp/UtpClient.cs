@@ -297,27 +297,26 @@ namespace Utp
                 return;
             }
 
-			NetworkSettings networkSettings = new NetworkSettings();
-			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
-            RelayParameterExtensions.WithRelayParameters(ref networkSettings, ref relayServerData);
-
-            driver = NetworkDriver.Create(networkSettings);
-
             connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
 
+			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
+
+			var networkSettings = new NetworkSettings();
+            networkSettings.WithRelayParameters(ref relayServerData);
+
+            driver = NetworkDriver.Create(networkSettings);
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
-            NetworkEndPoint endpoint = relayServerData.Endpoint;
-			connection = driver.Connect(endpoint);
+			connection = driver.Connect(relayServerData.Endpoint);
 
             if (IsValidConnection(connection))
             {
-                UtpLog.Info($"Client connected to the Relay server at {endpoint.Address}:{endpoint.Port}.");
+                UtpLog.Info($"Client connected to the Relay server at {relayServerData.Endpoint.Address}:{relayServerData.Endpoint.Port}.");
             }
             else
             {
-                UtpLog.Error($"Client failed to connect to the Relay server at {endpoint.Address}:{endpoint.Port}.");
+                UtpLog.Error($"Client failed to connect to the Relay server at {relayServerData.Endpoint.Address}:{relayServerData.Endpoint.Port}.");
             }
         }
 
