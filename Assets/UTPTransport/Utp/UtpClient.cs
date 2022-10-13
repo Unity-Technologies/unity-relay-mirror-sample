@@ -264,13 +264,12 @@ namespace Utp
                 return;
             }
 
+            connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
+
             var settings = new NetworkSettings();
             settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
             driver = NetworkDriver.Create(settings);
-
-            connectionsEventsQueue = new NativeQueue<UtpConnectionEvent>(Allocator.Persistent);
-
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
