@@ -328,20 +328,18 @@ namespace Utp
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
+			// If endpoint connection failed, back out 
 			if (driver.Bind(endpoint) != 0)
 			{
-				//If endpoint connection failed, back out 
 				UtpLog.Error($"Unable to start server, failed to bind the specified port {endpoint.Port}.");
 				return;
 			}
-			else
+
+			// If network driver cannot get feedback, back out
+			if (driver.Listen() != 0)
 			{
-				//If network driver cannot get feedback, back out
-				if (driver.Listen() != 0)
-				{
-					UtpLog.Error("Server failed to listen");
-					return;
-				}
+				UtpLog.Error("Server failed to listen");
+				return;
 			}
 
 			UtpLog.Info(useRelay ? ("Relay server started") : ($"Server started on port: {endpoint.Port}"));
