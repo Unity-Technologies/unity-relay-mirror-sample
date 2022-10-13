@@ -241,13 +241,13 @@ namespace Utp
 		{
 			if (IsConnected())
 			{
-				UtpLog.Warning($"Attempted to connect to {address}:{port} when this client is already connected to a server.");
+                UtpLog.Warning($"Abandoning connection attempt, this client is already connected to a server.");
 				return;
             }
 
             if(string.IsNullOrEmpty(address))
             {
-                UtpLog.Error("Client attempted to connect to empty host");
+                UtpLog.Error("Abandoning connection attempt, a null or empty address was provided.");
                 return;
             }
 
@@ -260,7 +260,7 @@ namespace Utp
             NetworkEndPoint endpoint;
             if (!NetworkEndPoint.TryParse(address, port, out endpoint))
             {
-                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {address}:{port} into a valid NetworkEndpoint.");
+                UtpLog.Error($"Abandoning connection attempt, failed to convert {address}:{port} into a valid NetworkEndpoint.");
                 return;
             }
 
