@@ -1,4 +1,4 @@
-# unity-relay-mirror-sample
+# Unity Relay Mirror Sample
 # Docs/README.md
 ## Info
 
