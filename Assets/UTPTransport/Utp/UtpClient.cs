@@ -247,7 +247,7 @@ namespace Utp
             }
 
             //Check for blank host
-            if(String.IsNullOrEmpty(host))
+            if(string.IsNullOrEmpty(host))
             {
                 UtpLog.Error("Client attempted to connect to empty host");
                 return;
