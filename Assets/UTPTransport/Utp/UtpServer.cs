@@ -43,7 +43,6 @@ namespace Utp
 				//If a connection is no longer established, remove it
 				if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				{
-					Debug.Log($"Removed connection {connections[i].GetHashCode()} [{i}].");
                     connections.RemoveAtSwapBack(i--);
 				}
             }

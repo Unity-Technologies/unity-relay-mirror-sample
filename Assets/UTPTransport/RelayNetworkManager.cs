@@ -100,7 +100,7 @@ namespace Utp
 			{
 				if (error != null)
 				{
-					Debug.LogWarning("Something went wrong allocating Relay Server. Error: " + error);
+					UtpLog.Warning("Something went wrong allocating Relay Server. Error: " + error);
 					return;
 				}
 
@@ -128,7 +128,7 @@ namespace Utp
 			{
 				if (error != null)
 				{
-					Debug.LogWarning("Something went wrong joining Relay server with code: " + relayJoinCode + ", Error: " + error);
+					UtpLog.Warning("Something went wrong joining Relay server with code: " + relayJoinCode + ", Error: " + error);
 					return;
 				}
 
