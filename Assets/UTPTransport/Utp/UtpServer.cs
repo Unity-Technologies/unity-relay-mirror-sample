@@ -331,7 +331,7 @@ namespace Utp
 			if (driver.Bind(endpoint) != 0)
 			{
 				//If endpoint connection failed, back out 
-				UtpLog.Error($"Failed to bind to port: {endpoint.Port}");
+				UtpLog.Error($"Unable to start server, failed to bind the specified port {endpoint.Port}.");
 				return;
 			}
 			else
