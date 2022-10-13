@@ -126,7 +126,7 @@ namespace Utp
 		{
 			ServerAllocation = allocation;
 
-			UtpLog.Verbose("Got allocation: " + ServerAllocation.AllocationId.ToString());
+			UtpLog.Verbose($"Received allocation: {allocation.AllocationId}");
 			StartCoroutine(GetJoinCodeTask(ServerAllocation.AllocationId, OnRelayServerAllocated));
 		}
 
