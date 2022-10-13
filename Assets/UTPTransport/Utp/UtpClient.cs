@@ -273,8 +273,15 @@ namespace Utp
             reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
             unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
+            // TODO: Support for IPv6.
+            NetworkEndPoint endpoint; 
+            if (!NetworkEndPoint.TryParse(host, port, out endpoint))
+            {
+                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {host}:{port} into a valid NetworkEndpoint.");
+                return;
+            }
+
             //Attempt endpoint connection
-			NetworkEndPoint endpoint = NetworkEndPoint.Parse(host, port); // TODO: also support IPV6
 			connection = driver.Connect(endpoint);
 
             //No response on endpoint connection
