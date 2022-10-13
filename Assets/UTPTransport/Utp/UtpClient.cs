@@ -287,11 +287,11 @@ namespace Utp
             //No response on endpoint connection
             if (IsValidConnection(connection))
             {
-                UtpLog.Info($"Client connecting to server at {endpoint.Address}");
+                UtpLog.Info($"Client connected to the server at {host}:{port}.");
             }
             else
             {
-                UtpLog.Error($"Client failed to connect to server at {endpoint.Address}");
+                UtpLog.Error($"Client failed to connect to the server at {host}:{port}.");
             }
         }
 
