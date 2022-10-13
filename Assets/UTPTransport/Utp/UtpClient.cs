@@ -291,12 +291,11 @@ namespace Utp
         /// <param name="joinAllocation"></param>
 		public void RelayConnect(JoinAllocation joinAllocation)
 		{
-            //Check for existing connection status
 			if (IsConnected())
 			{
-				UtpLog.Warning("Client is already connected");
-				return;
-			}
+                UtpLog.Warning($"Abandoning connection attempt, this client is already connected to a server.");
+                return;
+            }
 
             //Instantiate relay network data
 			RelayServerData relayServerData = RelayUtils.PlayerRelayData(joinAllocation, RelayServerEndpoint.NetworkOptions.Udp);
