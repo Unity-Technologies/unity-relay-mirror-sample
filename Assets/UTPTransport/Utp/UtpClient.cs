@@ -285,14 +285,14 @@ namespace Utp
 			connection = driver.Connect(endpoint);
 
             //No response on endpoint connection
-            if (!IsValidConnection(connection))
+            if (IsValidConnection(connection))
+            {
+                UtpLog.Info($"Client connecting to server at {endpoint.Address}");
+            }
+            else
             {
                 UtpLog.Error($"Client failed to connect to server at {endpoint.Address}");
-                return;
             }
-
-            //Successfull connection
-            UtpLog.Info($"Client connecting to server at {endpoint.Address}");
         }
 
         /// <summary>
