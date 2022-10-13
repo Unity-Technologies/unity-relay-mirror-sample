@@ -242,7 +242,7 @@ namespace Utp
             //Check for double connection
 			if (IsConnected())
 			{
-				UtpLog.Warning("Client is already connected");
+				UtpLog.Warning($"Attempted to connect to {host}:{port} when this client is already connected to a server.");
 				return;
             }
 
