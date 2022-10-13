@@ -38,7 +38,7 @@ namespace Utp
         {
             var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 5f);
             _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
+            _client.Connect(address: "localhost", port: 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             yield return waitForDisconnect;
@@ -51,7 +51,7 @@ namespace Utp
         {
             var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
+            _client.Connect(address: "localhost", port: 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             _server.Disconnect(connectionId: 1);
@@ -65,7 +65,7 @@ namespace Utp
         {
             var waitForDisconnect = new WaitForClientAndServerToDisconnect(client: _client, server: _server, timeoutInSeconds: 30f);
             _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
+            _client.Connect(address: "localhost", port: 7777);
             yield return new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             _client.Disconnect();

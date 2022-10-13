@@ -235,32 +235,32 @@ namespace Utp
 		/// <summary>
 		/// Attempt to connect to a listen server at a given IP/port. Currently only supports IPV4.
 		/// </summary>
-		/// <param name="host">The host address at which the listen server is running.</param>
+		/// <param name="address">The host address at which the listen server is running.</param>
 		/// <param name="port">The port which the listen server is listening on.</param>
-		public void Connect(string host, ushort port)
+		public void Connect(string address, ushort port)
 		{
 			if (IsConnected())
 			{
-				UtpLog.Warning($"Attempted to connect to {host}:{port} when this client is already connected to a server.");
+				UtpLog.Warning($"Attempted to connect to {address}:{port} when this client is already connected to a server.");
 				return;
             }
 
-            if(string.IsNullOrEmpty(host))
+            if(string.IsNullOrEmpty(address))
             {
                 UtpLog.Error("Client attempted to connect to empty host");
                 return;
             }
 
-            if (host == "localhost")
+            if (address == "localhost")
             {
-                host = "127.0.0.1";
+                address = "127.0.0.1";
             }
 
             // TODO: Support for IPv6.
             NetworkEndPoint endpoint;
-            if (!NetworkEndPoint.TryParse(host, port, out endpoint))
+            if (!NetworkEndPoint.TryParse(address, port, out endpoint))
             {
-                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {host}:{port} into a valid NetworkEndpoint.");
+                UtpLog.Error($"Unable to connect to the specified address and port, failed to parse {address}:{port} into a valid NetworkEndpoint.");
                 return;
             }
 
@@ -278,11 +278,11 @@ namespace Utp
 
             if (IsValidConnection(connection))
             {
-                UtpLog.Info($"Client connected to the server at {host}:{port}.");
+                UtpLog.Info($"Client connected to the server at {address}:{port}.");
             }
             else
             {
-                UtpLog.Error($"Client failed to connect to the server at {host}:{port}.");
+                UtpLog.Error($"Client failed to connect to the server at {address}:{port}.");
             }
         }
 

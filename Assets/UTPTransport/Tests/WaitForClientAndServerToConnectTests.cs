@@ -39,7 +39,7 @@ namespace Utp
             var waitForConnection = new WaitForClientAndServerToConnect(client: _client, server: _server, timeoutInSeconds: 30f);
 
             _server.Start(port: 7777);
-            _client.Connect(host: "localhost", port: 7777);
+            _client.Connect(address: "localhost", port: 7777);
             yield return waitForConnection;
 
             Assert.That(waitForConnection.Result, Is.EqualTo(WaitForClientAndServerToConnect.Status.ClientConnected));
