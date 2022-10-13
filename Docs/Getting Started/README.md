@@ -1,5 +1,5 @@
 # Unity Mirror Relay Mirror Adapter
-The Unity Mirror Sample project demonstrates how to use the Unity Transport Package (UTP), the Unity Relay service, and the Mirror Networking API together. You can access the sample project directly on [GitHub](https://github.com/Unity-Technologies/unity-relay-mirror-adapter).
+The Unity Mirror Sample project demonstrates how to use the Unity Transport Package (UTP), the Unity Relay service, and the Mirror Networking API together. You can access the sample project directly on [GitHub](https://github.com/unity-technologies/unity-relay-mirror-sample).
 
 * The Unity Transport Package (UTP) is a low-level networking library that provides a connection-based abstraction layer over UDP sockets with optional functionality such as reliability, ordering, and fragmentation.
 * Relay is a Unity service that facilitates securely connecting players by using a join code style workflow without the need for dedicated game servers or peer-to-peer communication.
