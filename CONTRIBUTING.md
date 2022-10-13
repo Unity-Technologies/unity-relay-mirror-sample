@@ -7,7 +7,7 @@ Thank you for your interest in contributing to the Unity Relay Mirror Adapter!
 Before starting on a project that you intend to contribute to the
 Unity Relay Mirror Adapter, we
 **strongly** recommend posting on our
-[Issues page](https://github.com/Unity-Technologies/unity-relay-mirror-adapter/issues) and
+[Issues page](https://github.com/unity-technologies/unity-relay-mirror-sample/issues) and
 briefly outlining the changes you plan to make. This will enable us to provide
 some context that may be helpful for you. This could range from advice and
 feedback on how to optimally perform your changes or reasons for not doing it.
@@ -35,4 +35,4 @@ When you open a pull request, you will be asked to acknolwedge our Contributor
 License Agreement. We allow both individual contributions and contributions made
 on behalf of companies. We use an open source tool called CLA assistant. If you
 have any questions on our CLA, please
-[submit an issue](https://github.com/Unity-Technologies/unity-relay-mirror-adapter/issues).
+[submit an issue](https://github.com/unity-technologies/unity-relay-mirror-sample/issues).
