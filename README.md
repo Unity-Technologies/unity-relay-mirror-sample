@@ -17,7 +17,7 @@ The sample has the following requirements:
 	* [Unity Transport](https://docs.unity3d.com/Packages/com.unity.transport@latest) 
     * [Unity Jobs](https://docs.unity3d.com/Packages/com.unity.jobs@latest)
 * [Mirror Networking library](https://mirror-networking.com/)
-## Installation Instructions
+## Installation
 If you would like to use the code from this sample in your own project, please perform the following steps:
 1. Install the latest version of Mirror.
     * The latest version of Mirror can be obtained from either the [Unity Asset Store](https://assetstore.unity.com/packages/tools/network/mirror-129321) or the [Mirror repository on Github](https://github.com/vis2k/mirror).
