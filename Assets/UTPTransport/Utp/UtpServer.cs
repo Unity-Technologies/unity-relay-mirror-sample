@@ -328,17 +328,17 @@ namespace Utp
 			reliablePipeline = driver.CreatePipeline(typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
 
-			// If endpoint connection failed, back out 
-			if (driver.Bind(endpoint) != 0)
+			int bindReturnCode = driver.Bind(endpoint);
+			if (!driver.Bound)
 			{
-				UtpLog.Error($"Unable to start server, failed to bind the specified port {endpoint.Port}.");
+				UtpLog.Error($"Unable to start server, failed to bind the specified port {endpoint.Port}. {nameof(NetworkDriver.Bind)}() returned {bindReturnCode}.");
 				return;
 			}
 
-			// If network driver cannot get feedback, back out
-			if (driver.Listen() != 0)
+			int listenReturnCode = driver.Listen();
+			if (!driver.Listening)
 			{
-				UtpLog.Error("Server failed to listen");
+				UtpLog.Error($"Unable to start server, failed to listen. {nameof(NetworkDriver.Listen)} returned {listenReturnCode}.");
 				return;
 			}
 
