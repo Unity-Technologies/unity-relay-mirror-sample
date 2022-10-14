@@ -66,30 +66,67 @@ namespace Utp
 			callback?.Invoke(null);
 		}
 
-        /// <summary>
-        /// Get a list of Regions from the Relay Service.
-        /// </summary>
-        /// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
-        /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
-        public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
-        {
+		/// <summary>
+		/// Get a list of Regions from the Relay Service.
+		/// </summary>
+		/// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
+		/// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
+		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+		{
 			StartCoroutine(GetRelayRegionsTask(onSuccess, onFailure));
-        }
+		}
 
 		private IEnumerator GetRelayRegionsTask(Action<List<Region>> onSuccess, Action onFailure)
 		{
-            Task<List<Region>> listRegions = RelayServiceSDK.ListRegionsAsync();
+			Task<List<Region>> listRegions = RelayServiceSDK.ListRegionsAsync();
 
-            while (!listRegions.IsCompleted)
+			while (!listRegions.IsCompleted)
+			{
+				yield return null;
+			}
+
+			if (listRegions.IsFaulted)
+			{
+				listRegions.Exception.Flatten().Handle((Exception err) =>
+				{
+					UtpLog.Error($"Unable to retrieve the list of Relay regions, encountered an error: {err.Message}.");
+					return true;
+				});
+
+				onFailure?.Invoke();
+
+				yield break;
+			}
+
+			onSuccess?.Invoke(listRegions.Result);
+		}
+
+        /// <summary>
+        /// Allocate a Relay Server.
+        /// </summary>
+        /// <param name="maxPlayers">The max number of players that may connect to this server.</param>
+        /// <param name="regionId">The region to allocate the server in. May be null.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
+        public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
+		{
+			StartCoroutine(AllocateRelayServerTask(maxPlayers, regionId, onSuccess, onFailure));
+		}
+
+		private IEnumerator AllocateRelayServerTask(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
+		{
+            Task<Allocation> createAllocation = RelayServiceSDK.CreateAllocationAsync(maxPlayers, regionId);
+
+            while (!createAllocation.IsCompleted)
             {
                 yield return null;
             }
 
-            if (listRegions.IsFaulted)
+            if (createAllocation.IsFaulted)
             {
-				listRegions.Exception.Flatten().Handle((Exception err) =>
+				createAllocation.Exception.Flatten().Handle((Exception err) =>
 				{
-					UtpLog.Error($"Encountered an error retrieving the list of Relay regions: {err.Message}.");
+					UtpLog.Error($"Unable to allocate Relay server, encountered an error creating a Relay allocation: {err.Message}.");
 					return true;
 				});
 
@@ -98,63 +135,36 @@ namespace Utp
                 yield break;
             }
 
-			onSuccess?.Invoke(listRegions.Result);
+			ServerAllocation = createAllocation.Result;
+
+            UtpLog.Verbose($"Received allocation: {ServerAllocation.AllocationId}");
+
+			StartCoroutine(GetJoinCodeTask(onSuccess, onFailure));
         }
 
-		/// <summary>
-		/// Allocate a Relay Server.
-		/// </summary>
-		/// <param name="maxPlayers">The max number of players that may connect to this server.</param>
-		/// <param name="regionId">The region to allocate the server in. May be null.</param>
-		public void AllocateRelayServer(int maxPlayers, string regionId)
-		{
-			StartCoroutine(AllocateRelayServerTask(maxPlayers, regionId, OnAllocateRelayServer));
-		}
+		private IEnumerator GetJoinCodeTask(Action<string> onSuccess, Action onFailure)
+        {
+            Task<string> getJoinCode = RelayServiceSDK.GetJoinCodeAsync(ServerAllocation.AllocationId);
 
-		private IEnumerator AllocateRelayServerTask(int maxPlayers, string regionId, Action<Allocation> callback)
-		{
-			Task<Allocation> allocationTask = RelayServiceSDK.CreateAllocationAsync(maxPlayers, regionId);
-			while (!allocationTask.IsCompleted)
-			{
-				yield return null;
-			}
+            while (!getJoinCode.IsCompleted)
+            {
+                yield return null;
+            }
 
-			if (allocationTask.IsFaulted)
-			{
-				UtpLog.Error("Create allocation request failed");
-				OnRelayServerAllocated?.Invoke(null, allocationTask.Exception.Message);
+            if (getJoinCode.IsFaulted)
+            {
+				getJoinCode.Exception.Flatten().Handle((Exception err) =>
+                {
+                    UtpLog.Error($"Unable to allocate Relay server, encountered an error retrieving the join code: {err.Message}.");
+                    return true;
+                });
 
-				yield break;
-			}
+                onFailure?.Invoke();
 
-			callback?.Invoke(allocationTask.Result);
-		}
+                yield break;
+            }
 
-		private void OnAllocateRelayServer(Allocation allocation)
-		{
-			ServerAllocation = allocation;
-
-			UtpLog.Verbose($"Received allocation: {allocation.AllocationId}");
-			StartCoroutine(GetJoinCodeTask(ServerAllocation.AllocationId, OnRelayServerAllocated));
-		}
-
-		private IEnumerator GetJoinCodeTask(Guid allocationId, Action<string, string> callback)
-		{
-			Task<string> joinCodeTask = RelayServiceSDK.GetJoinCodeAsync(allocationId);
-			while (!joinCodeTask.IsCompleted)
-			{
-				yield return null;
-			}
-
-			if (joinCodeTask.IsFaulted)
-			{
-				UtpLog.Error("Get join code failed");
-				callback?.Invoke(null, joinCodeTask.Exception.Message);
-
-				yield break;
-			}
-
-			callback?.Invoke(joinCodeTask.Result, null);
-		}
+			onSuccess?.Invoke(getJoinCode.Result);
+        }
 	}
 }

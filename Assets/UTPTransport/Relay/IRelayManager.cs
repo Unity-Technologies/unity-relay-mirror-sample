@@ -35,11 +35,13 @@ namespace Utp
         /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
         public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure);
 
-		/// <summary>
-		/// Allocate a Relay Server.
-		/// </summary>
-		/// <param name="maxPlayers">The max number of players that may connect to this server.</param>
-		/// <param name="regionId">The region to allocate the server in. May be null.</param>
-		public void AllocateRelayServer(int maxPlayers, string regionId);
+        /// <summary>
+        /// Allocate a Relay Server.
+        /// </summary>
+        /// <param name="maxPlayers">The max number of players that may connect to this server.</param>
+        /// <param name="regionId">The region to allocate the server in. May be null.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
+        public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure);
 	}
 }

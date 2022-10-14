@@ -68,7 +68,7 @@ namespace Utp
             Action onFailure = () => { didInvokeOnFailure = true; };
             _relayManager.GetRelayRegions(onSuccess: onSuccess, onFailure: onFailure);
 
-            LogAssert.Expect(LogType.Error, new Regex(@"Encountered an error retrieving the list of Relay regions:"));
+            LogAssert.Expect(LogType.Error, new Regex(@"Unable to retrieve the list of Relay regions, encountered an error:"));
             Assert.That(didInvokeOnSucess, Is.False);
             Assert.That(didInvokeOnFailure, Is.True);
         }
@@ -89,42 +89,42 @@ namespace Utp
         }
 
         [Test]
-        public void AllocateRelayServer_FaultedTask_LogsAnErrorAndInvokesOnRelayServerAllocated()
+        public void AllocateRelayServer_FaultedTask_InvokesOnFailure()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
 
-            string joinCode = null;
-            string errorMessage = null;
-            Action<string, string> onRelayServerAllocated = (code, error) => { joinCode = code; errorMessage = error; };
-            _relayManager.OnRelayServerAllocated += onRelayServerAllocated;
+            bool didInvokeOnSuccess = false;
+            bool didInvokeOnFailure = false;
 
             int validMaxPlayers = 8;
             string validRegionId = "test";
-            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId);
+            Action<string> onSuccess = (code) => { didInvokeOnSuccess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId, onSuccess: onSuccess, onFailure: onFailure);
 
-            LogAssert.Expect(LogType.Error, "Create allocation request failed");
+            LogAssert.Expect(LogType.Error, new Regex(@"Unable to allocate Relay server, encountered an error creating a Relay allocation:"));  
             Assert.That(_relayManager.ServerAllocation, Is.Null);
-            Assert.That(joinCode, Is.Null);
-            Assert.That(errorMessage, Is.Not.Null);
+            Assert.That(didInvokeOnSuccess, Is.False);
+            Assert.That(didInvokeOnFailure, Is.True);
         }
 
         [Test]
-        public void AllocateRelayServer_CompletedTask_ServerAllocationNoErrorAndInvokesOnRelayServerAllocated()
+        public void AllocateRelayServer_CompletedTask_InvokesOnSuccess()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
 
-            string joinCode = null;
-            string errorMessage = null;
-            Action<string, string> onRelayServerAllocated = (code, error) => { joinCode = code; errorMessage = error; };
-            _relayManager.OnRelayServerAllocated += onRelayServerAllocated;
+            bool didInvokeOnSuccess = false;
+            bool didInvokeOnFailure = false;
 
             int validMaxPlayers = 8;
             string validRegionId = "test";
-            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId);
+            Action<string> onSuccess = (code) => { didInvokeOnSuccess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.AllocateRelayServer(maxPlayers: validMaxPlayers, regionId: validRegionId, onSuccess: onSuccess, onFailure: onFailure);
 
             Assert.That(_relayManager.ServerAllocation, Is.Not.Null);
-            Assert.That(joinCode, Is.Not.Null);
-            Assert.That(errorMessage, Is.Null);
+            Assert.That(didInvokeOnSuccess, Is.True);
+            Assert.That(didInvokeOnFailure, Is.False);
         }
 
         private class TaskAlwaysCompletes : IRelayServiceSDK

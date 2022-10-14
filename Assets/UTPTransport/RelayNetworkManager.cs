@@ -93,26 +93,26 @@ namespace Utp
 		/// <summary>
 		/// Ensures Relay is enabled. Starts a network "host" - a server and client in the same application
 		/// </summary>
-		public void StartRelayHost(int maxPlayers, string regionId = null)
-		{
-			utpTransport.useRelay = true;
-			utpTransport.AllocateRelayServer(maxPlayers, regionId, (string joinCode, string error) =>
+        public void StartRelayHost(int maxPlayers, string regionId = null)
+        {
+            utpTransport.useRelay = true;
+            utpTransport.AllocateRelayServer(maxPlayers, regionId, 
+			(string joinCode) =>
+            {
+                relayJoinCode = joinCode;
+
+                StartHost();
+            },
+			() =>
 			{
-				if (error != null)
-				{
-					UtpLog.Warning($"Something went wrong allocating the Relay server: {error}");
-					return;
-				}
+				UtpLog.Error($"Failed to start a Relay host.");
+            });
+        }
 
-				relayJoinCode = joinCode;
-				StartHost();
-			});
-		}
-
-		/// <summary>
-		/// Ensures Relay is disabled. Starts the client, connects it to the server with networkAddress.
-		/// </summary>
-		public void JoinStandardServer()
+        /// <summary>
+        /// Ensures Relay is disabled. Starts the client, connects it to the server with networkAddress.
+        /// </summary>
+        public void JoinStandardServer()
 		{
 			utpTransport.useRelay = false;
 			StartClient();

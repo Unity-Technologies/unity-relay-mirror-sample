@@ -183,17 +183,17 @@ namespace Utp
 			relayManager.GetRelayRegions(onSuccess, onFailure);
         }
 
-		/// <summary>
-		/// Allocates a new Relay server. 
-		/// </summary>
-		/// <param name="maxPlayers">The maximum player count.</param>
-		/// <param name="regionId">The region ID.</param>
-		/// <param name="callback">Allocation callback action.</param>
-		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string, string> callback)
+        /// <summary>
+        /// Allocates a new Relay server. 
+        /// </summary>
+        /// <param name="maxPlayers">The maximum player count.</param>
+        /// <param name="regionId">The region ID.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
+        public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
 		{
-			relayManager.OnRelayServerAllocated = callback;
-			relayManager.AllocateRelayServer(maxPlayers, regionId);
-		}
+			relayManager.AllocateRelayServer(maxPlayers, regionId, onSuccess, onFailure);
+        }
 
 		/// <summary>
 		/// Returns the max packet size for any packet going over the network
