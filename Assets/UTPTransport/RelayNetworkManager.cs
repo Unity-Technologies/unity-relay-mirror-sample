@@ -8,10 +8,10 @@ using Unity.Services.Relay.Models;
 
 namespace Utp
 {
-    public class RelayNetworkManager : NetworkManager
-    {
+	public class RelayNetworkManager : NetworkManager
+	{
 		private UtpTransport utpTransport;
-		
+
 		/// <summary>
 		/// Server's join code if using Relay.
 		/// </summary>
@@ -86,33 +86,33 @@ namespace Utp
 		/// </summary>
 		/// 
 		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
-        {
+		{
 			utpTransport.GetRelayRegions(onSuccess, onFailure);
-        }
+		}
 
 		/// <summary>
 		/// Ensures Relay is enabled. Starts a network "host" - a server and client in the same application
 		/// </summary>
-        public void StartRelayHost(int maxPlayers, string regionId = null)
-        {
-            utpTransport.useRelay = true;
-            utpTransport.AllocateRelayServer(maxPlayers, regionId, 
+		public void StartRelayHost(int maxPlayers, string regionId = null)
+		{
+			utpTransport.useRelay = true;
+			utpTransport.AllocateRelayServer(maxPlayers, regionId,
 			(string joinCode) =>
-            {
-                relayJoinCode = joinCode;
+			{
+				relayJoinCode = joinCode;
 
-                StartHost();
-            },
+				StartHost();
+			},
 			() =>
 			{
 				UtpLog.Error($"Failed to start a Relay host.");
-            });
-        }
+			});
+		}
 
-        /// <summary>
-        /// Ensures Relay is disabled. Starts the client, connects it to the server with networkAddress.
-        /// </summary>
-        public void JoinStandardServer()
+		/// <summary>
+		/// Ensures Relay is disabled. Starts the client, connects it to the server with networkAddress.
+		/// </summary>
+		public void JoinStandardServer()
 		{
 			utpTransport.useRelay = false;
 			StartClient();
@@ -124,15 +124,15 @@ namespace Utp
 		public void JoinRelayServer()
 		{
 			utpTransport.useRelay = true;
-            utpTransport.ConfigureClientWithJoinCode(relayJoinCode,
-            () =>
-            {
-                StartClient();
-            },
-            () =>
+			utpTransport.ConfigureClientWithJoinCode(relayJoinCode,
+			() =>
+			{
+				StartClient();
+			},
+			() =>
 			{
 				UtpLog.Error($"Failed to join Relay server.");
 			});
-        }
-    }
+		}
+	}
 }

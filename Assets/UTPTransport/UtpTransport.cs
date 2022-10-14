@@ -7,10 +7,10 @@ using Unity.Services.Relay.Models;
 
 namespace Utp
 {
-    /// <summary>
-    /// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
-    /// </summary>
-    [DisallowMultipleComponent]
+	/// <summary>
+	/// Component that implements Mirror's Transport class, utilizing the Unity Transport Package (UTP).
+	/// </summary>
+	[DisallowMultipleComponent]
 	public class UtpTransport : Transport
 	{
 		/// <summary>
@@ -68,10 +68,10 @@ namespace Utp
 			SetupDefaultCallbacks();
 
 			//Logging delegates
-			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => {};
-			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => {};
-			if (LoggerLevel < LogLevel.Warning) UtpLog.Warning = _ => {};
-			if (LoggerLevel < LogLevel.Error) UtpLog.Error = _ => {};
+			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => { };
+			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => { };
+			if (LoggerLevel < LogLevel.Warning) UtpLog.Warning = _ => { };
+			if (LoggerLevel < LogLevel.Error) UtpLog.Error = _ => { };
 
 			//Instantiate new UTP server
 			server = new UtpServer(
@@ -88,41 +88,41 @@ namespace Utp
 				TimeoutMS);
 
 			if (!TryGetComponent<IRelayManager>(out relayManager))
-            {
+			{
 				//Add relay manager component
 				relayManager = gameObject.AddComponent<RelayManager>();
-            }
+			}
 
 			UtpLog.Info("UTPTransport initialized!");
 		}
 
 		private void SetupDefaultCallbacks()
-        {
+		{
 			if (OnServerConnected == null)
-            {
+			{
 				OnServerConnected = (connId) => UtpLog.Warning("OnServerConnected called with no handler");
 			}
 			if (OnServerDisconnected == null)
-            {
+			{
 				OnServerDisconnected = (connId) => UtpLog.Warning("OnServerDisconnected called with no handler");
 			}
 			if (OnServerDataReceived == null)
-            {
+			{
 				OnServerDataReceived = (connId, data, channel) => UtpLog.Warning("OnServerDataReceived called with no handler");
 			}
 			if (OnClientConnected == null)
-            {
+			{
 				OnClientConnected = () => UtpLog.Warning("OnClientConnected called with no handler");
 			}
 			if (OnClientDisconnected == null)
-            {
+			{
 				OnClientDisconnected = () => UtpLog.Warning("OnClientDisconnected called with no handler");
 			}
 			if (OnClientDataReceived == null)
-            {
+			{
 				OnClientDataReceived = (data, channel) => UtpLog.Warning("OnClientDataReceived called with no handler");
 			}
-        }
+		}
 
 		/// <summary>
 		/// Checks to see if UTP is available on this platform. 
@@ -156,45 +156,45 @@ namespace Utp
 				else
 				{
 					// fallback to default port
-					client.Connect(address, Port); 
+					client.Connect(address, Port);
 				}
 			}
 		}
 
-        #region Relay methods
+		#region Relay methods
 
-        /// <summary>
-        /// Configures a new Relay client with a join code.
-        /// </summary>
-        /// <param name="joinCode">The Relay join code.</param>
-        /// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
-        /// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
-        public void ConfigureClientWithJoinCode(string joinCode, Action onSuccess, Action onFailure)
-        {
-            relayManager.GetAllocationFromJoinCode(joinCode, onSuccess, onFailure);
-        }
+		/// <summary>
+		/// Configures a new Relay client with a join code.
+		/// </summary>
+		/// <param name="joinCode">The Relay join code.</param>
+		/// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
+		/// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
+		public void ConfigureClientWithJoinCode(string joinCode, Action onSuccess, Action onFailure)
+		{
+			relayManager.GetAllocationFromJoinCode(joinCode, onSuccess, onFailure);
+		}
 
-        /// <summary>
-        /// Gets region ID's from all the Relay regions (Only use if Relay is enabled).
-        /// </summary>
-        /// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
-        /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
-        public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
-        {
+		/// <summary>
+		/// Gets region ID's from all the Relay regions (Only use if Relay is enabled).
+		/// </summary>
+		/// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
+		/// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
+		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+		{
 			relayManager.GetRelayRegions(onSuccess, onFailure);
-        }
+		}
 
-        /// <summary>
-        /// Allocates a new Relay server. 
-        /// </summary>
-        /// <param name="maxPlayers">The maximum player count.</param>
-        /// <param name="regionId">The region ID.</param>
-        /// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
-        /// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
-        public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
+		/// <summary>
+		/// Allocates a new Relay server. 
+		/// </summary>
+		/// <param name="maxPlayers">The maximum player count.</param>
+		/// <param name="regionId">The region ID.</param>
+		/// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
+		/// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
+		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
 		{
 			relayManager.AllocateRelayServer(maxPlayers, regionId, onSuccess, onFailure);
-        }
+		}
 
 		/// <summary>
 		/// Returns the max packet size for any packet going over the network
@@ -208,11 +208,11 @@ namespace Utp
 			{
 				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
 			}
-            else if (server != null && server.IsActive())
-            {
+			else if (server != null && server.IsActive())
+			{
 				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
-            }
-            else
+			}
+			else
 			{
 				//Fall back on default MTU
 				return NetworkParameterConstants.MTU;
@@ -232,11 +232,11 @@ namespace Utp
 			if (enabled) client.Tick();
 		}
 
-        #endregion
+		#endregion
 
-        #region Server overrides
+		#region Server overrides
 
-        public override bool ServerActive() => server.IsActive();
+		public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
 			server.Start(Port, useRelay, relayManager.ServerAllocation);
@@ -261,11 +261,11 @@ namespace Utp
 			return builder.Uri;
 		}
 
-        #endregion
+		#endregion
 
-        #region Transport overrides
+		#region Transport overrides
 
-        public override void Shutdown() 
+		public override void Shutdown()
 		{
 			if (client.IsConnected()) client.Disconnect();
 			if (server.IsNetworkDriverInitialized()) server.Stop();

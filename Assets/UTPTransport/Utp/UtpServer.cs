@@ -12,12 +12,12 @@ using Unity.Burst;
 namespace Utp
 {
 
-    #region Jobs
+	#region Jobs
 
-    /// <summary>
-    /// Job used to update connections. 
-    /// </summary>
-    [BurstCompile]
+	/// <summary>
+	/// Job used to update connections. 
+	/// </summary>
+	[BurstCompile]
 	struct ServerUpdateConnectionsJob : IJob
 	{
 		/// <summary>
@@ -38,14 +38,14 @@ namespace Utp
 		public void Execute()
 		{
 			//Iterate through connections list
-            for (int i = 0; i < connections.Length; i++)
-            {
+			for (int i = 0; i < connections.Length; i++)
+			{
 				//If a connection is no longer established, remove it
 				if (driver.GetConnectionState(connections[i]) == Unity.Networking.Transport.NetworkConnection.State.Disconnected)
 				{
-                    connections.RemoveAtSwapBack(i--);
+					connections.RemoveAtSwapBack(i--);
 				}
-            }
+			}
 
 			// Accept new connections
 			Unity.Networking.Transport.NetworkConnection networkConnection;
@@ -204,7 +204,7 @@ namespace Utp
 		{
 			DataStreamWriter writer;
 			int writeStatus = driver.BeginSend(pipeline, connection, out writer);
-			
+
 			//If Acquire was success
 			if (writeStatus == (int)Unity.Networking.Transport.Error.StatusCode.Success)
 			{
@@ -241,24 +241,24 @@ namespace Utp
 		/// </summary>
 		private NativeList<Unity.Networking.Transport.NetworkConnection> connections;
 
-        /// <summary>
-        /// The number of pipelines tracked in the header size array.
-        /// </summary>
-        private const int NUM_PIPELINES = 2;
+		/// <summary>
+		/// The number of pipelines tracked in the header size array.
+		/// </summary>
+		private const int NUM_PIPELINES = 2;
 
-        /// <summary>
-        /// The driver's max header size for UTP transport.
-        /// </summary>
-        private int[] driverMaxHeaderSize = new int[NUM_PIPELINES];
+		/// <summary>
+		/// The driver's max header size for UTP transport.
+		/// </summary>
+		private int[] driverMaxHeaderSize = new int[NUM_PIPELINES];
 
-        /// <summary>
-        /// Constructor for UTP server.
-        /// </summary>
-        /// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
-        public UtpServer(int timeoutInMilliseconds)
-        {
-            this.timeoutInMilliseconds = timeoutInMilliseconds;
-        }
+		/// <summary>
+		/// Constructor for UTP server.
+		/// </summary>
+		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
+		public UtpServer(int timeoutInMilliseconds)
+		{
+			this.timeoutInMilliseconds = timeoutInMilliseconds;
+		}
 
 		/// <summary>
 		/// Constructor for UTP server.
@@ -268,12 +268,12 @@ namespace Utp
 		/// <param name="OnDisconnected">Action that is invoked when disconnected.</param>
 		/// <param name="timeoutInMilliseconds">The response timeout in miliseconds.</param>
 		public UtpServer(Action<int> OnConnected, Action<int, ArraySegment<byte>> OnReceivedData, Action<int> OnDisconnected, int timeoutInMilliseconds)
-            : this(timeoutInMilliseconds)
-        {
-            this.OnConnected = OnConnected;
-            this.OnReceivedData = OnReceivedData;
-            this.OnDisconnected = OnDisconnected;
-        }
+			: this(timeoutInMilliseconds)
+		{
+			this.OnConnected = OnConnected;
+			this.OnReceivedData = OnReceivedData;
+			this.OnDisconnected = OnDisconnected;
+		}
 
 		/// <summary>
 		/// Initialize the server. Currently only supports IPV4.
@@ -352,7 +352,7 @@ namespace Utp
 		{
 			//If the network driver has shut down, back out
 			if (!IsNetworkDriverInitialized())
-            {
+			{
 				return;
 			}
 
@@ -362,11 +362,11 @@ namespace Utp
 			// Trigger Mirror callbacks for events that resulted in the last jobs work
 			ProcessIncomingEvents();
 
-            //Cache driver & connection info
-            cacheConnectionInfo();
+			//Cache driver & connection info
+			cacheConnectionInfo();
 
-            // Create a new jobs
-            var serverUpdateJob = new ServerUpdateJob
+			// Create a new jobs
+			var serverUpdateJob = new ServerUpdateJob
 			{
 				driver = driver.ToConcurrent(),
 				connections = connections.AsDeferredJobArray(),
@@ -398,24 +398,24 @@ namespace Utp
 			jobHandle.Complete();
 
 			//Dispose of event queue
-			if(connectionsEventsQueue.IsCreated)
-            {
+			if (connectionsEventsQueue.IsCreated)
+			{
 				connectionsEventsQueue.Dispose();
 			}
-			
+
 			//Dispose of connections
-			if(connections.IsCreated)
-            {
+			if (connections.IsCreated)
+			{
 				connections.Dispose();
 			}
 
 			//Dispose of driver
-			if(driver.IsCreated)
+			if (driver.IsCreated)
 			{
-                driver.Dispose();
-                driver = default(NetworkDriver);
-            }
-        }
+				driver.Dispose();
+				driver = default(NetworkDriver);
+			}
+		}
 
 		/// <summary>
 		/// Disconnect and remove a connection via it's ID.
@@ -435,11 +435,11 @@ namespace Utp
 				driver.ScheduleUpdate().Complete();
 
 				//Invoke disconnect action
-                OnDisconnected?.Invoke(connectionId);
+				OnDisconnected?.Invoke(connectionId);
 			}
 			else
 			{
-                UtpLog.Warning($"Connection not found: {connectionId}");
+				UtpLog.Warning($"Connection not found: {connectionId}");
 			}
 		}
 
@@ -466,10 +466,10 @@ namespace Utp
 				// Create a new job
 				var job = new ClientSendJob
 				{
-					driver     = driver,
-					pipeline   = pipeline,
+					driver = driver,
+					pipeline = pipeline,
 					connection = connection,
-					data       = segmentArray
+					data = segmentArray
 				};
 
 				// Schedule job
@@ -497,61 +497,61 @@ namespace Utp
 			}
 		}
 
-        public int GetMaxHeaderSize(int channelId = Channels.Reliable)
-        {
-            if (IsNetworkDriverInitialized())
-            {
-                return driverMaxHeaderSize[channelId];
-            }
+		public int GetMaxHeaderSize(int channelId = Channels.Reliable)
+		{
+			if (IsNetworkDriverInitialized())
+			{
+				return driverMaxHeaderSize[channelId];
+			}
 
-            return 0;
-        }
+			return 0;
+		}
 
-        /// <summary>
-        /// Processes connection events from the queue.
-        /// </summary>
-        public void ProcessIncomingEvents()
+		/// <summary>
+		/// Processes connection events from the queue.
+		/// </summary>
+		public void ProcessIncomingEvents()
 		{
 			//Check if the server is active
 			if (!IsNetworkDriverInitialized())
-            {
+			{
 				return;
-			}	
+			}
 
 			//Process the events in the event list
 			UtpConnectionEvent connectionEvent;
 			while (connectionsEventsQueue.TryDequeue(out connectionEvent))
 			{
-				switch(connectionEvent.eventType)
-                {
+				switch (connectionEvent.eventType)
+				{
 					//Connect action 
 					case ((byte)UtpConnectionEventType.OnConnected):
-					{
-						OnConnected?.Invoke(connectionEvent.connectionId);
-						break;
-					}
+						{
+							OnConnected?.Invoke(connectionEvent.connectionId);
+							break;
+						}
 
 					//Receive data action
 					case ((byte)UtpConnectionEventType.OnReceivedData):
-                    {
-						OnReceivedData?.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
-						break;
-					}
+						{
+							OnReceivedData?.Invoke(connectionEvent.connectionId, new ArraySegment<byte>(connectionEvent.eventData.ToArray()));
+							break;
+						}
 
 					//Disconnect action
 					case ((byte)UtpConnectionEventType.OnDisconnected):
-                    {
-						OnDisconnected?.Invoke(connectionEvent.connectionId);
-						break;
-					}
+						{
+							OnDisconnected?.Invoke(connectionEvent.connectionId);
+							break;
+						}
 
 					//Invalid action
 					default:
-                    {
-						UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
-						break;
-					}
-						
+						{
+							UtpLog.Warning($"Invalid connection event: {connectionEvent.eventType}");
+							break;
+						}
+
 				}
 			}
 		}
@@ -566,7 +566,7 @@ namespace Utp
 			jobHandle.Complete();
 
 			if (connections.IsCreated)
-            {
+			{
 				foreach (Unity.Networking.Transport.NetworkConnection connection in connections)
 				{
 					if (connection.GetHashCode() == connectionId)
@@ -574,7 +574,7 @@ namespace Utp
 						return connection;
 					}
 				}
-            }
+			}
 
 			return default(Unity.Networking.Transport.NetworkConnection);
 		}
@@ -585,7 +585,7 @@ namespace Utp
 		/// <param name="connectionId">The id of the connection to check.</param>
 		/// <returns>Whether the connection is valid.</returns>
 		private bool TryGetConnection(int connectionId, out Unity.Networking.Transport.NetworkConnection connection)
-        {
+		{
 			connection = FindConnection(connectionId);
 			return connection.GetHashCode() == connectionId;
 		}
@@ -595,22 +595,22 @@ namespace Utp
 		/// </summary>
 		/// <returns>True if running, false otherwise.</returns>
 		public bool IsActive()
-        {
+		{
 			return IsNetworkDriverInitialized();
-        }
+		}
 
-        private void cacheConnectionInfo()
-        {
-            bool isInitialized = IsNetworkDriverInitialized();
+		private void cacheConnectionInfo()
+		{
+			bool isInitialized = IsNetworkDriverInitialized();
 
-            //If driver is active, cache its max header size for UTP transport
-            if (isInitialized)
-            {
-                driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
-                driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
-            }
+			//If driver is active, cache its max header size for UTP transport
+			if (isInitialized)
+			{
+				driverMaxHeaderSize[Channels.Reliable] = driver.MaxHeaderSize(reliablePipeline);
+				driverMaxHeaderSize[Channels.Unreliable] = driver.MaxHeaderSize(unreliablePipeline);
+			}
 
-        }
-    }
+		}
+	}
 }
 
