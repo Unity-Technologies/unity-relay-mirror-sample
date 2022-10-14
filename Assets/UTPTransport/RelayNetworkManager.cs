@@ -124,16 +124,15 @@ namespace Utp
 		public void JoinRelayServer()
 		{
 			utpTransport.useRelay = true;
-			utpTransport.ConfigureClientWithJoinCode(relayJoinCode, (string error) =>
+            utpTransport.ConfigureClientWithJoinCode(relayJoinCode,
+            () =>
+            {
+                StartClient();
+            },
+            () =>
 			{
-				if (error != null)
-				{
-					UtpLog.Warning($"Something went wrong joining the Relay server using code {relayJoinCode}: {error}");
-					return;
-				}
-
-				StartClient();
+				UtpLog.Error($"Failed to join Relay server.");
 			});
-		}
-	}
+        }
+    }
 }

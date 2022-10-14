@@ -16,12 +16,13 @@ namespace Utp
 		/// </summary>
 		public JoinAllocation JoinAllocation { get; set; }
 
-		/// <summary>
-		/// Get a Relay Service JoinAllocation from a given joinCode.
-		/// </summary>
-		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
-		/// <param name="callback">A callback to invoke on success/error.</param>
-		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback);
+        /// <summary>
+        /// Get a Relay Service JoinAllocation from a given joinCode.
+        /// </summary>
+        /// <param name="joinCode">The code to look up the joinAllocation for.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
+        public void GetAllocationFromJoinCode(string joinCode, Action onSuccess, Action onFailure);
 
         /// <summary>
         /// Get a list of Regions from the Relay Service.

@@ -30,31 +30,38 @@ namespace Utp
         }
 
         [Test]
-        public void GetAllocationFromJoinCode_FaultedTask_LogsAnErrorAndReturnsAnErrorMessage()
+        public void GetAllocationFromJoinCode_FaultedTask_InvokesOnFailure()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
 
-            string errorMessage = null;
-            string validJoinCode = "test";
-            Action<string> onError = (err) => { errorMessage = err; };
-            _relayManager.GetAllocationFromJoinCode(joinCode: validJoinCode, callback: onError);
+            bool didInvokeOnSuccess = false;
+            bool didInvokeOnFailure = false;
 
-            LogAssert.Expect(LogType.Error, "Join allocation request failed");
-            Assert.That(_relayManager.JoinAllocation, Is.Null);
-            Assert.That(errorMessage, Is.Not.Null);
-            Assert.That(errorMessage, Is.Not.Empty);
+            string validJoinCode = "test";
+            Action onSuccess = () => { didInvokeOnSuccess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.GetAllocationFromJoinCode(joinCode: validJoinCode, onSuccess: onSuccess, onFailure: onFailure);
+
+            LogAssert.Expect(LogType.Error, new Regex(@"Unable to get Relay allocation from join code, encountered an error:"));
+            Assert.That(didInvokeOnSuccess, Is.False);
+            Assert.That(didInvokeOnFailure, Is.True);
         }
 
         [Test]
-        public void GetAllocationFromJoinCode_CompletedTask_NullErrorAndNotNullAllocationId()
+        public void GetAllocationFromJoinCode_CompletedTask_InvokesOnSuccess()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
 
-            string errorMessage = null;
-            Action<string> onError = (err) => { errorMessage = err; };
-            _relayManager.GetAllocationFromJoinCode("test", onError);
-            Assert.That(errorMessage, Is.Null);
-            Assert.That(_relayManager.JoinAllocation.AllocationId, Is.Not.Null);
+            bool didInvokeOnSuccess = false;
+            bool didInvokeOnFailure = false;
+
+            string validJoinCode = "test";
+            Action onSuccess = () => { didInvokeOnSuccess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.GetAllocationFromJoinCode(joinCode: validJoinCode, onSuccess: onSuccess, onFailure: onFailure);
+
+            Assert.That(didInvokeOnSuccess, Is.True);
+            Assert.That(didInvokeOnFailure, Is.False);
         }
 
         [Test]

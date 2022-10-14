@@ -163,15 +163,16 @@ namespace Utp
 
         #region Relay methods
 
-		/// <summary>
-		/// Configures a new Relay client with a join code.
-		/// </summary>
-		/// <param name="joinCode">The Relay join code.</param>
-		/// <param name="callback">Callback action.</param>
-        public void ConfigureClientWithJoinCode(string joinCode, Action<string> callback)
-		{
-			relayManager.GetAllocationFromJoinCode(joinCode, callback);
-		}
+        /// <summary>
+        /// Configures a new Relay client with a join code.
+        /// </summary>
+        /// <param name="joinCode">The Relay join code.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
+        public void ConfigureClientWithJoinCode(string joinCode, Action onSuccess, Action onFailure)
+        {
+            relayManager.GetAllocationFromJoinCode(joinCode, onSuccess, onFailure);
+        }
 
         /// <summary>
         /// Gets region ID's from all the Relay regions (Only use if Relay is enabled).

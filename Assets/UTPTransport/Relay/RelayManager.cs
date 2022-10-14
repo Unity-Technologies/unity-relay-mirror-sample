@@ -36,35 +36,44 @@ namespace Utp
 			UtpLog.Info("RelayManager initialized");
 		}
 
-		/// <summary>
-		/// Get a Relay Service JoinAllocation from a given joinCode.
-		/// </summary>
-		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
-		/// <param name="callback">A callback to invoke on success/error.</param>
-		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback)
-		{
-			StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, callback));
-		}
+        /// <summary>
+        /// Get a Relay Service JoinAllocation from a given joinCode.
+        /// </summary>
+        /// <param name="joinCode">The code to look up the joinAllocation for.</param>
+        /// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
+        /// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
+        public void GetAllocationFromJoinCode(string joinCode, Action onSuccess, Action onFailure)
+        {
+            StartCoroutine(GetAllocationFromJoinCodeTask(joinCode, onSuccess, onFailure));
+        }
 
-		private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action<string> callback)
-		{
-			Task<JoinAllocation> joinTask = RelayServiceSDK.JoinAllocationAsync(joinCode);
-			while (!joinTask.IsCompleted)
-			{
-				yield return null;
-			}
+        private IEnumerator GetAllocationFromJoinCodeTask(string joinCode, Action onSuccess, Action onFailure)
+        {
+            Task<JoinAllocation> joinAllocation = RelayServiceSDK.JoinAllocationAsync(joinCode);
 
-			if (joinTask.IsFaulted)
-			{
-				UtpLog.Error("Join allocation request failed");
-				callback?.Invoke(joinTask.Exception.Message);
+            while (!joinAllocation.IsCompleted)
+            {
+                yield return null;
+            }
 
-				yield break;
-			}
+            if (joinAllocation.IsFaulted)
+            {
+				joinAllocation.Exception.Flatten().Handle((Exception err) =>
+				{
+					UtpLog.Error($"Unable to get Relay allocation from join code, encountered an error: {err.Message}.");
 
-			JoinAllocation = joinTask.Result;
-			callback?.Invoke(null);
-		}
+					return true;
+				});
+
+				onFailure?.Invoke();
+
+                yield break;
+            }
+
+            JoinAllocation = joinAllocation.Result;
+
+			onSuccess?.Invoke();
+        }
 
 		/// <summary>
 		/// Get a list of Regions from the Relay Service.
