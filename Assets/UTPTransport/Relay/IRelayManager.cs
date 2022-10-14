@@ -17,11 +17,6 @@ namespace Utp
 		public JoinAllocation JoinAllocation { get; set; }
 
 		/// <summary>
-		/// A callback for when a Relay server is allocated and a join code is fetched.
-		/// </summary>
-		public Action<string, string> OnRelayServerAllocated { get; set; }
-
-		/// <summary>
 		/// Get a Relay Service JoinAllocation from a given joinCode.
 		/// </summary>
 		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
