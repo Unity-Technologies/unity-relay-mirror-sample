@@ -37,9 +37,9 @@ namespace Utp
 		}
 
 		/// <summary>
-		/// Get a Relay Service JoinAllocation from a given joinCode.
+		/// Retrieve the <seealso cref="Unity.Services.Relay.Models.JoinAllocation"/> corresponding to the specified join code.
 		/// </summary>
-		/// <param name="joinCode">The code to look up the joinAllocation for.</param>
+		/// <param name="joinCode">The join code that will be used to retrieve the JoinAllocation.</param>
 		/// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
 		/// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
 		public void GetAllocationFromJoinCode(string joinCode, Action onSuccess, Action onFailure)
