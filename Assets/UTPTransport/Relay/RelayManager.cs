@@ -66,32 +66,40 @@ namespace Utp
 			callback?.Invoke(null);
 		}
 
-		/// <summary>
-		/// Get a list of Regions from the Relay Service.
-		/// </summary>
-		/// <param name="callback">A callback to invoke on success/error.</param>
-		public void GetRelayRegions(Action<List<Region>> callback)
+        /// <summary>
+        /// Get a list of Regions from the Relay Service.
+        /// </summary>
+        /// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
+        /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
+        public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+        {
+			StartCoroutine(GetRelayRegionsTask(onSuccess, onFailure));
+        }
+
+		private IEnumerator GetRelayRegionsTask(Action<List<Region>> onSuccess, Action onFailure)
 		{
-			StartCoroutine(GetRelayRegionsTask(callback));
-		}
+            Task<List<Region>> listRegions = RelayServiceSDK.ListRegionsAsync();
 
-		private IEnumerator GetRelayRegionsTask(Action<List<Region>> callback)
-		{
-			Task<List<Region>> regionsTask = RelayServiceSDK.ListRegionsAsync();
-			while (!regionsTask.IsCompleted)
-			{
-				yield return null;
-			}
+            while (!listRegions.IsCompleted)
+            {
+                yield return null;
+            }
 
-			if (regionsTask.IsFaulted)
-			{
-				UtpLog.Error("List regions request failed");
-				callback?.Invoke(new List<Region>());
-				yield break;
-			}
+            if (listRegions.IsFaulted)
+            {
+				listRegions.Exception.Flatten().Handle((Exception err) =>
+				{
+					UtpLog.Error($"Encountered an error retrieving the list of Relay regions: {err.Message}.");
+					return true;
+				});
 
-			callback?.Invoke(regionsTask.Result);
-		}
+				onFailure?.Invoke();
+
+                yield break;
+            }
+
+			onSuccess?.Invoke(listRegions.Result);
+        }
 
 		/// <summary>
 		/// Allocate a Relay Server.

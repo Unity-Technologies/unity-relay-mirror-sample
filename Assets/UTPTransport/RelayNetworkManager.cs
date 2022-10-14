@@ -85,10 +85,10 @@ namespace Utp
 		/// Gets available Relay regions.
 		/// </summary>
 		/// 
-		public void GetRelayRegions(Action<List<Region>> callback)
-		{
-			utpTransport.GetRelayRegions(callback);
-		}
+		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+        {
+			utpTransport.GetRelayRegions(onSuccess, onFailure);
+        }
 
 		/// <summary>
 		/// Ensures Relay is enabled. Starts a network "host" - a server and client in the same application

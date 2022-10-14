@@ -173,14 +173,15 @@ namespace Utp
 			relayManager.GetAllocationFromJoinCode(joinCode, callback);
 		}
 
-		/// <summary>
-		/// Gets region ID's from all the Relay regions (Only use if Relay is enabled).
-		/// </summary>
-		/// <param name="callback">Callback action.</param>
-		public void GetRelayRegions(Action<List<Region>> callback)
-		{
-			relayManager.GetRelayRegions(callback);
-		}
+        /// <summary>
+        /// Gets region ID's from all the Relay regions (Only use if Relay is enabled).
+        /// </summary>
+        /// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
+        /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
+        public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+        {
+			relayManager.GetRelayRegions(onSuccess, onFailure);
+        }
 
 		/// <summary>
 		/// Allocates a new Relay server. 

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
@@ -57,30 +58,34 @@ namespace Utp
         }
 
         [Test]
-        public void GetRelayRegions_FaultedTask_LogsAnErrorAndReturnsAnEmptyList()
+        public void GetRelayRegions_FaultedTask_InvokesOnFailure()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysFaults();
 
-            List<Region> listOfRegions = null;
-            Action<List<Region>> onRegionsRetrieved = (regions) => { listOfRegions = regions; };
-            _relayManager.GetRelayRegions(callback: onRegionsRetrieved);
+            bool didInvokeOnSucess = false;
+            bool didInvokeOnFailure = false;
+            Action<List<Region>> onSuccess = (regions) => { didInvokeOnSucess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.GetRelayRegions(onSuccess: onSuccess, onFailure: onFailure);
 
-            LogAssert.Expect(LogType.Error, "List regions request failed");
-            Assert.That(listOfRegions, Is.Not.Null);
-            Assert.That(listOfRegions, Is.Empty);
+            LogAssert.Expect(LogType.Error, new Regex(@"Encountered an error retrieving the list of Relay regions:"));
+            Assert.That(didInvokeOnSucess, Is.False);
+            Assert.That(didInvokeOnFailure, Is.True);
         }
 
         [Test]
-        public void GetRelayRegions_CompletedTask_ReturnsNotEmptyList()
+        public void GetRelayRegions_CompletedTask_InvokesOnSuccess()
         {
             _relayManager.RelayServiceSDK = new TaskAlwaysCompletes();
 
-            List<Region> listOfRegions = null;
-            Action<List<Region>> onRegionsRetrieved = (regions) => { listOfRegions = regions; };
-            _relayManager.GetRelayRegions(callback: onRegionsRetrieved);
+            bool didInvokeOnSucess = false;
+            bool didInvokeOnFailure = false;
+            Action<List<Region>> onSuccess = (regions) => { didInvokeOnSucess = true; };
+            Action onFailure = () => { didInvokeOnFailure = true; };
+            _relayManager.GetRelayRegions(onSuccess: onSuccess, onFailure: onFailure);
 
-            Assert.That(listOfRegions, Is.Not.Null);
-            Assert.That(listOfRegions, Is.Not.Empty);
+            Assert.That(didInvokeOnSucess, Is.True);
+            Assert.That(didInvokeOnFailure, Is.False);
         }
 
         [Test]

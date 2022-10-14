@@ -151,7 +151,12 @@ namespace UI
 							{
 								Debug.LogWarning("No regions received");
 							}
-						});
+						},
+
+                        () =>
+                        {
+                            Debug.LogError("Failed to retrieve the list of Relay regions.");
+                        });
 					}
                 }
                 else

@@ -28,11 +28,12 @@ namespace Utp
 		/// <param name="callback">A callback to invoke on success/error.</param>
 		public void GetAllocationFromJoinCode(string joinCode, Action<string> callback);
 
-		/// <summary>
-		/// Get a list of Regions from the Relay Service.
-		/// </summary>
-		/// <param name="callback">A callback to invoke on success/error.</param>
-		public void GetRelayRegions(Action<List<Region>> callback);
+        /// <summary>
+        /// Get a list of Regions from the Relay Service.
+        /// </summary>
+        /// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
+        /// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
+        public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure);
 
 		/// <summary>
 		/// Allocate a Relay Server.
