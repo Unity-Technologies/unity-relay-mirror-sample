@@ -118,7 +118,7 @@ namespace UI
 
 					// Client + IP
 					GUILayout.BeginHorizontal();
-					if (GUILayout.Button("Client (DGS)"))
+					if (GUILayout.Button("Client (without Relay)"))
 					{
 						m_Manager.JoinStandardServer();
 					}
@@ -127,7 +127,7 @@ namespace UI
 
 					// Client + Relay Join Code
 					GUILayout.BeginHorizontal();
-					if (GUILayout.Button("Client (Relay)"))
+					if (GUILayout.Button("Client (with Relay)"))
 					{
 						m_Manager.JoinRelayServer();
 					}
