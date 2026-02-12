@@ -2,11 +2,12 @@ using Mirror;
 using System;
 using Unity.Collections;
 using Unity.Jobs;
-using Unity.Networking.Transport;
+
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Networking.Transport;
 
 namespace Utp
 {
@@ -257,8 +258,8 @@ namespace Utp
 			}
 
 			// TODO: Support for IPv6.
-			NetworkEndPoint endpoint;
-			if (!NetworkEndPoint.TryParse(address, port, out endpoint))
+			NetworkEndpoint endpoint;
+			if (!NetworkEndpoint.TryParse(address, port, out endpoint))
 			{
 				UtpLog.Error($"Abandoning connection attempt, failed to convert {address}:{port} into a valid NetworkEndpoint.");
 				return;

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 11dbda2b964884128b2bd209f9e5cead
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2655988077585873504
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Presets/Network Transform (Unreliable)/ClientAuth-Casual.preset
+  uploadId: 736421

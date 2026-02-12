@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b0ef23ac1c6a62546bbad5529b3bfdad
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/SimpleWeb/CHANGELOG.md
+  uploadId: 736421

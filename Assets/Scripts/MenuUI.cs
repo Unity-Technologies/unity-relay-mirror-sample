@@ -183,7 +183,7 @@ namespace UI
 			// server / client status message
 			if (NetworkServer.active)
 			{
-				GUILayout.Label("Server: active. Transport: " + Transport.activeTransport);
+				GUILayout.Label("Server: active. Transport: " + Transport.active);
 				if (m_Manager.IsRelayEnabled())
 				{
 					GUILayout.Label("Relay enabled. Join code: " + m_Manager.relayJoinCode);

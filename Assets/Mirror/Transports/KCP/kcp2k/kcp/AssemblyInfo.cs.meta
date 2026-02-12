@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: aec6a15ac7bd43129317ea1f01f19782
+timeCreated: 1602665988
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/KCP/kcp2k/kcp/AssemblyInfo.cs
+  uploadId: 736421

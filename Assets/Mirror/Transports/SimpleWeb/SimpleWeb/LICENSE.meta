@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0a0cf751b4a201242ac60b4adbc54657
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/SimpleWeb/LICENSE
+  uploadId: 736421

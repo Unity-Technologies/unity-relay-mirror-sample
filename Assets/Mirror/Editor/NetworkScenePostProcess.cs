@@ -33,9 +33,7 @@ namespace Mirror
                 // if we had a [ConflictComponent] attribute that would be better than this check.
                 // also there is no context about which scene this is in.
                 if (identity.GetComponent<NetworkManager>() != null)
-                {
                     Debug.LogError("NetworkManager has a NetworkIdentity component. This will cause the NetworkManager object to be disabled, so it is not recommended.");
-                }
 
                 // not spawned before?
                 //  OnPostProcessScene is called after additive scene loads too,
@@ -57,19 +55,28 @@ namespace Mirror
                     else
                     {
                         // there are two cases where sceneId == 0:
-                        // * if we have a prefab open in the prefab scene
-                        // * if an unopened scene needs resaving
-                        // show a proper error message in both cases so the user
-                        // knows what to do.
+                        // if we have a prefab open in the prefab scene
                         string path = identity.gameObject.scene.path;
                         if (string.IsNullOrWhiteSpace(path))
+                        {
+                            // pressing play while in prefab edit mode used to freeze/crash Unity 2019.
+                            // this seems fine now so we don't need to stop the editor anymore.
+#if UNITY_2020_3_OR_NEWER
+                            Debug.LogWarning($"{identity.name} was open in Prefab Edit Mode while launching with Mirror. If this causes issues, please let us know.");
+#else
                             Debug.LogError($"{identity.name} is currently open in Prefab Edit Mode. Please open the actual scene before launching Mirror.");
+                            EditorApplication.isPlaying = false;
+#endif
+                        }
+                        // if an unopened scene needs resaving
                         else
-                            Debug.LogError($"Scene {path} needs to be opened and resaved, because the scene object {identity.name} has no valid sceneId yet.");
+                        {
 
-                        // either way we shouldn't continue. nothing good will
-                        // happen when trying to launch with invalid sceneIds.
-                        EditorApplication.isPlaying = false;
+                            // nothing good will happen when trying to launch with invalid sceneIds.
+                            // show an error and stop playing immediately.
+                            Debug.LogError($"Scene {path} needs to be opened and resaved, because the scene object {identity.name} has no valid sceneId yet.");
+                            EditorApplication.isPlaying = false;
+                        }
                     }
                 }
             }
@@ -80,28 +87,20 @@ namespace Mirror
             // set scene hash
             identity.SetSceneIdSceneHashPartInternal();
 
-            // disable it
+            // spawnable scene objects are force disabled on scene load to
+            // ensure Start/Update/etc. aren't called until actually spawned.
+            //
             // note: NetworkIdentity.OnDisable adds itself to the
             //       spawnableObjects dictionary (only if sceneId != 0)
             identity.gameObject.SetActive(false);
 
             // safety check for prefabs with more than one NetworkIdentity
-#if UNITY_2018_2_OR_NEWER
             GameObject prefabGO = PrefabUtility.GetCorrespondingObjectFromSource(identity.gameObject);
-#else
-            GameObject prefabGO = PrefabUtility.GetPrefabParent(identity.gameObject);
-#endif
             if (prefabGO)
             {
-#if UNITY_2018_3_OR_NEWER
                 GameObject prefabRootGO = prefabGO.transform.root.gameObject;
-#else
-                GameObject prefabRootGO = PrefabUtility.FindPrefabRoot(prefabGO);
-#endif
                 if (prefabRootGO != null && prefabRootGO.GetComponentsInChildren<NetworkIdentity>().Length > 1)
-                {
                     Debug.LogWarning($"Prefab {prefabRootGO.name} has several NetworkIdentity components attached to itself or its children, this is not supported.");
-                }
             }
         }
     }

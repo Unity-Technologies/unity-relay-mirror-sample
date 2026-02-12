@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f87dd81736d9c824db67f808ac71841d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/SimpleWeb/Common/SendLoop.cs
+  uploadId: 736421

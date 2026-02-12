@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4c1f218a2b16ca846aaf23260078e549
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/SimpleWeb/Common/MessageProcessor.cs
+  uploadId: 736421

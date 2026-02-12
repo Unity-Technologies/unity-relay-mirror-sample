@@ -5,9 +5,9 @@
         "Mirror",
         "Unity.Collections",
         "Unity.Jobs",
-        "Unity.Services.Relay",
         "Unity.Networking.Transport",
-        "Unity.Burst"
+        "Unity.Burst",
+        "Unity.Services.Multiplayer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

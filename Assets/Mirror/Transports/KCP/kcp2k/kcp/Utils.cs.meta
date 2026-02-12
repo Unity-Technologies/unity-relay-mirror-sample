@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: ef959eb716205bd48b050f010a9a35ae
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/KCP/kcp2k/kcp/Utils.cs
+  uploadId: 736421

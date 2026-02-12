@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0ba11103b95fd4721bffbb08440d5b8e
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/Telepathy/Telepathy/LICENSE
+  uploadId: 736421

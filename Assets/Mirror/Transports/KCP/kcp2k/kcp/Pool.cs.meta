@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 35c07818fc4784bb4ba472c8e5029002
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/KCP/kcp2k/kcp/Pool.cs
+  uploadId: 736421

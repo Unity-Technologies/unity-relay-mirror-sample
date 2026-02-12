@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: b5b24284f35f4992bcd4cc43919267d7
+timeCreated: 1724246251
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/Profiling/NetworkGraphStacked.shader
+  uploadId: 736421

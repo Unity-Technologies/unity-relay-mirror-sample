@@ -12,8 +12,18 @@ namespace Mirror.Weaver
               ? td.GetElementType().FullName == type.FullName
               : td.FullName == type.FullName;
 
+        // check if 'td' is exactly of type T.
+        // it does not check if any base type is of <T>, only the specific type.
+        // for example:
+        //   NetworkConnection         Is NetworkConnection: true
+        //   NetworkConnectionToClient Is NetworkConnection: false
         public static bool Is<T>(this TypeReference td) => Is(td, typeof(T));
 
+        // check if 'tr' is derived from T.
+        // it does not check if 'tr' is exactly T.
+        // for example:
+        //   NetworkConnection         IsDerivedFrom<NetworkConnection>: false
+        //   NetworkConnectionToClient IsDerivedFrom<NetworkConnection>: true
         public static bool IsDerivedFrom<T>(this TypeReference tr) => IsDerivedFrom(tr, typeof(T));
 
         public static bool IsDerivedFrom(this TypeReference tr, Type baseClass)
@@ -79,7 +89,10 @@ namespace Mirror.Weaver
         public static bool IsNetworkIdentityField(this TypeReference tr) =>
             tr.Is<UnityEngine.GameObject>() ||
             tr.Is<NetworkIdentity>() ||
-            tr.IsDerivedFrom<NetworkBehaviour>();
+            // handle both NetworkBehaviour and inheritors.
+            // fixes: https://github.com/MirrorNetworking/Mirror/issues/2939
+            tr.IsDerivedFrom<NetworkBehaviour>() ||
+            tr.Is<NetworkBehaviour>();
 
         public static bool CanBeResolved(this TypeReference parent)
         {
@@ -229,7 +242,16 @@ namespace Mirror.Weaver
             {
                 foreach (FieldDefinition field in typeDefinition.Fields)
                 {
-                    if (field.IsStatic || field.IsPrivate)
+                    // ignore static, private, protected fields
+                    // fixes: https://github.com/MirrorNetworking/Mirror/issues/3485
+                    // credit: James Frowen
+                    if (field.IsStatic || field.IsPrivate || field.IsFamily)
+                        continue;
+
+                    // also ignore internal fields
+                    // we dont want to create different writers for this type if they are in current dll or another dll
+                    // so we have to ignore internal in all cases
+                    if (field.IsAssembly)
                         continue;
 
                     if (field.IsNotSerialized)
@@ -266,7 +288,7 @@ namespace Mirror.Weaver
 
         // Takes generic arguments from child class and applies them to parent reference, if possible
         // eg makes `Base<T>` in Child<int> : Base<int> have `int` instead of `T`
-        // Originally by James-Frowen under MIT 
+        // Originally by James-Frowen under MIT
         // https://github.com/MirageNet/Mirage/commit/cf91e1d54796866d2cf87f8e919bb5c681977e45
         public static TypeReference ApplyGenericParameters(this TypeReference parentReference,
             TypeReference childReference)
@@ -306,7 +328,7 @@ namespace Mirror.Weaver
         }
 
         // Finds the type reference for a generic parameter with the provided name in the child reference
-        // Originally by James-Frowen under MIT 
+        // Originally by James-Frowen under MIT
         // https://github.com/MirageNet/Mirage/commit/cf91e1d54796866d2cf87f8e919bb5c681977e45
         static TypeReference FindMatchingGenericArgument(TypeReference childReference, string paramName)
         {

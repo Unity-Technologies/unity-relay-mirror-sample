@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e87e1847def3c1f41b19b7df4f0920b3
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/Profiling/Prefabs/GraphCanvas.prefab
+  uploadId: 736421

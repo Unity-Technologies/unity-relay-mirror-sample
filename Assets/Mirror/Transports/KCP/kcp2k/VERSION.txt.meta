@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ed3f2cf1bbf1b4d53a6f2c103d311f71
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/KCP/kcp2k/VERSION.txt
+  uploadId: 736421

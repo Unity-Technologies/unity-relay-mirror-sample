@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 54c5bb307a5d80d4180010c653b2c085
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/ScriptTemplates/51-Mirror__Network Manager With Actions-NewNetworkManagerWithActions.cs.txt
+  uploadId: 736421

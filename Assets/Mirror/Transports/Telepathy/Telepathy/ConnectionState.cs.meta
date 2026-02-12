@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: af95e2b6f6343411aa8bdf871abd7b1b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/Telepathy/Telepathy/ConnectionState.cs
+  uploadId: 736421

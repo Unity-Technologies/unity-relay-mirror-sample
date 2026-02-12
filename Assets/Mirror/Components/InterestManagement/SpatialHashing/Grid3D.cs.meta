@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: b157c08313c64752b0856469b1b70771
+timeCreated: 1713533175
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/InterestManagement/SpatialHashing/Grid3D.cs
+  uploadId: 736421

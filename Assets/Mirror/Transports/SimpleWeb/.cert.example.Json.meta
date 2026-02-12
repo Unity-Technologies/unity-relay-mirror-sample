@@ -1,0 +1,9 @@
+guid: 4DD9F6E6E712911717200F85FA16CCAD
+fileFormatVersion: 2
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/.cert.example.Json
+  uploadId: 736421

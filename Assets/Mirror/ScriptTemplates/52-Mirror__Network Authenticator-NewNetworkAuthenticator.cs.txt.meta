@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 65ea3c30df1c9f949bb5d6c76e549280
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/ScriptTemplates/52-Mirror__Network Authenticator-NewNetworkAuthenticator.cs.txt
+  uploadId: 736421

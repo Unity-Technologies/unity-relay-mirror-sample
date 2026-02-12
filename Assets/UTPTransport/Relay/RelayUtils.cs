@@ -34,7 +34,7 @@ namespace Utp
 			}
 
 			// Prepare the server endpoint using the Relay server IP and port
-			var serverEndpoint = NetworkEndPoint.Parse(endpoint.Host, (ushort)endpoint.Port);
+			var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
 
 			// UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
 			var allocationIdBytes = ConvertFromAllocationIdBytes(allocation.AllocationIdBytes);
@@ -45,7 +45,6 @@ namespace Utp
 			// The host passes its connectionData twice into this function
 			var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
 				ref connectionData, ref key, connectionTypeString == "dtls");
-			relayServerData.ComputeNewNonce();
 
 			return relayServerData;
 		}
@@ -75,7 +74,7 @@ namespace Utp
 			}
 
 			// Prepare the server endpoint using the Relay server IP and port
-			var serverEndpoint = NetworkEndPoint.Parse(endpoint.Host, (ushort)endpoint.Port);
+			var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
 
 			// UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
 			var allocationIdBytes = ConvertFromAllocationIdBytes(allocation.AllocationIdBytes);
@@ -87,7 +86,6 @@ namespace Utp
 			// A player joining the host passes its own connectionData as well as the host's
 			var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
 				ref hostConnectionData, ref key, connectionTypeString == "dtls");
-			relayServerData.ComputeNewNonce();
 
 			return relayServerData;
 		}

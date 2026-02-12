@@ -3,11 +3,12 @@ using System;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
-using Unity.Networking.Transport;
+
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst;
+using Unity.Networking.Transport;
 
 namespace Utp
 {
@@ -294,7 +295,7 @@ namespace Utp
 			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
 			//Create IPV4 endpoint
-			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;
+			NetworkEndpoint endpoint = NetworkEndpoint.AnyIpv4;
 			endpoint.Port = port;
 
 			if (useRelay)
@@ -487,7 +488,7 @@ namespace Utp
 			//If a connection was found, get its address
 			if (TryGetConnection(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
 			{
-				NetworkEndPoint endpoint = driver.RemoteEndPoint(connection);
+				NetworkEndpoint endpoint = driver.GetRemoteEndpoint(connection);
 				return endpoint.Address;
 			}
 			else

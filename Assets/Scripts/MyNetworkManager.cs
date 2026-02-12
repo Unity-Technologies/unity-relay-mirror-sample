@@ -142,14 +142,16 @@ namespace Network
             m_SessionId = "";
         }
 
-        public override void OnClientConnect(NetworkConnection conn)
+        public override void OnClientConnect()
         {
+            base.OnClientConnect();
+
             Debug.Log($"MyNetworkManager: {m_Username} Connected to Server!");
         }
 
-        public override void OnClientDisconnect(NetworkConnection conn)
+        public override void OnClientDisconnect()
         {
-            base.OnClientDisconnect(conn);
+            base.OnClientDisconnect();
             Debug.Log("MyNetworkManager: Disconnected from Server!");
         }
 

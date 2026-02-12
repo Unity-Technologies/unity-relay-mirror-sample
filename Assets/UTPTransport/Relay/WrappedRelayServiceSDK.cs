@@ -10,22 +10,22 @@ namespace Utp
     {
         public Task<Allocation> CreateAllocationAsync(int maxConnections, string region = null)
         {
-            return Relay.Instance.CreateAllocationAsync(maxConnections, region);
+            return RelayService.Instance.CreateAllocationAsync(maxConnections, region);
         }
 
         public Task<string> GetJoinCodeAsync(Guid allocationId)
         {
-            return Relay.Instance.GetJoinCodeAsync(allocationId);
+            return RelayService.Instance.GetJoinCodeAsync(allocationId);
         }
 
         public Task<JoinAllocation> JoinAllocationAsync(string joinCode)
         {
-            return Relay.Instance.JoinAllocationAsync(joinCode);
+            return RelayService.Instance.JoinAllocationAsync(joinCode);
         }
 
         public Task<List<Region>> ListRegionsAsync()
         {
-            return Relay.Instance.ListRegionsAsync();
+            return RelayService.Instance.ListRegionsAsync();
         }
     }
 }

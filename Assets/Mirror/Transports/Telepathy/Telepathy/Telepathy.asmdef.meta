@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 725ee7191c021de4dbf9269590ded755
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/Telepathy/Telepathy/Telepathy.asmdef
+  uploadId: 736421

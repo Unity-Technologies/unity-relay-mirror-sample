@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0e3971d5783109f4d9ce93c7a689d701
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/SimpleWeb/SimpleWeb/README.txt
+  uploadId: 736421

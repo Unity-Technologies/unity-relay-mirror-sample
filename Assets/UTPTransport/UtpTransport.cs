@@ -98,30 +98,32 @@ namespace Utp
 
 		private void SetupDefaultCallbacks()
 		{
-			if (OnServerConnected == null)
-			{
-				OnServerConnected = (connId) => UtpLog.Warning("OnServerConnected called with no handler");
-			}
-			if (OnServerDisconnected == null)
-			{
-				OnServerDisconnected = (connId) => UtpLog.Warning("OnServerDisconnected called with no handler");
-			}
-			if (OnServerDataReceived == null)
-			{
-				OnServerDataReceived = (connId, data, channel) => UtpLog.Warning("OnServerDataReceived called with no handler");
-			}
-			if (OnClientConnected == null)
-			{
-				OnClientConnected = () => UtpLog.Warning("OnClientConnected called with no handler");
-			}
-			if (OnClientDisconnected == null)
-			{
-				OnClientDisconnected = () => UtpLog.Warning("OnClientDisconnected called with no handler");
-			}
-			if (OnClientDataReceived == null)
-			{
-				OnClientDataReceived = (data, channel) => UtpLog.Warning("OnClientDataReceived called with no handler");
-			}
+			// Commented out because always null
+
+			//if (OnServerConnected == null)
+			//{
+			//	OnServerConnected = (connId) => UtpLog.Warning("OnServerConnected called with no handler");
+			//}
+			//if (OnServerDisconnected == null)
+			//{
+			//	OnServerDisconnected = (connId) => UtpLog.Warning("OnServerDisconnected called with no handler");
+			//}
+			//if (OnServerDataReceived == null)
+			//{
+			//	OnServerDataReceived = (connId, data, channel) => UtpLog.Warning("OnServerDataReceived called with no handler");
+			//}
+			//if (OnClientConnected == null)
+			//{
+			//	OnClientConnected = () => UtpLog.Warning("OnClientConnected called with no handler");
+			//}
+			//if (OnClientDisconnected == null)
+			//{
+			//	OnClientDisconnected = () => UtpLog.Warning("OnClientDisconnected called with no handler");
+			//}
+			//if (OnClientDataReceived == null)
+			//{
+			//	OnClientDataReceived = (data, channel) => UtpLog.Warning("OnClientDataReceived called with no handler");
+			//}
 		}
 
 		/// <summary>

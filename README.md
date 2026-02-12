@@ -1,7 +1,4 @@
-# [DEPRECATED] Unity Relay Mirror Sample
-> [!WARNING]
-> This sample is deprecated.
-> This sample was tested on Unity 2020.3 and is not maintained for later versions.
+# Unity Relay Mirror Sample
 
 The Unity Relay Mirror Sample demonstrates how to use the [Unity Transport Package](https://docs.unity3d.com/Packages/com.unity.transport@latest), the [Unity Relay service](https://docs.unity.com/relay), and the [Mirror Networking library](https://mirror-networking.com/) together. 
 
@@ -12,12 +9,12 @@ The Unity Relay Mirror Sample demonstrates how to use the [Unity Transport Packa
 The [Unity Relay](https://docs.unity.com/relay) documentation contains additional information on the usage of this sample.
 ## Requirements
 The sample has the following requirements:
-* [Unity Editor version 2020.3.40f1](https://unity3d.com/unity/whats-new/2020.3.40)
+* [Unity Editor version 6000.2.10f1](https://unity.com/releases/editor/whats-new/6000.2.10f1)
 * Unity services
 	* [Unity Authentication Service](https://docs.unity.com/authentication)
 	* [Unity Relay Service](https://docs.unity.com/relay)
 * Unity packages
-	* [Unity Relay](https://docs.unity3d.com/Packages/com.unity.services.relay@latest) 
+	* [Unity Multiplayer Services](https://docs.unity3d.com/Packages/com.unity.services.multiplayer@1.1/manual/index.html) 
 	* [Unity Transport](https://docs.unity3d.com/Packages/com.unity.transport@latest) 
     * [Unity Jobs](https://docs.unity3d.com/Packages/com.unity.jobs@latest)
 * [Mirror Networking library](https://mirror-networking.com/)

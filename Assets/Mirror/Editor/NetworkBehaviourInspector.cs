@@ -43,7 +43,8 @@ namespace Mirror
 
         void OnEnable()
         {
-            if (target == null) { Debug.LogWarning("NetworkBehaviourInspector had no target object"); return; }
+            // sometimes target is null. just return early.
+            if (target == null) return;
 
             // If target's base class is changed from NetworkBehaviour to MonoBehaviour
             // then Unity temporarily keep using this Inspector causing things to break
@@ -85,7 +86,15 @@ namespace Mirror
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Sync Settings", EditorStyles.boldLabel);
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("syncMode"));
+            // sync direction
+            SerializedProperty syncDirection = serializedObject.FindProperty("syncDirection");
+            EditorGUILayout.PropertyField(syncDirection);
+
+            // sync mdoe: only show for ServerToClient components
+            if (syncDirection.enumValueIndex == (int)SyncDirection.ServerToClient)
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("syncMode"));
+
+            // sync interval
             EditorGUILayout.PropertyField(serializedObject.FindProperty("syncInterval"));
 
             // apply

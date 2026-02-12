@@ -90,3 +90,10 @@ PluginImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Plugins/Mono.Cecil/Mono.CecilX.Rocks.dll
+  uploadId: 736421

@@ -23,29 +23,46 @@ namespace Mirror.Discovery
     {
         public static bool SupportedOnThisPlatform { get { return Application.platform != RuntimePlatform.WebGLPlayer; } }
 
-        // each game should have a random unique handshake,  this way you can tell if this is the same game or not
-        [HideInInspector]
-        public long secretHandshake;
+        [SerializeField]
+        [Tooltip("If true, broadcasts a discovery request every ActiveDiscoveryInterval seconds")]
+        public bool enableActiveDiscovery = true;
+
+        // broadcast address needs to be configurable on iOS:
+        // https://github.com/vis2k/Mirror/pull/3255
+        [Tooltip("iOS may require LAN IP address here (e.g. 192.168.x.x), otherwise leave blank.")]
+        public string BroadcastAddress = "";
 
         [SerializeField]
         [Tooltip("The UDP port the server will listen for multi-cast messages")]
         protected int serverBroadcastListenPort = 47777;
 
         [SerializeField]
-        [Tooltip("If true, broadcasts a discovery request every ActiveDiscoveryInterval seconds")]
-        public bool enableActiveDiscovery = true;
-
-        [SerializeField]
         [Tooltip("Time in seconds between multi-cast messages")]
         [Range(1, 60)]
         float ActiveDiscoveryInterval = 3;
+
+        [Tooltip("Transport to be advertised during discovery")]
+        public Transport transport;
+
+        [Tooltip("Invoked when a server is found")]
+        public ServerFoundUnityEvent<Response> OnServerFound;
+
+        // Each game should have a random unique handshake,
+        // this way you can tell if this is the same game or not
+        [HideInInspector]
+        public long secretHandshake;
+
+        public long ServerId { get; private set; }
 
         protected UdpClient serverUdpClient;
         protected UdpClient clientUdpClient;
 
 #if UNITY_EDITOR
-        void OnValidate()
+        public virtual void OnValidate()
         {
+            if (transport == null)
+                transport = GetComponent<Transport>();
+
             if (secretHandshake == 0)
             {
                 secretHandshake = RandomLong();
@@ -54,22 +71,31 @@ namespace Mirror.Discovery
         }
 #endif
 
-        public static long RandomLong()
-        {
-            int value1 = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
-            int value2 = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
-            return value1 + ((long)value2 << 32);
-        }
-
         /// <summary>
         /// virtual so that inheriting classes' Start() can call base.Start() too
         /// </summary>
         public virtual void Start()
         {
+            ServerId = RandomLong();
+
+            // active transport gets initialized in Awake
+            // so make sure we set it here in Start() after Awake
+            // Or just let the user assign it in the inspector
+            if (transport == null)
+                transport = Transport.active;
+
             // Server mode? then start advertising
-#if UNITY_SERVER
-            AdvertiseServer();
-#endif
+            if (Utils.IsHeadless())
+            {
+                AdvertiseServer();
+            }
+        }
+
+        public static long RandomLong()
+        {
+            int value1 = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            int value2 = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            return value1 + ((long)value2 << 32);
         }
 
         // Ensure the ports are cleared no matter when Game/Unity UI exits
@@ -144,6 +170,8 @@ namespace Mirror.Discovery
                 MulticastLoopback = false
             };
 
+            //Debug.Log($"Discovery: Advertising Server {Dns.GetHostName()}");
+
             // listen for client pings
             _ = ServerListenAsync();
         }
@@ -162,9 +190,7 @@ namespace Mirror.Discovery
                     // socket has been closed
                     break;
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) {}
             }
         }
 
@@ -243,11 +269,12 @@ namespace Mirror.Discovery
         AndroidJavaObject multicastLock;
         bool hasMulticastLock;
 #endif
+
         void BeginMulticastLock()
 		{
 #if UNITY_ANDROID
             if (hasMulticastLock) return;
-                
+
             if (Application.platform == RuntimePlatform.Android)
             {
                 using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
@@ -267,7 +294,7 @@ namespace Mirror.Discovery
         {
 #if UNITY_ANDROID
             if (!hasMulticastLock) return;
-            
+
             multicastLock?.Call("release");
             hasMulticastLock = false;
 #endif
@@ -324,16 +351,16 @@ namespace Mirror.Discovery
         /// <returns>ClientListenAsync Task</returns>
         public async Task ClientListenAsync()
         {
-            // while clientUpdClient to fix: 
+            // while clientUpdClient to fix:
             // https://github.com/vis2k/Mirror/pull/2908
             //
             // If, you cancel discovery the clientUdpClient is set to null.
             // However, nothing cancels ClientListenAsync. If we change the if(true)
-            // to check if the client is null. You can properly cancel the discovery, 
+            // to check if the client is null. You can properly cancel the discovery,
             // and kill the listen thread.
             //
-            // Prior to this fix, if you cancel the discovery search. It crashes the 
-            // thread, and is super noisy in the output. As well as causes issues on 
+            // Prior to this fix, if you cancel the discovery search. It crashes the
+            // thread, and is super noisy in the output. As well as causes issues on
             // the quest.
             while (clientUdpClient != null)
             {
@@ -369,6 +396,18 @@ namespace Mirror.Discovery
 
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Broadcast, serverBroadcastListenPort);
 
+            if (!string.IsNullOrWhiteSpace(BroadcastAddress))
+            {
+                try
+                {
+                    endPoint = new IPEndPoint(IPAddress.Parse(BroadcastAddress), serverBroadcastListenPort);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
             {
                 writer.WriteLong(secretHandshake);
@@ -381,6 +420,7 @@ namespace Mirror.Discovery
 
                     ArraySegment<byte> data = writer.ToArraySegment();
 
+                    //Debug.Log($"Discovery: Sending BroadcastDiscoveryRequest {request}");
                     clientUdpClient.SendAsync(data.Array, data.Count, endPoint);
                 }
                 catch (Exception)

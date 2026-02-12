@@ -126,7 +126,9 @@ namespace Mirror
             Vector2 maxValueLabelSize = GetMaxNameLabelSize(infos);
 
             Rect labelRect = new Rect(initialX, Y, maxNameLabelSize.x, maxNameLabelSize.y);
-            Rect idLabelRect = new Rect(maxNameLabelSize.x, Y, maxValueLabelSize.x, maxValueLabelSize.y);
+
+            // height needs a +1 to line up nicely
+            Rect idLabelRect = new Rect(maxNameLabelSize.x, Y, maxValueLabelSize.x, maxValueLabelSize.y + 1);
 
             foreach (NetworkIdentityInfo info in infos)
             {
@@ -171,7 +173,7 @@ namespace Mirror
 
         float DrawObservers(NetworkIdentity identity, float initialX, float Y)
         {
-            if (identity.observers != null && identity.observers.Count > 0)
+            if (identity.observers.Count > 0)
             {
                 Rect observerRect = new Rect(initialX, Y + 10, 200, 20);
 
@@ -252,7 +254,7 @@ namespace Mirror
                 infos.Add(GetString("Network ID", identity.netId.ToString()));
                 infos.Add(GetBoolean("Is Client", identity.isClient));
                 infos.Add(GetBoolean("Is Server", identity.isServer));
-                infos.Add(GetBoolean("Has Authority", identity.hasAuthority));
+                infos.Add(GetBoolean("Is Owned", identity.isOwned));
                 infos.Add(GetBoolean("Is Local Player", identity.isLocalPlayer));
             }
             return infos;

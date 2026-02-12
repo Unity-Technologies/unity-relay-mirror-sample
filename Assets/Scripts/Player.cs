@@ -58,4 +58,5 @@ public class Player : NetworkBehaviour
     {
         Debug.Log("Player has been spawned on the server!");
     }
+
 }

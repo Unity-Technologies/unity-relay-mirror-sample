@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: e1e3744418024c02acf39f44c1d1bd20
+timeCreated: 1708874062
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Transports/Encryption/PubKeyInfo.cs
+  uploadId: 736421

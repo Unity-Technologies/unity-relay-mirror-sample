@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 9bdc42bca9b7109428d00fe33bdb5102
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/Profiling/Prefabs/FPSMinMaxAvg.prefab
+  uploadId: 736421

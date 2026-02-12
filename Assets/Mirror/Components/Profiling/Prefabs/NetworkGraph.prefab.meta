@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a4ee3092d7c7f4a38a70b11014175ebd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/Profiling/Prefabs/NetworkGraph.prefab
+  uploadId: 736421

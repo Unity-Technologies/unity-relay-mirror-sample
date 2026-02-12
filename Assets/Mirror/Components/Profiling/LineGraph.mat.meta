@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5f77111e39fad6240bbf2a93d735b648
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Components/Profiling/LineGraph.mat
+  uploadId: 736421
